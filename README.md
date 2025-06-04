@@ -6,7 +6,7 @@ Win.
 
 Trampling.
 
-Show other losers that you're the best.
+Show other losers that you owned this world.
 
 # 💰 돈으로 밀어붙이는 전쟁
 
