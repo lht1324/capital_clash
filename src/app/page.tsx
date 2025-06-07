@@ -3,6 +3,7 @@
 import Header from '@/components/Header'
 import ContinentSelector from '@/components/ContinentSelector'
 import ContinentMap from '@/components/ContinentMap'
+import InvestmentPanel from '@/components/InvestmentPanel'
 
 export default function Home() {
   return (
@@ -15,6 +16,9 @@ export default function Home() {
       
       {/* 메인 지도 - 항상 표시 */}
       <ContinentMap />
+      
+      {/* 우하단 투자 패널 */}
+      <InvestmentPanel />
     </>
   )
 }
