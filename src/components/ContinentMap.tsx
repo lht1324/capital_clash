@@ -362,81 +362,87 @@ function canPlaceSquare(x: number, y: number, size: number, existingPlacements: 
   return true // 겹치지 않음
 }
 
-// 대륙 생성 및 실제 배치
-function TerritorySystem({ investors, onTileClick, continentId }: { 
+// 🌳 NEW: Billboard 배치 시스템 (정사방형 & 행 우선 순회)
+function TerritorySystem({ 
+  investors, 
+  onTileClick, 
+  continentId 
+}: { 
   investors: any[], 
   onTileClick: (investorId: string) => void,
-  continentId: string
+  continentId: string 
 }) {
   const { updateInvestorPositions } = useContinentStore()
-  
-  const placementResult = useMemo(() => {
-    if (investors.length === 0) return null
-    return calculateSquareLayout(investors)
-  }, [investors])
-  
-  // 배치 완료 후 위치 정보 업데이트 (한 번만 실행)
+  const [sharedTexture, setSharedTexture] = useState<THREE.Texture | null>(null)
+
+  // 🚀 공통 텍스처 로딩 - 50개 개별 로딩 → 1개 공통 로딩
   useEffect(() => {
-    if (placementResult) {
-      const { placements } = placementResult
-      
-      // 이미 위치 정보가 업데이트되었는지 확인 (무한 루프 방지)
-      const needsUpdate = placements.some((placement: any) => {
+    const loader = new THREE.TextureLoader()
+    loader.load(
+      '/test.jpg',
+      (loadedTexture) => {
+        loadedTexture.flipY = true
+        setSharedTexture(loadedTexture)
+        console.log(`🚀 공통 텍스처 로드 완료: test.jpg`)
+      },
+      undefined,
+      (error) => {
+        console.error(`❌ 공통 텍스처 로드 실패:`, error)
+      }
+    )
+  }, [])
+
+  // 🌳 NEW: Billboard 알고리즘으로 배치 계산
+  const placementResult = useMemo(() => {
+    if (investors.length === 0) return { placements: [], boundary: { minX: 0, maxX: 50, minY: 0, maxY: 50, width: 50, height: 50 } }
+    
+    const result = calculateBillboardLayout(investors)
+    
+    if (result.placements.length === 0) {
+      console.warn('⚠️ Billboard 배치 실패, 빈 배열 반환')
+      return { placements: [], boundary: { minX: 0, maxX: 50, minY: 0, maxY: 50, width: 50, height: 50 } }
+    }
+    
+    console.log(`🏢 Billboard 배치 완료: ${result.placements.length}개, 경계: ${result.boundary.width}×${result.boundary.height}`)
+    
+    return result
+  }, [investors])
+
+  // 🚀 최적화: 위치 업데이트 조건부 실행
+  useEffect(() => {
+    if (placementResult.placements.length > 0) {
+      const hasPositionChanges = placementResult.placements.some(placement => {
         const investor = placement.investor
         return !investor.tilePosition || 
                investor.tilePosition.x !== placement.x ||
                investor.tilePosition.y !== placement.y ||
-               investor.tilePosition.size !== placement.size ||
-               investor.tilePosition.continentId !== continentId
+               investor.tilePosition.size !== Math.max(placement.width, placement.height)
       })
-      
-      if (needsUpdate) {
-        // placement 정보를 updateInvestorPositions에 맞는 형태로 변환
-        const positionUpdates = placements.map((placement: any) => ({
+
+      if (hasPositionChanges) {
+        console.log(`📍 위치 변경 감지, 스토어 업데이트 실행`)
+        // Billboard는 width/height를 사용하므로 size로 변환
+        const positionUpdates = placementResult.placements.map(placement => ({
           investorId: placement.investor.id,
           x: placement.x,
           y: placement.y,
-          size: placement.size
+          size: Math.max(placement.width, placement.height) // width/height 중 최대값을 size로 사용
         }))
-        
-        console.log(`📍 위치 정보 업데이트: ${continentId} 대륙, ${positionUpdates.length}개 타일`)
         updateInvestorPositions(continentId as any, positionUpdates)
       }
     }
-  }, [placementResult, continentId, updateInvestorPositions])
-  
-  if (!placementResult) return null
-  
-  const { placements, boundary } = placementResult
-  
-  console.log('🎨 대륙 생성 및 실제 배치')
-  
-  // 경계 기준 대륙 크기 계산 (고정 셀 크기 사용)
-  const continentWidth = boundary.width * CELL_SIZE
-  const continentHeight = boundary.height * CELL_SIZE
-  
-  console.log(`🌍 대륙 크기: ${continentWidth}×${continentHeight} (${boundary.width}×${boundary.height} 격자)`)
-  
+  }, [placementResult.placements, continentId, updateInvestorPositions])
+
   return (
     <group>
-      {/* 조각난 대륙 베이스 - 각 배치된 영역마다 개별 조각 */}
-      {placements.map((placement: any, index: number) => (
-        <ContinentPiece
-          key={`continent-${placement.investor.id}`}
-          placement={placement}
-          boundary={boundary}
-          cellSize={CELL_SIZE}
-        />
-      ))}
-      
-      {/* 실제 영역 배치 */}
-      {placements.map((placement: any, index: number) => (
+      {placementResult.placements.map((placement) => (
         <TerritoryArea
           key={placement.investor.id}
           placement={placement}
-          boundary={boundary}
+          boundary={placementResult.boundary}
           cellSize={CELL_SIZE}
           onTileClick={onTileClick}
+          sharedTexture={sharedTexture}
         />
       ))}
     </group>
@@ -447,11 +453,15 @@ function TerritorySystem({ investors, onTileClick, continentId }: {
 function ContinentPiece({ 
   placement, 
   boundary, 
-  cellSize 
+  cellSize,
+  onTileClick,
+  sharedTexture
 }: {
   placement: any,
   boundary: any,
-  cellSize: number
+  cellSize: number,
+  onTileClick: (investorId: string) => void,
+  sharedTexture: THREE.Texture | null
 }) {
   // 🔧 Treemap(width,height) 또는 기존(size) 모두 지원
   const width = placement.width ? placement.width * cellSize : placement.size * cellSize
@@ -485,39 +495,26 @@ function ContinentPiece({
   )
 }
 
-// 🌳 NEW: 개별 영역 컴포넌트 (직사각형) - Treemap 알고리즘용
+// 🌳 NEW: 개별 영역 컴포넌트 (직사각형) - 최적화된 버전
 function TerritoryArea({ 
   placement, 
   boundary, 
   cellSize,
-  onTileClick
+  onTileClick,
+  sharedTexture
 }: {
   placement: any,
   boundary: any,
   cellSize: number,
-  onTileClick: (investorId: string) => void
+  onTileClick: (investorId: string) => void,
+  sharedTexture: THREE.Texture | null
 }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const imageMeshRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
-  const [texture, setTexture] = useState<THREE.Texture | null>(null)
   
-  // 텍스처 로드 (모든 직사각형에 적용)
-  useEffect(() => {
-    const loader = new THREE.TextureLoader()
-    loader.load(
-      '/test.jpg',
-      (loadedTexture) => {
-        loadedTexture.flipY = true // 이미지 정상 방향으로 수정
-        setTexture(loadedTexture)
-        console.log(`🖼️ ${placement.investor.name}에 이미지 로드 완료 (${placement.width}×${placement.height})`)
-      },
-      undefined,
-      (error) => {
-        console.error(`❌ ${placement.investor.name} 이미지 로드 실패:`, error)
-      }
-    )
-  }, [placement.investor.name, placement.width, placement.height])
+  // 🚀 개별 애니메이션 제거 - 호버 상태만 관리
+  // useFrame 제거로 50개 × 60fps = 3000회/초 → 0회/초
   
   // 🌳 NEW: Treemap 좌표를 3D 좌표로 변환 (직사각형)
   const width = placement.width * cellSize
@@ -525,34 +522,18 @@ function TerritoryArea({
   const x = (placement.x + placement.width/2) * cellSize
   const y = -(placement.y + placement.height/2) * cellSize
   
+  // 🚀 호버 시에만 간단한 CSS 변환 사용
+  const baseScale = hovered ? 1.05 : 1.0
+  const baseZ = hovered ? 0.15 : 0.1
+  const imageZ = hovered ? 0.35 : 0.3
 
-  
-  // 애니메이션
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      const targetScale = hovered ? 1.05 : 1.0
-      meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 8)
-      
-      const targetZ = hovered ? 0.15 : 0.1
-      meshRef.current.position.z = THREE.MathUtils.lerp(meshRef.current.position.z, targetZ, delta * 5)
-    }
-    
-    // 이미지 메시도 함께 애니메이션
-    if (imageMeshRef.current) {
-      const targetScale = hovered ? 1.05 : 1.0
-      imageMeshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 8)
-      
-      const targetZ = hovered ? 0.35 : 0.3
-      imageMeshRef.current.position.z = THREE.MathUtils.lerp(imageMeshRef.current.position.z, targetZ, delta * 5)
-    }
-  })
-  
   return (
     <group position={[x, y, 0]}>
-      {/* 🌳 NEW: 기본 직사각형 베이스 */}
+      {/* 🌳 NEW: 기본 직사각형 베이스 - 최적화된 애니메이션 */}
       <mesh 
         ref={meshRef}
-        position={[0, 0, 0.1]}
+        position={[0, 0, baseZ]}
+        scale={[baseScale, baseScale, baseScale]}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         onClick={() => {
@@ -570,11 +551,12 @@ function TerritoryArea({
         />
       </mesh>
       
-      {/* 🌳 NEW: 프로필 이미지 (직사각형 비율에 맞춤) */}
-      {texture && (
+      {/* 🌳 NEW: 프로필 이미지 - 공통 텍스처 사용 */}
+      {sharedTexture && (
         <mesh 
           ref={imageMeshRef}
-          position={[0, 0, 0.3]}
+          position={[0, 0, imageZ]}
+          scale={[baseScale, baseScale, baseScale]}
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}
           onClick={() => {
@@ -584,7 +566,7 @@ function TerritoryArea({
         >
           <planeGeometry args={[width, height]} />
           <meshStandardMaterial 
-            map={texture}
+            map={sharedTexture}
             transparent={false}
             opacity={1.0}
             roughness={0.1}
@@ -594,15 +576,14 @@ function TerritoryArea({
       )}
       
       {/* 🌳 NEW: 호버 시 투자자 정보 표시 (큰 직사각형에만) */}
-      {hovered && width >= 7 && height >= 7 && (
-        <mesh position={[0, height * 0.6, 0.4]}>
-          <planeGeometry args={[width * 1.2, height * 0.3]} />
-          <meshBasicMaterial 
-            color="#000000"
-            transparent={true}
-            opacity={0.8}
-          />
-        </mesh>
+      {hovered && placement.width * placement.height > 100 && (
+        <group position={[0, height/4, 0.5]}>
+          <mesh>
+            <planeGeometry args={[width * 0.8, height * 0.3]} />
+            <meshBasicMaterial color="black" opacity={0.7} transparent />
+          </mesh>
+          {/* TODO: 텍스트 렌더링은 나중에 추가 */}
+        </group>
       )}
     </group>
   )

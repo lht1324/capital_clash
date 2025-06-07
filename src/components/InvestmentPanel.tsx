@@ -197,9 +197,10 @@ export default function InvestmentPanel() {
             </button>
             <button
               onClick={() => selectedContinent && generate50TestData(selectedContinent)}
-              className="w-full px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm transition-colors"
+              disabled={animatingTerritories}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm transition-colors disabled:opacity-50"
             >
-              🏢 50명 Billboard 테스트
+              {animatingTerritories ? '생성중...' : '🚀 50명 최적화된 Billboard 테스트'}
             </button>
           </div>
         </div>
