@@ -92,7 +92,7 @@ export default function TileSettingsPanel({
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">{investor.name}</h2>
-            <p className="text-gray-600">타일 설정 패널</p>
+            <p className="text-gray-600">영역 설정 패널</p>
           </div>
           <button
             onClick={onClose}
@@ -114,7 +114,7 @@ export default function TileSettingsPanel({
               <span className="ml-2 font-semibold">{(investor.share * 100).toFixed(2)}%</span>
             </div>
             <div>
-              <span className="text-gray-600">타일 색상:</span>
+              <span className="text-gray-600">영역 색상:</span>
               <span 
                 className="ml-2 inline-block w-6 h-6 rounded border"
                 style={{ backgroundColor: investor.color }}
@@ -133,7 +133,7 @@ export default function TileSettingsPanel({
         </div>
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">타일 이미지 설정</h3>
+          <h3 className="text-lg font-semibold mb-3">영역 이미지 설정</h3>
           
           <div className="mb-4">
             <span className="text-gray-600">현재 상태:</span>
@@ -155,7 +155,7 @@ export default function TileSettingsPanel({
               <p className="text-gray-600 mb-2">현재 이미지:</p>
               <img 
                 src={investor.imageUrl} 
-                alt="현재 타일 이미지" 
+                                  alt="현재 영역 이미지" 
                 className="w-32 h-32 object-cover border rounded"
               />
             </div>

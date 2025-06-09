@@ -5,6 +5,7 @@ import { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { useContinentStore, type Continent, type ContinentId } from '@/store/continentStore'
 import TileSettingsPanel from './TileSettingsPanel'
+import ProfileViewModal from './ProfileViewModal'
 
 function CameraController() {
   const { camera, gl } = useThree()
@@ -83,7 +84,7 @@ function CameraController() {
       const deltaX = event.clientX - previousMouse.current.x
       const deltaY = event.clientY - previousMouse.current.y
       
-      const sensitivity = 0.015
+      const sensitivity = 0.03  // 드래그 속도 증가
       targetPosition.current.x -= deltaX * sensitivity
       targetPosition.current.y += deltaY * sensitivity
       
@@ -101,7 +102,7 @@ function CameraController() {
     
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault()
-      const zoomSpeed = 0.008
+      const zoomSpeed = 0.02  // 줌 속도 적절히 조정
       targetPosition.current.z += event.deltaY * zoomSpeed
       targetPosition.current.z = Math.max(15, Math.min(120, targetPosition.current.z))
     }
@@ -407,7 +408,7 @@ function TerritorySystem({
     
     return result
   }, [investors])
-
+  
   // 🚀 최적화: 위치 업데이트 조건부 실행
   useEffect(() => {
     if (placementResult.placements.length > 0) {
@@ -432,7 +433,7 @@ function TerritorySystem({
       }
     }
   }, [placementResult.placements, continentId, updateInvestorPositions])
-
+  
   return (
     <group>
       {placementResult.placements.map((placement) => (
@@ -526,7 +527,7 @@ function TerritoryArea({
   const baseScale = hovered ? 1.05 : 1.0
   const baseZ = hovered ? 0.15 : 0.1
   const imageZ = hovered ? 0.35 : 0.3
-
+  
   return (
     <group position={[x, y, 0]}>
       {/* 🌳 NEW: 기본 직사각형 베이스 - 최적화된 애니메이션 */}
@@ -581,7 +582,7 @@ function TerritoryArea({
           <mesh>
             <planeGeometry args={[width * 0.8, height * 0.3]} />
             <meshBasicMaterial color="black" opacity={0.7} transparent />
-          </mesh>
+        </mesh>
           {/* TODO: 텍스트 렌더링은 나중에 추가 */}
         </group>
       )}
@@ -629,20 +630,48 @@ function WorldScene({ onTileClick }: { onTileClick: (investorId: string) => void
 }
 
 export default function ContinentMap() {
-  const [selectedTile, setSelectedTile] = useState<{
+  // 두 가지 모달 상태 분리
+  const [selectedTileSettings, setSelectedTileSettings] = useState<{
     investorId: string
     continentId: ContinentId
   } | null>(null)
+  
+  const [selectedTileProfile, setSelectedTileProfile] = useState<{
+    investorId: string
+    continentId: ContinentId
+  } | null>(null)
+  
   const { selectedContinent } = useContinentStore()
+
+  // 임시 권한 확인 로직 (테스트용)
+  const isOwner = (investorId: string) => {
+    // TODO: 추후 실제 인증 시스템 연동
+    // 현재는 첫 번째 투자자만 본인으로 설정 (테스트용)
+    return investorId === 'investor_01'
+  }
 
   const handleTileClick = (investorId: string) => {
     if (selectedContinent) {
-      setSelectedTile({ investorId, continentId: selectedContinent })
+      if (isOwner(investorId)) {
+        // 본인 영역: 설정 패널 열기
+        console.log(`🔧 ${investorId} 설정 패널 열기 (본인)`)
+        setSelectedTileSettings({ investorId, continentId: selectedContinent })
+        setSelectedTileProfile(null) // 다른 모달 닫기
+      } else {
+        // 타인 영역: 프로필 보기 열기
+        console.log(`👀 ${investorId} 프로필 보기 열기 (타인)`)
+        setSelectedTileProfile({ investorId, continentId: selectedContinent })
+        setSelectedTileSettings(null) // 다른 모달 닫기
+      }
     }
   }
 
-  const handleCloseTilePanel = () => {
-    setSelectedTile(null)
+  const handleCloseSettingsPanel = () => {
+    setSelectedTileSettings(null)
+  }
+
+  const handleCloseProfileModal = () => {
+    setSelectedTileProfile(null)
   }
 
   return (
@@ -657,13 +686,23 @@ export default function ContinentMap() {
         <WorldScene onTileClick={handleTileClick} />
       </Canvas>
       
-      {/* 타일 설정 패널 */}
-      {selectedTile && (
+      {/* 설정 패널 (투자자 본인용) */}
+      {selectedTileSettings && (
         <TileSettingsPanel
           isOpen={true}
-          onClose={handleCloseTilePanel}
-          investorId={selectedTile.investorId}
-          continentId={selectedTile.continentId}
+          onClose={handleCloseSettingsPanel}
+          investorId={selectedTileSettings.investorId}
+          continentId={selectedTileSettings.continentId}
+        />
+      )}
+      
+      {/* 프로필 보기 모달 (타인용) */}
+      {selectedTileProfile && (
+        <ProfileViewModal
+          isOpen={true}
+          onClose={handleCloseProfileModal}
+          investorId={selectedTileProfile.investorId}
+          continentId={selectedTileProfile.continentId}
         />
       )}
     </div>

@@ -14,9 +14,38 @@ export default function ContinentSelector() {
   
   const [isOpen, setIsOpen] = useState(false)
 
+  // 🛡️ 디버깅을 위한 로그
+  console.log('🔍 ContinentSelector 상태 확인:', {
+    continents: continents ? Object.keys(continents) : 'null',
+    continentsLength: continents ? Object.keys(continents).length : 0,
+    selectedContinent,
+    isWorldView
+  })
+
+  // 🛡️ continents가 완전히 비어있지 않다면 표시 (로딩 조건 완화)
+  if (!continents || Object.keys(continents).length < 2) {
+    return (
+      <div className="fixed top-20 left-4 z-30">
+        <div className="bg-black bg-opacity-80 text-white p-3 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-gray-500 rounded-full animate-pulse"></div>
+            <span className="text-sm">대륙 데이터 로딩 중... ({continents ? Object.keys(continents).length : 0}/5)</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const handleContinentSelect = (continentId: ContinentId) => {
-    selectContinent(continentId)
-    setIsOpen(false)
+    // 🛡️ 선택하려는 대륙이 실제로 존재하는지 확인
+    if (continents[continentId]) {
+      selectContinent(continentId)
+      setIsOpen(false)
+    } else {
+      console.warn(`⚠️ 대륙 '${continentId}'가 존재하지 않습니다. 세계 뷰로 전환합니다.`)
+      resetSelection()
+      setIsOpen(false)
+    }
   }
 
   const handleWorldView = () => {
@@ -24,10 +53,18 @@ export default function ContinentSelector() {
     setIsOpen(false)
   }
 
-  // 현재 선택 상태에 따른 표시
+  // 현재 선택 상태에 따른 표시 (안전한 접근)
+  const selectedContinentData = selectedContinent ? continents[selectedContinent] : null
   const currentDisplay = isWorldView 
     ? { name: '세계 지도', description: '모든 대륙 보기', color: '#6B7280' }
-    : continents[selectedContinent!]
+    : selectedContinentData || { name: '로딩 중...', description: '대륙 정보 불러오는 중', color: '#6B7280' }
+    
+  // 현재 대륙의 투자 통계 (안전한 접근)
+  const currentStats = !isWorldView && selectedContinent && selectedContinentData ? {
+    totalInvestment: selectedContinentData.totalInvestment || 0,
+    investorCount: Object.keys(selectedContinentData.investors || {}).length,
+    maxUsers: selectedContinentData.maxUsers || 0
+  } : null
 
   return (
     <div className="fixed top-20 left-4 z-30">
@@ -47,6 +84,18 @@ export default function ContinentSelector() {
           <div className="flex-1 text-left">
             <div className="font-bold text-sm">{currentDisplay.name}</div>
             <div className="text-xs text-gray-300">{currentDisplay.description}</div>
+            {currentStats && (
+              <div className="text-xs text-gray-400 mt-1 space-y-0.5">
+                <div className="flex justify-between">
+                  <span>💰 투자금:</span>
+                  <span className="text-green-400">${currentStats.totalInvestment.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>👥 투자자:</span>
+                  <span className="text-blue-400">{currentStats.investorCount}/{currentStats.maxUsers}</span>
+                </div>
+              </div>
+            )}
           </div>
           <div className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>
             ▼

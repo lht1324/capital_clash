@@ -1,24 +1,31 @@
 'use client'
 
 import Header from '@/components/Header'
+import Sidebar from '@/components/Sidebar'
 import ContinentSelector from '@/components/ContinentSelector'
 import ContinentMap from '@/components/ContinentMap'
-import InvestmentPanel from '@/components/InvestmentPanel'
+import InvestmentNotificationManager from '@/components/InvestmentNotification'
 
 export default function Home() {
   return (
-    <>
+    <div className="min-h-screen">
       {/* 상단 헤더 */}
       <Header />
       
+      {/* 사이드바 */}
+      <Sidebar />
+      
+      {/* 메인 컨텐츠 영역 - Header 높이만큼 상단 여백 추가 */}
+      <main className="pt-16">
       {/* 좌상단 대륙 선택 버튼 */}
       <ContinentSelector />
       
       {/* 메인 지도 - 항상 표시 */}
       <ContinentMap />
       
-      {/* 우하단 투자 패널 */}
-      <InvestmentPanel />
-    </>
+      {/* 실시간 투자 알림 시스템 */}
+      <InvestmentNotificationManager isEnabled={true} />
+      </main>
+    </div>
   )
 }
