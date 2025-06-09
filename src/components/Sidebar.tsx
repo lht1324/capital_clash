@@ -139,10 +139,11 @@ export default function Sidebar() {
         {/* 사이드바 토글 버튼 - 오른쪽으로 이동 */}
         <button
             onClick={() => setSidebarOpen(!isSidebarOpen)}
-            className={`fixed top-20 z-50 bg-gray-900 hover:bg-gray-800 text-white p-2 rounded-l-lg border border-r-0 border-gray-700 transition-all duration-300 ${
+            className={`fixed top-20 z-20 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-l-lg border border-r-0 border-gray-700 transition-all duration-300 flex items-center gap-2 ${
                 isSidebarOpen ? 'right-80' : 'right-0'
             }`}
         >
+          <span className="text-sm font-medium">My Info</span>
           <svg
               className={`w-5 h-5 transition-transform duration-300 ${isSidebarOpen ? '' : 'rotate-180'}`}
               fill="none"
@@ -155,7 +156,7 @@ export default function Sidebar() {
 
         {/* 사이드바 - 오른쪽으로 이동 */}
         <div
-            className={`fixed top-16 right-0 h-[calc(100vh-4rem)] bg-gray-900 border-l border-gray-700 z-30 transition-transform duration-300 ${
+            className={`fixed top-16 right-0 h-[calc(100vh-4rem)] bg-gray-900 border-l border-gray-700 z-20 transition-transform duration-300 ${
                 isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
             style={{ width: '320px' }}
