@@ -1,0 +1,286 @@
+'use client'
+
+import { useState, useRef, useCallback } from 'react'
+import { X, Upload, Image as ImageIcon, AlertCircle, Check } from 'lucide-react'
+
+interface ImageUploadModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onUpload: (file: File) => void
+  currentImageStatus?: 'none' | 'pending' | 'approved' | 'rejected'
+}
+
+export default function ImageUploadModal({ 
+  isOpen, 
+  onClose, 
+  onUpload,
+  currentImageStatus = 'none'
+}: ImageUploadModalProps) {
+  const [dragActive, setDragActive] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true)
+    } else if (e.type === 'dragleave') {
+      setDragActive(false)
+    }
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+
+    const files = e.dataTransfer.files
+    if (files && files[0]) {
+      handleFileSelection(files[0])
+    }
+  }, [])
+
+  const handleFileSelection = (file: File) => {
+    // File validation
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+    const maxSize = 5 * 1024 * 1024 // 5MB
+
+    if (!allowedTypes.includes(file.type)) {
+      alert('Only JPG, PNG, and GIF files are allowed.')
+      return
+    }
+
+    if (file.size > maxSize) {
+      alert('File size must be less than 5MB.')
+      return
+    }
+
+    setSelectedFile(file)
+    
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setPreview(e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleFileSelection(file)
+    }
+  }
+
+  const handleUpload = async () => {
+    if (!selectedFile) return
+
+    setUploading(true)
+    
+    // Simulate upload delay
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    onUpload(selectedFile)
+    setUploading(false)
+    setSelectedFile(null)
+    setPreview(null)
+    onClose()
+  }
+
+  const resetSelection = () => {
+    setSelectedFile(null)
+    setPreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-20">
+      <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4 max-h-[calc(100vh-6rem)] overflow-y-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-white">Upload Territory Image</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Guidelines */}
+        <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-4 mb-6">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="text-blue-400 mt-1 flex-shrink-0" size={20} />
+            <div className="text-sm text-blue-200 space-y-2">
+              <p className="font-medium">Review Process Notice</p>
+              <ul className="space-y-1 text-xs">
+                <li>• Your image will be reviewed for approval</li>
+                <li>• Review process may take up to 24 hours</li>
+                <li>• Images must be in 1:1 aspect ratio (square format)</li>
+                <li>• Images containing inappropriate content will be rejected</li>
+                <li>• Ensure your image follows community guidelines</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+
+
+        {/* Current Image Status Display */}
+        {currentImageStatus !== 'none' && !selectedFile && (
+          <div className="mb-6">
+            <div className={`border rounded-lg p-4 ${
+              currentImageStatus === 'pending' ? 'border-yellow-500 bg-yellow-500/10' :
+              currentImageStatus === 'approved' ? 'border-green-500 bg-green-500/10' :
+              'border-red-500 bg-red-500/10'
+            }`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3">
+                  <span className={`text-2xl`}>
+                    {currentImageStatus === 'pending' ? '🔄' :
+                     currentImageStatus === 'approved' ? '✅' :
+                     '❌'}
+                  </span>
+                  <div>
+                    <p className={`font-medium ${
+                      currentImageStatus === 'pending' ? 'text-yellow-400' :
+                      currentImageStatus === 'approved' ? 'text-green-400' :
+                      'text-red-400'
+                    }`}>
+                      {currentImageStatus === 'pending' ? 'Under Review' :
+                       currentImageStatus === 'approved' ? 'Approved' :
+                       'Rejected'}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {currentImageStatus === 'pending' ? 'Your image is being reviewed by our team' :
+                       currentImageStatus === 'approved' ? 'Your image has been approved and is live' :
+                       'Your image was rejected. Please upload a new one.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
+                    currentImageStatus === 'approved' 
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-purple-600 hover:bg-purple-700 text-white'
+                  }`}
+                >
+                  {currentImageStatus === 'approved' ? 'Replace Image' : 
+                   currentImageStatus === 'pending' ? 'Upload New Image' :
+                   'Upload New Image'}
+                </button>
+                {currentImageStatus === 'pending' && (
+                  <button
+                    onClick={onClose}
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                  >
+                    Wait for Review
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Area */}
+        {currentImageStatus === 'none' && !selectedFile ? (
+          <div
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+              dragActive 
+                ? 'border-purple-400 bg-purple-900/20' 
+                : 'border-gray-600 hover:border-gray-500'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <Upload className="mx-auto mb-4 text-gray-400" size={48} />
+            <p className="text-white mb-2">Drag & drop your image here</p>
+            <p className="text-gray-400 text-sm mb-4">or</p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Choose File
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/gif"
+              onChange={handleFileInputChange}
+              className="hidden"
+            />
+            <p className="text-xs text-gray-500 mt-4">
+              Supports: JPG, PNG, GIF (Max 5MB)
+            </p>
+          </div>
+        ) : selectedFile ? (
+          /* Preview Area */
+          <div className="space-y-4">
+            <div className="relative">
+              <img
+                src={preview!}
+                alt="Preview"
+                className="w-full h-48 object-cover rounded-lg border border-gray-600"
+              />
+              <button
+                onClick={resetSelection}
+                className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="bg-gray-800 rounded-lg p-3">
+              <div className="flex items-center space-x-2 mb-2">
+                <ImageIcon size={16} className="text-blue-400" />
+                <span className="text-sm font-medium text-white">{selectedFile.name}</span>
+              </div>
+              <div className="text-xs text-gray-400">
+                Size: {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={resetSelection}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpload}
+                disabled={uploading}
+                className="flex-1 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+              >
+                {uploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    <span>Upload Image</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+} 
