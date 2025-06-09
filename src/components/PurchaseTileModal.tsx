@@ -66,10 +66,19 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
       setValidationError('유효한 숫자를 입력해주세요.')
       return false
     }
-    if (amount < 1) {
+    
+    // 선택된 대륙의 최소 투자금액 체크
+    if (selectedContinent) {
+      const minInvestment = continents[selectedContinent].min_investment
+      if (amount < minInvestment) {
+        setValidationError(`최소 투자 금액은 $${minInvestment}입니다.`)
+        return false
+      }
+    } else if (amount < 1) {
       setValidationError('최소 투자 금액은 $1입니다.')
       return false
     }
+    
     setValidationError('')
     return true
   }
@@ -203,25 +212,28 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
           </div>
 
           {/* 콘텐츠 */}
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-8">
             {/* 추가 투자 모드일 때 현재 영역 정보 표시 */}
             {isAdditionalInvestment && userTileInfo.continentId && (
-              <div className="bg-blue-900 bg-opacity-50 rounded-lg p-4 border border-blue-700">
-                <h3 className="text-lg font-semibold text-white mb-2">📍 현재 영역</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
+              <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 rounded-xl p-6 border border-blue-700/50 backdrop-blur-sm">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <span className="text-2xl">📍</span>
+                  <span>현재 영역 정보</span>
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
                     <span className="text-gray-300">대륙</span>
                     <span className="text-white font-medium">
                       {continentOptions.find(c => c.id === userTileInfo.continentId)?.name}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
                     <span className="text-gray-300">현재 투자금</span>
                     <span className="text-green-400 font-medium">
                       ${userTileInfo.investment?.toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
                     <span className="text-gray-300">현재 지분율</span>
                     <span className="text-blue-400 font-medium">
                       {userTileInfo.sharePercentage?.toFixed(2)}%
@@ -234,36 +246,56 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
             {/* 단계 1: 대륙 선택 (신규 구매시만) */}
             {!isAdditionalInvestment && (
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">1️⃣ 대륙 선택</h3>
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-sm">1</span>
+                  대륙 선택
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   {continentOptions.map((continent) => {
                     const userCount = getContinentUserCount(continent.id)
                     const isFull = userCount >= 50
                     const isSelected = selectedContinent === continent.id
+                    const minInvestment = continents[continent.id].min_investment
                     
                     return (
                       <button
                         key={continent.id}
                         onClick={() => !isFull && setSelectedContinent(continent.id)}
                         disabled={isFull}
-                        className={`p-4 rounded-lg border-2 transition-all ${
+                        className={`p-5 rounded-xl border-2 transition-all duration-200 ${
                           isSelected
-                            ? 'border-blue-400 bg-blue-400 bg-opacity-10 scale-105'
+                            ? 'border-blue-500 bg-gradient-to-br from-blue-500/20 to-purple-500/20 scale-[1.02]'
                             : isFull
-                            ? 'border-gray-600 bg-gray-800 opacity-50 cursor-not-allowed'
-                            : 'border-gray-600 bg-gray-800 hover:border-gray-500 hover:scale-102'
+                            ? 'border-gray-600/50 bg-gray-800/50 opacity-50 cursor-not-allowed'
+                            : 'border-gray-600/50 bg-gray-800/50 hover:border-gray-400 hover:scale-[1.01] hover:bg-gray-700/50'
                         }`}
                       >
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-4">
                           <div 
-                            className="w-4 h-4 rounded-full"
-                            style={{ backgroundColor: continent.color }}
-                          />
+                            className="w-12 h-12 rounded-xl flex items-center justify-center"
+                            style={{ backgroundColor: continent.color + '20' }}
+                          >
+                            <div 
+                              className="w-6 h-6 rounded-lg"
+                              style={{ backgroundColor: continent.color }}
+                            />
+                          </div>
                           <div className="flex-1 text-left">
-                            <div className="font-medium text-white">{continent.name}</div>
-                            <div className="text-sm text-gray-400">{continent.position}</div>
-                            <div className={`text-sm ${isFull ? 'text-red-400' : 'text-green-400'}`}>
-                              {userCount}/50 명 {isFull && '(가득참)'}
+                            <div className="font-medium text-white mb-1">{continent.name}</div>
+                            <div className="text-sm text-gray-400 mb-2">{continent.position}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 rounded-full bg-gray-700 overflow-hidden">
+                                <div 
+                                  className="h-full rounded-full transition-all"
+                                  style={{ 
+                                    width: `${(userCount / 50) * 100}%`,
+                                    backgroundColor: isFull ? '#EF4444' : '#10B981'
+                                  }}
+                                />
+                              </div>
+                              <span className={`text-sm ${isFull ? 'text-red-400' : 'text-green-400'}`}>
+                                {userCount}/50
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -276,53 +308,69 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
 
             {/* 단계 2: 투자 금액 입력 */}
             <div>
-              <h3 className="text-lg font-semibold text-white mb-4">
-                {isAdditionalInvestment ? '💵 추가 투자 금액' : '2️⃣ 투자 금액'}
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                {isAdditionalInvestment ? (
+                  <>
+                    <span className="text-2xl">💵</span>
+                    <span>추가 투자 금액</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-sm">2</span>
+                    <span>투자 금액</span>
+                  </>
+                )}
               </h3>
               <div className="space-y-4">
                 <div>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-semibold text-gray-400">$</div>
                     <input
                       type="number"
                       value={investmentAmount}
                       onChange={(e) => handleAmountChange(e.target.value)}
                       placeholder="투자 금액을 입력하세요"
-                      className="w-full pl-8 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border-2 border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-lg"
                       min="1"
                       step="1"
                     />
                   </div>
                   {validationError && (
-                    <p className="mt-2 text-red-400 text-sm">{validationError}</p>
+                    <p className="mt-3 text-red-400 text-sm flex items-center gap-2">
+                      <span>⚠️</span>
+                      <span>{validationError}</span>
+                    </p>
                   )}
                 </div>
 
                 {/* 실시간 미리보기 */}
                 {showPreview && selectedContinent && (
-                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 space-y-4">
-                    <h4 className="text-white font-medium">📊 투자 결과 미리보기</h4>
+                  <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 rounded-xl p-6 border border-gray-600/50 space-y-6">
+                    <h4 className="text-white font-medium flex items-center gap-2">
+                      <span className="text-xl">📊</span>
+                      <span>투자 결과 미리보기</span>
+                    </h4>
                     
                     {/* 투자 정보 */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
+                      <div className="bg-gray-800/50 rounded-xl p-4 space-y-2">
                         <div className="text-sm text-gray-400">예상 지분율</div>
-                        <div className="text-xl font-semibold text-blue-400">
+                        <div className="text-2xl font-semibold text-blue-400">
                           {sharePercentage.toFixed(2)}%
                         </div>
                       </div>
-                      <div className="space-y-2">
+                      <div className="bg-gray-800/50 rounded-xl p-4 space-y-2">
                         <div className="text-sm text-gray-400">예상 영역 크기</div>
-                        <div className="text-xl font-semibold text-green-400">
+                        <div className="text-2xl font-semibold text-green-400">
                           {expectedSize}×{expectedSize}
                         </div>
                       </div>
                     </div>
 
                     {/* 시각적 미리보기 */}
-                    <div className="relative w-full aspect-square bg-gray-900 rounded-lg overflow-hidden">
+                    <div className="relative w-full aspect-square bg-gray-900/50 rounded-xl overflow-hidden border border-gray-700/50">
                       <div 
-                        className="absolute bg-blue-500 bg-opacity-30 border-2 border-blue-400"
+                        className="absolute bg-gradient-to-br from-blue-500/30 to-purple-500/30 border-2 border-blue-400"
                         style={{
                           width: `${(expectedSize / 50) * 100}%`,
                           height: `${(expectedSize / 50) * 100}%`,
@@ -332,25 +380,25 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                         }}
                       />
                       <div className="absolute inset-0 grid place-items-center">
-                        <div className="text-center">
+                        <div className="text-center bg-gray-900/80 px-6 py-3 rounded-xl backdrop-blur-sm">
                           <div className="text-sm text-gray-400">예상 셀 개수</div>
-                          <div className="text-lg font-semibold text-white">{expectedCells}셀</div>
+                          <div className="text-2xl font-semibold text-white">{expectedCells}셀</div>
                         </div>
                       </div>
                     </div>
 
                     {/* 투자 효과 설명 */}
-                    <div className="text-sm text-gray-400">
+                    <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-4 text-sm text-gray-300 leading-relaxed">
                       {isAdditionalInvestment ? (
                         <>
-                          현재 지분율 {userTileInfo.sharePercentage?.toFixed(2)}%에서{' '}
-                          <span className="text-blue-400">{sharePercentage.toFixed(2)}%</span>로 증가하며,
-                          영역 크기가 <span className="text-green-400">{expectedSize}×{expectedSize}</span>로 변경됩니다.
+                          현재 지분율 <span className="text-gray-200 font-medium">{userTileInfo.sharePercentage?.toFixed(2)}%</span>에서{' '}
+                          <span className="text-blue-400 font-medium">{sharePercentage.toFixed(2)}%</span>로 증가하며,
+                          영역 크기가 <span className="text-green-400 font-medium">{expectedSize}×{expectedSize}</span>로 변경됩니다.
                         </>
                       ) : (
                         <>
-                          선택하신 대륙에서 <span className="text-blue-400">{sharePercentage.toFixed(2)}%</span>의 지분을 가지며,
-                          <span className="text-green-400">{expectedSize}×{expectedSize}</span> 크기의 영역을 차지하게 됩니다.
+                          선택하신 대륙에서 <span className="text-blue-400 font-medium">{sharePercentage.toFixed(2)}%</span>의 지분을 가지며,{' '}
+                          <span className="text-green-400 font-medium">{expectedSize}×{expectedSize}</span> 크기의 영역을 차지하게 됩니다.
                         </>
                       )}
                     </div>
@@ -361,20 +409,20 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
           </div>
 
           {/* 버튼 */}
-          <div className="mt-8 flex justify-end space-x-4">
+          <div className="p-6 flex justify-end space-x-4">
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              className="px-6 py-3 bg-gray-800 text-gray-300 rounded-xl hover:bg-gray-700 transition-colors"
             >
               취소
             </button>
             <button
               onClick={handlePurchase}
               disabled={!canPurchase || isCalculating}
-              className={`px-6 py-2 rounded-lg transition-all ${
+              className={`px-6 py-3 rounded-xl transition-all ${
                 canPurchase && !isCalculating
-                  ? 'bg-blue-500 text-white hover:bg-blue-400'
-                  : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90'
+                  : 'bg-gray-800 text-gray-500 cursor-not-allowed'
               }`}
             >
               {isCalculating ? (
