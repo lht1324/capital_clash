@@ -5,6 +5,7 @@ import { useContinentStore, type ContinentId } from '@/store/continentStore'
 import PurchaseTileModal from './PurchaseTileModal'
 import ImageUploadModal from './ImageUploadModal'
 import { getCurrentUserTileInfo } from '@/utils/userUtils'
+import { useUserStore } from '@/store/userStore'
 
 interface MyTile {
   id: string
@@ -27,6 +28,10 @@ export default function Sidebar() {
 
   // 각 대륙별 현재 유저 수 계산
   const { continents, addInvestor, isSidebarOpen, setSidebarOpen } = useContinentStore()
+  const { user } = useUserStore()
+
+  // 로그인하지 않은 경우 아무것도 렌더링하지 않음
+  if (!user) return null;
 
   // 현재 사용자의 영역 정보 가져오기
   const userTileInfo = getCurrentUserTileInfo(continents)

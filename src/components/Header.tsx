@@ -11,12 +11,14 @@ import { ContinentId } from '@/store/continentStore'
 import { useUserStore } from '@/store/userStore'
 import DropdownMenu from './ui/dropdown-menu'
 import { UserCircleIcon } from '@heroicons/react/24/outline'
+import { useContinentStore } from '@/store/continentStore'
 
 export default function Header() {
   const router = useRouter()
   const [isRankingModalOpen, setIsRankingModalOpen] = useState(false)
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
   const { user, setUser } = useUserStore()
+  const { setSidebarOpen } = useContinentStore()
 
   useEffect(() => {
     // 초기 로그인 상태 체크
@@ -25,13 +27,14 @@ export default function Header() {
         setUser(session.user)
       } else {
         setUser(null)
+        setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
       }
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [setUser])
+  }, [setUser, setSidebarOpen])
 
   const handleGoogleLogin = async () => {
     try {
@@ -52,6 +55,7 @@ export default function Header() {
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut()
+      setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
     } catch (error) {
       console.error('로그아웃 중 오류 발생:', error)
     }

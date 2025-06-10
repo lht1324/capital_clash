@@ -33,6 +33,7 @@ interface ContinentStore {
   selectedContinent: ContinentId | null
   isWorldView: boolean
   cameraTarget: [number, number, number] | null
+  isSidebarOpen: boolean
   
   // 액션
   fetchContinents: () => Promise<void>
@@ -42,6 +43,7 @@ interface ContinentStore {
   setCameraTarget: (target: [number, number, number] | null) => void
   resetSelection: () => void
   updateContinentUsers: (id: ContinentId, count: number) => void
+  setSidebarOpen: (isOpen: boolean) => void
 }
 
 export const useContinentStore = create<ContinentStore>((set) => ({
@@ -52,6 +54,7 @@ export const useContinentStore = create<ContinentStore>((set) => ({
   selectedContinent: null,
   isWorldView: true,
   cameraTarget: null,
+  isSidebarOpen: false,
   
   // 대륙 정보 불러오기
   fetchContinents: async () => {
@@ -120,5 +123,8 @@ export const useContinentStore = create<ContinentStore>((set) => ({
         }
       }
     }))
-  }
+  },
+
+  // 사이드바 상태 관리
+  setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen })
 }))
