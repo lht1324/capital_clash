@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { useContinentStore } from '@/store/continentStore'
+import { useInvestorsStore } from '@/store/investorsStore'
 import { 
   auth, 
   users, 
@@ -174,6 +175,7 @@ export function useContinentSync() {
 // 투자자 데이터 실시간 동기화 훅
 export function useInvestorSync() {
   const { setInvestors, setLoading } = useContinentStore()
+  const { fetchInvestors, subscribeToInvestors, unsubscribeFromInvestors } = useInvestorsStore()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -211,10 +213,7 @@ export function useInvestorSync() {
         setInvestors(groupedInvestors)
         
         // 실시간 구독 설정
-        subscription = subscriptions.subscribeToInvestors((payload) => {
-          console.log('투자자 변경사항:', payload)
-          loadInvestors()
-        })
+        subscription = subscribeToInvestors()
         
       } catch (err: any) {
         setError(err.message)
@@ -228,10 +227,10 @@ export function useInvestorSync() {
 
     return () => {
       if (subscription) {
-        subscriptions.unsubscribe(subscription)
+        unsubscribeFromInvestors()
       }
     }
-  }, [setInvestors, setLoading])
+  }, [setInvestors, setLoading, subscribeToInvestors, unsubscribeFromInvestors])
 
   return { error }
 }
@@ -400,4 +399,50 @@ export function useNotifications(userId: string | null) {
     markAsRead,
     markAllAsRead,
   }
+}
+
+/**
+ * Supabase 데이터 초기화 및 실시간 구독을 관리하는 훅
+ */
+export function useSupabaseData() {
+  const { fetchContinents } = useContinentStore()
+  const { 
+    fetchInvestors, 
+    subscribeToInvestors, 
+    unsubscribeFromInvestors 
+  } = useInvestorsStore()
+
+  useEffect(() => {
+    // 초기 데이터 로드
+    const loadInitialData = async () => {
+      console.log('🌍 초기 데이터 로드 시작')
+      
+      try {
+        await Promise.all([
+          fetchContinents(),
+          fetchInvestors()
+        ])
+        
+        // 실시간 구독 설정
+        await subscribeToInvestors()
+        
+        console.log('✅ 초기 데이터 로드 및 구독 설정 완료')
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error('❌ 초기 데이터 로드 실패:', error.message)
+          showError('데이터 로드 실패', error.message)
+        } else {
+          console.error('❌ 초기 데이터 로드 실패: 알 수 없는 에러')
+          showError('데이터 로드 실패', '알 수 없는 에러가 발생했습니다.')
+        }
+      }
+    }
+
+    loadInitialData()
+
+    // 컴포넌트 언마운트 시 구독 해제
+    return () => {
+      unsubscribeFromInvestors()
+    }
+  }, [fetchContinents, fetchInvestors, subscribeToInvestors, unsubscribeFromInvestors])
 } 

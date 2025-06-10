@@ -13,15 +13,15 @@ function CameraController() {
   
   const [isDragging, setIsDragging] = useState(false)
   const previousMouse = useRef({ x: 0, y: 0 })
-  const cameraPosition = useRef(new THREE.Vector3(0, 0, 60))
-  const targetPosition = useRef(new THREE.Vector3(0, 0, 60))
+  const cameraPosition = useRef(new THREE.Vector3(0, 0, 40))
+  const targetPosition = useRef(new THREE.Vector3(0, 0, 40))
   
   // 초기 월드 뷰 설정 (컴포넌트 마운트 시 한 번)
   useEffect(() => {
     console.log('🏠 CameraController 초기화: 월드 뷰로 설정')
     // 카메라를 월드 뷰 위치로 설정
-    targetPosition.current.set(0, 0, 80)
-    cameraPosition.current.set(0, 0, 80)
+    targetPosition.current.set(0, 0, 60)
+    cameraPosition.current.set(0, 0, 60)
     resetSelection()
   }, [])
   
@@ -35,22 +35,23 @@ function CameraController() {
     }
   }, [cameraTarget, setCameraTarget])
   
-  // 현재 위치 기반 드롭다운 반영 함수 (재활성화)
+  // 현재 위치 기반 드롭다운 반영 함수
   const updateDropdownBasedOnPosition = useCallback(() => {
-    if (isDragging) return
+    // 드래그 중이거나 continents가 없으면 early return
+    if (!continents) return
 
     const currentPos = camera.position
     let nearestContinent: string | null = null
     let minDistance = Infinity
     
     Object.values(continents).forEach((continent) => {
-      const [x, y, z] = continent.position
+      const [x, y, z] = [continent.position_x, continent.position_y, continent.position_z]
       const distance = Math.sqrt(
         Math.pow(currentPos.x - x, 2) + 
         Math.pow(currentPos.y - y, 2)
       )
       
-      if (distance < minDistance && distance < 30) {
+      if (distance < minDistance && distance < 15) {
         minDistance = distance
         nearestContinent = continent.id
       }
@@ -65,50 +66,53 @@ function CameraController() {
       console.log('세계 지도로 드롭다운 변경')
       setWorldView(true)
     }
-  }, [camera, continents, selectedContinent, isWorldView, isDragging, setSelectedContinent, setWorldView])
+  }, [camera, continents, selectedContinent, isWorldView, setSelectedContinent, setWorldView])
   
   // Canvas 마우스 이벤트 설정
+  const handlePointerDown = useCallback((event: PointerEvent) => {
+    event.preventDefault()
+    setIsDragging(true)
+    previousMouse.current = {
+      x: event.clientX,
+      y: event.clientY
+    }
+  }, [])
+
+  const handlePointerMove = useCallback((event: PointerEvent) => {
+    if (!isDragging) return
+
+    const deltaX = event.clientX - previousMouse.current.x
+    const deltaY = event.clientY - previousMouse.current.y
+    
+    previousMouse.current = {
+      x: event.clientX,
+      y: event.clientY
+    }
+
+    const movementSpeed = 0.03  // 0.1 → 0.03으로 조정
+    targetPosition.current.x -= deltaX * movementSpeed
+    targetPosition.current.y += deltaY * movementSpeed
+  }, [isDragging])
+
+  const handlePointerUp = useCallback(() => {
+    setIsDragging(false)
+    // 드래그 종료 시 즉시 위치 기반 업데이트 실행
+    updateDropdownBasedOnPosition()
+  }, [updateDropdownBasedOnPosition])
+
+  const handleWheel = useCallback((event: WheelEvent) => {
+    event.preventDefault()
+    const zoomSpeed = 0.015
+    targetPosition.current.z += event.deltaY * zoomSpeed
+    // Z축 제한 범위를 기존대로 복원
+    targetPosition.current.z = Math.max(20, Math.min(100, targetPosition.current.z))
+  }, [])
+
   useEffect(() => {
     const canvas = gl.domElement
-    
-    const handlePointerDown = (event: PointerEvent) => {
-      setIsDragging(true)
-      previousMouse.current = { x: event.clientX, y: event.clientY }
-      canvas.style.cursor = 'grabbing'
-      event.preventDefault()
-    }
-    
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!isDragging) return
-      
-      const deltaX = event.clientX - previousMouse.current.x
-      const deltaY = event.clientY - previousMouse.current.y
-      
-      const sensitivity = 0.03  // 드래그 속도 증가
-      targetPosition.current.x -= deltaX * sensitivity
-      targetPosition.current.y += deltaY * sensitivity
-      
-      previousMouse.current = { x: event.clientX, y: event.clientY }
-      event.preventDefault()
-    }
-    
-    const handlePointerUp = (event: PointerEvent) => {
-      if (isDragging) {
-        setIsDragging(false)
-        canvas.style.cursor = 'grab'
-        event.preventDefault()
-      }
-    }
-    
-    const handleWheel = (event: WheelEvent) => {
-      event.preventDefault()
-      const zoomSpeed = 0.02  // 줌 속도 적절히 조정
-      targetPosition.current.z += event.deltaY * zoomSpeed
-      targetPosition.current.z = Math.max(15, Math.min(120, targetPosition.current.z))
-    }
-    
     canvas.addEventListener('pointerdown', handlePointerDown)
     canvas.addEventListener('wheel', handleWheel)
+    
     document.addEventListener('pointermove', handlePointerMove)
     document.addEventListener('pointerup', handlePointerUp)
     
@@ -118,11 +122,14 @@ function CameraController() {
       document.removeEventListener('pointermove', handlePointerMove)
       document.removeEventListener('pointerup', handlePointerUp)
     }
-  }, [gl, isDragging])
+  }, [gl, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel])
   
   useFrame(() => {
+    // 부드러운 카메라 이동
     cameraPosition.current.lerp(targetPosition.current, 0.12)
     camera.position.copy(cameraPosition.current)
+    
+    // 위치 기반 업데이트 (드래그 중에도 실행)
     updateDropdownBasedOnPosition()
   })
   
@@ -131,7 +138,7 @@ function CameraController() {
 
 // 새로운 정사각형 중앙 나선형 배치 시스템 (개선됨)
 const TOTAL_CELLS = 2500 // 2500개 셀 고정
-const CELL_SIZE = 0.4 // 셀 크기 조정 (기본 대륙과 비례 맞춤)
+const CELL_SIZE = 0.8 // 셀 크기 2배 증가
 const MIN_SQUARE_SIZE = 3 // 최소 정사각형 크기 (3×3)
 
 // 🏢 NEW: Billboard-Style 배치 알고리즘 (광고판 스타일)
@@ -590,121 +597,87 @@ function TerritoryArea({
   )
 }
 
-function SingleContinent({ continent, onTileClick }: { continent: Continent, onTileClick: (investorId: string) => void }) {
+function SingleContinent({ continent }: { continent: Continent }) {
   const { updateContinentUsers } = useContinentStore()
-  const [x, y, z] = continent.position
+  
+  // Supabase 데이터 구조에 맞게 position 처리
+  const position: [number, number, number] = [
+    continent.position_x || 0,
+    continent.position_y || 0,
+    continent.position_z || 0
+  ]
   
   // 스토어에서 실제 투자자 데이터 가져오기
-  const investorsList = Object.values(continent.investors)
+  const investorsList = Object.values(continent.investors || {})
+  
+  // 투자자 수 업데이트
+  useEffect(() => {
+    if (updateContinentUsers) {
+      updateContinentUsers(continent.id, investorsList.length)
+    }
+  }, [continent.id, investorsList.length, updateContinentUsers])
   
   return (
-    <group position={[x, y, z]}>
-      {investorsList.length > 0 ? (
-        <TerritorySystem investors={investorsList} onTileClick={onTileClick} continentId={continent.id} />
-      ) : (
-        <mesh position={[0, 0, 0]}>
-          <boxGeometry args={[50 * CELL_SIZE, 50 * CELL_SIZE, 1]} />
-          <meshStandardMaterial 
-            color={continent.color} 
-            opacity={1.0} 
-            transparent={false} 
-            roughness={0.6}
-            metalness={0.2}
-          />
-        </mesh>
-      )}
+    <group position={position}>
+      {/* 대륙 기본 모양 */}
+      <mesh>
+        <boxGeometry args={[20, 20, 1]} /> {/* 대륙 크기 2배 증가 */}
+        <meshStandardMaterial 
+          color={continent.color} 
+          opacity={0.9} 
+          transparent={true}
+          roughness={0.7}
+          metalness={0.3}
+        />
+      </mesh>
+      
+      {/* 투자자 영역 시스템 */}
+      <TerritorySystem
+        investors={investorsList}
+        continentId={continent.id}
+      />
     </group>
   )
 }
 
-function WorldScene({ onTileClick }: { onTileClick: (investorId: string) => void }) {
+function WorldScene() {
   const { continents } = useContinentStore()
   
   return (
     <>
+      {/* 전역 조명 */}
+      <ambientLight intensity={0.8} />
+      <pointLight position={[20, 20, 20]} intensity={1} />
+      <pointLight position={[-20, -20, 20]} intensity={0.5} />
+      
+      {/* 모든 대륙 렌더링 */}
       {Object.values(continents).map((continent) => (
-        <SingleContinent key={continent.id} continent={continent} onTileClick={onTileClick} />
+        <SingleContinent key={continent.id} continent={continent} />
       ))}
     </>
   )
 }
 
 export default function ContinentMap() {
-  // 두 가지 모달 상태 분리
-  const [selectedTileSettings, setSelectedTileSettings] = useState<{
-    investorId: string
-    continentId: ContinentId
-  } | null>(null)
+  const { selectedContinent, continents, isWorldView } = useContinentStore()
   
-  const [selectedTileProfile, setSelectedTileProfile] = useState<{
-    investorId: string
-    continentId: ContinentId
-  } | null>(null)
+  // 현재 선택된 대륙 정보 (있으면 해당 대륙, 없으면 중앙 대륙)
+  const displayContinent = selectedContinent ? continents[selectedContinent] : continents.center
   
-  const { selectedContinent } = useContinentStore()
-
-  // 임시 권한 확인 로직 (테스트용)
-  const isOwner = (investorId: string) => {
-    // TODO: 추후 실제 인증 시스템 연동
-    // 현재는 첫 번째 투자자만 본인으로 설정 (테스트용)
-    return investorId === 'investor_01'
-  }
-
-  const handleTileClick = (investorId: string) => {
-    if (selectedContinent) {
-      if (isOwner(investorId)) {
-        // 본인 영역: 설정 패널 열기
-        console.log(`🔧 ${investorId} 설정 패널 열기 (본인)`)
-        setSelectedTileSettings({ investorId, continentId: selectedContinent })
-        setSelectedTileProfile(null) // 다른 모달 닫기
-      } else {
-        // 타인 영역: 프로필 보기 열기
-        console.log(`👀 ${investorId} 프로필 보기 열기 (타인)`)
-        setSelectedTileProfile({ investorId, continentId: selectedContinent })
-        setSelectedTileSettings(null) // 다른 모달 닫기
-      }
-    }
-  }
-
-  const handleCloseSettingsPanel = () => {
-    setSelectedTileSettings(null)
-  }
-
-  const handleCloseProfileModal = () => {
-    setSelectedTileProfile(null)
-  }
-
   return (
-    <div className="w-full h-screen bg-blue-200">
-      <Canvas
-        camera={{ position: [0, 0, 60], fov: 50 }}
+    <main className="w-full h-screen" style={{ backgroundColor: '#37aff7' }}>
+      {/* 3D Canvas */}
+      <Canvas 
+        camera={{ 
+          position: [0, 0, 40],  // 초기 카메라 Z 위치 조정
+          fov: 60  // FOV 감소로 원근감 조정
+        }}
+        className="w-full h-full"
         style={{ cursor: 'grab' }}
       >
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[10, 10, 5]} intensity={1} />
         <CameraController />
-        <WorldScene onTileClick={handleTileClick} />
+        <WorldScene />
       </Canvas>
-      
-      {/* 설정 패널 (투자자 본인용) */}
-      {selectedTileSettings && (
-        <TileSettingsPanel
-          isOpen={true}
-          onClose={handleCloseSettingsPanel}
-          investorId={selectedTileSettings.investorId}
-          continentId={selectedTileSettings.continentId}
-        />
-      )}
-      
-      {/* 프로필 보기 모달 (타인용) */}
-      {selectedTileProfile && (
-        <ProfileViewModal
-          isOpen={true}
-          onClose={handleCloseProfileModal}
-          investorId={selectedTileProfile.investorId}
-          continentId={selectedTileProfile.continentId}
-        />
-      )}
-    </div>
+    </main>
   )
 } 
