@@ -969,7 +969,7 @@ npm run type-check
 
 4. **테스트 환경 정리**:
    - 주기적 랜덤 토스트 알림 제거 (`InvestmentNotification.tsx`)
-   - ContinentSelector 안전성 강화 및 디버깅 로그 추가
+   - ContinentDropdown 안전성 강화 및 디버깅 로그 추가
    - 자동 초기화 일시적 비활성화로 안정성 확보
 
 **결과**:

@@ -108,7 +108,7 @@ export default function ProfileViewModal({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">📈 지분율:</span>
-                <span className="font-medium">{(investor.share * 100).toFixed(2)}%</span>
+                <span className="font-medium">{(investor.share_percentage * 100).toFixed(2)}%</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">🎨 영역 색상:</span>

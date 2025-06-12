@@ -14,149 +14,149 @@ import { UserCircleIcon } from '@heroicons/react/24/outline'
 import { useContinentStore } from '@/store/continentStore'
 
 export default function Header() {
-  const router = useRouter()
-  const [isRankingModalOpen, setIsRankingModalOpen] = useState(false)
-  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
-  const { user, setUser } = useUserStore()
-  const { setSidebarOpen } = useContinentStore()
+    const router = useRouter()
+    const [isRankingModalOpen, setIsRankingModalOpen] = useState(false)
+    const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
+    const { user, setUser } = useUserStore()
+    const { setSidebarOpen } = useContinentStore()
 
-  useEffect(() => {
-    // 초기 로그인 상태 체크
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setUser(session.user)
-      } else {
-        setUser(null)
-        setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
-      }
-    })
+    useEffect(() => {
+        // 초기 로그인 상태 체크
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (session?.user) {
+                setUser(session.user)
+            } else {
+                setUser(null)
+                setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
+            }
+        })
 
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [setUser, setSidebarOpen])
-
-  const handleGoogleLogin = async () => {
-    try {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
+        return () => {
+            subscription.unsubscribe()
         }
-      })
-    } catch (error) {
-      console.error('로그인 중 오류 발생:', error)
-    }
-  }
+    }, [setUser, setSidebarOpen])
 
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut()
-      setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
-    } catch (error) {
-      console.error('로그아웃 중 오류 발생:', error)
+    const handleGoogleLogin = async () => {
+        try {
+            await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    }
+                }
+            })
+        } catch (error) {
+            console.error('로그인 중 오류 발생:', error)
+        }
     }
-  }
 
-  return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white z-50">
-      <div className="container h-full mx-auto px-4 flex items-center justify-between">
-        {/* 로고 */}
-        <Link href="/" className="flex items-center space-x-2">
+    const handleSignOut = async () => {
+        try {
+            await supabase.auth.signOut()
+            setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
+        } catch (error) {
+            console.error('로그아웃 중 오류 발생:', error)
+        }
+    }
+
+    return (
+        <header className="fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white z-50">
+            <div className="container h-full mx-auto px-4 flex items-center justify-between">
+                {/* 로고 */}
+                <Link href="/" className="flex items-center space-x-2">
           <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
             CC
           </span>
-          <span className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    <span className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
             Capital Clash
           </span>
-        </Link>
+                </Link>
 
-        {/* 중앙 네비게이션 버튼들 */}
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => setIsRankingModalOpen(true)}
-            className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
-          >
-            <span>🏆</span>
-            <span>Leaderboard</span>
-          </button>
+                {/* 중앙 네비게이션 버튼들 */}
+                <div className="flex items-center space-x-4">
+                    <button
+                        onClick={() => setIsRankingModalOpen(true)}
+                        className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                    >
+                        <span>🏆</span>
+                        <span>Leaderboard</span>
+                    </button>
 
-          <button
-            onClick={() => setIsPurchaseModalOpen(true)}
-            className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors"
-          >
-            <span>💎</span>
-            <span>Purchase Territory</span>
-          </button>
-        </div>
+                    <button
+                        onClick={() => setIsPurchaseModalOpen(true)}
+                        className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors"
+                    >
+                        <span>💎</span>
+                        <span>Purchase Territory</span>
+                    </button>
+                </div>
 
-        {/* 로그인/프로필 영역 */}
-        {!user ? (
-          <button
-            onClick={handleGoogleLogin}
-            className="flex items-center"
-          >
-            <Image
-              src="/signin-assets/google_signin_normal.png"
-              alt="Sign in with Google"
-              width={189}
-              height={40}
-              priority
-              className="hidden sm:block"
+                {/* 로그인/프로필 영역 */}
+                {!user ? (
+                    <button
+                        onClick={handleGoogleLogin}
+                        className="flex items-center"
+                    >
+                        <Image
+                            src="/signin-assets/google_signin_normal.png"
+                            alt="Sign in with Google"
+                            width={189}
+                            height={40}
+                            priority
+                            className="hidden sm:block"
+                        />
+                        <Image
+                            src="/signin-assets/google_signin_small.png"
+                            alt="Sign in with Google"
+                            width={152}
+                            height={36}
+                            priority
+                            className="sm:hidden"
+                        />
+                    </button>
+                ) : (
+                    <DropdownMenu
+                        trigger={
+                            <div className="flex items-center space-x-2">
+                                <UserCircleIcon className="h-6 w-6" />
+                                <span>{user.user_metadata?.name || '사용자'}</span>
+                            </div>
+                        }
+                        items={[
+                            {
+                                label: '프로필',
+                                onClick: () => router.push('/profile'),
+                                icon: '👤'
+                            },
+                            {
+                                label: '로그아웃',
+                                onClick: handleSignOut,
+                                icon: '👋'
+                            }
+                        ]}
+                    />
+                )}
+            </div>
+
+            {/* 랭킹 모달 */}
+            <RankingModal
+                isOpen={isRankingModalOpen}
+                onClose={() => setIsRankingModalOpen(false)}
             />
-            <Image
-              src="/signin-assets/google_signin_small.png"
-              alt="Sign in with Google"
-              width={152}
-              height={36}
-              priority
-              className="sm:hidden"
+
+            {/* 구매 모달 */}
+            <PurchaseTileModal
+                isOpen={isPurchaseModalOpen}
+                onClose={() => setIsPurchaseModalOpen(false)}
+                onPurchase={(continentId: ContinentId, amount: number) => {
+                    // 일단 넣었으나 필요할 경우 지워도 무방함
+                }}
+                onAdditionalInvestment={(amount: number) => {
+                    // 일단 넣었으나 필요할 경우 지워도 무방함
+                }}
             />
-          </button>
-        ) : (
-          <DropdownMenu
-            trigger={
-              <div className="flex items-center space-x-2">
-                <UserCircleIcon className="h-6 w-6" />
-                <span>{user.user_metadata?.name || '사용자'}</span>
-              </div>
-            }
-            items={[
-              {
-                label: '프로필',
-                onClick: () => router.push('/profile'),
-                icon: '👤'
-              },
-              {
-                label: '로그아웃',
-                onClick: handleSignOut,
-                icon: '👋'
-              }
-            ]}
-          />
-        )}
-      </div>
-
-      {/* 랭킹 모달 */}
-      <RankingModal
-        isOpen={isRankingModalOpen}
-        onClose={() => setIsRankingModalOpen(false)}
-      />
-
-      {/* 구매 모달 */}
-      <PurchaseTileModal
-        isOpen={isPurchaseModalOpen}
-        onClose={() => setIsPurchaseModalOpen(false)}
-        onPurchase={(continentId: ContinentId, amount: number) => {
-          // 일단 넣었으나 필요할 경우 지워도 무방함
-        }}
-        onAdditionalInvestment={(amount: number) => {
-          // 일단 넣었으나 필요할 경우 지워도 무방함
-        }}
-      />
-    </header>
-  )
-} 
+        </header>
+    )
+}

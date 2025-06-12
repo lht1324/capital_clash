@@ -52,7 +52,7 @@
 ### 주요 컴포넌트
 - `ContinentMap.tsx`: 3D 지도 렌더링 및 타일 시스템
 - `InvestmentPanel.tsx`: 투자자 관리 패널
-- `ContinentSelector.tsx`: 대륙 선택 드롭다운
+- `ContinentDropdown.tsx`: 대륙 선택 드롭다운
 - `Header.tsx`: 상단 헤더
 
 ### 상태 관리 (Zustand)

@@ -181,7 +181,7 @@ const spiralPlacement = (investors: any[]) => {
   
   // 2. 각 투자자의 크기 계산 (지분에 따른 정사각형 크기)
   const investorSizes = sortedInvestors.map(investor => {
-    const targetCells = Math.round(investor.share * TOTAL_CELLS)
+    const targetCells = Math.round(investor.share_percentage * TOTAL_CELLS)
     const side = Math.max(1, Math.floor(Math.sqrt(targetCells)))
     return {
       investor,
@@ -333,7 +333,7 @@ const gridSquarePlacement = (investors: any[]) => {
   
   // b. 지분율 -> 최대 셀 개수 변환
   const squaresToPlace = investors.map((investor, index) => {
-    const targetCells = Math.round(investor.share * TOTAL_CELLS_A)
+    const targetCells = Math.round(investor.share_percentage * TOTAL_CELLS_A)
     
     // c. 최대 셀 개수 -> 초기 정사각형 변 길이 변환
     // 목표 셀 개수보다 작은 제곱수 중 가장 가까운 제곱수 찾기
@@ -360,7 +360,7 @@ const gridSquarePlacement = (investors: any[]) => {
       idealSide = 1
     }
     
-    console.log(`  ${investor.name}: ${(investor.share * 100).toFixed(1)}% → ${targetCells}개 셀 → ${idealSide}×${idealSide} (${idealSide * idealSide}개)`)
+    console.log(`  ${investor.name}: ${(investor.share_percentage * 100).toFixed(1)}% → ${targetCells}개 셀 → ${idealSide}×${idealSide} (${idealSide * idealSide}개)`)
     
     return {
       id: index,
@@ -502,7 +502,7 @@ const gridSquarePlacement = (investors: any[]) => {
   console.log(`🎯 배치 성공률: ${finalResult.length}/${investors.length}명 (${((finalResult.length / investors.length) * 100).toFixed(1)}%)`)
   console.log(`📊 배치 결과:`)
   finalResult.forEach(result => {
-    const efficiency = (result.actualCells / Math.round(result.investor.share * TOTAL_CELLS_A)) * 100
+    const efficiency = (result.actualCells / Math.round(result.investor.share_percentage * TOTAL_CELLS_A)) * 100
     console.log(`  ${result.investor.name}: ${result.gridSize}×${result.gridSize} (${result.actualCells}개) - 효율성 ${efficiency.toFixed(1)}%`)
   })
   
