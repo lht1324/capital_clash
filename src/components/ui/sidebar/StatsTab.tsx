@@ -1,11 +1,15 @@
-import {memo, useMemo} from "react";
+import {memo, useCallback, useMemo} from "react";
 
 function StatsTab({
     isUserInvestmentInfoExist,
-    dailyViews
+    dailyViews,
+    previousSundayView,
+    userViewsRank
 } : {
     isUserInvestmentInfoExist: boolean,
-    dailyViews: number[]
+    dailyViews: number[],
+    previousSundayView: number,
+    userViewsRank: number
 }) {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const shortDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -21,9 +25,13 @@ function StatsTab({
         const day = new Date().getDay();
 
         return day === 0
-            ? 7
-            : day
-    }, [])
+            ? 6
+            : day - 1
+    }, []);
+
+    const calculateStreakDays = useCallback(() => {
+
+    }, []);
 
     return (
         <div className="space-y-4">
@@ -52,16 +60,25 @@ function StatsTab({
                                 // 요일명 계산 (월~일)
                                 const views = dailyViews[dayOfWeek]
                                 // 변화량 계산 (오늘-어제 등)
-                                const change = dayOfWeek > 0
+                                // 어제와 비교
+                                const change = dayOfWeek !== 0
                                     ? dailyViews[dayOfWeek] - dailyViews[dayOfWeek - 1]
-                                    : null;
+                                    : dailyViews[dayOfWeek] - previousSundayView;
                                 const today = days[dayOfWeek];
                                 const shortToday = shortDays[dayOfWeek];
-                                const isToday = dayOfWeek === 0
-                                const isPast = dayOfWeek < 0
-                                const isFuture = dayOfWeek > 0
-                                const changeColor = change !== null && change >= 0 ? 'text-green-400' : 'text-red-400'
-                                const changeIcon = change !== null ? (change >= 0 ? '↗' : '↘') : ''
+                                const isToday = dayOfWeek === currentDayOfWeek
+                                const isPast = dayOfWeek < currentDayOfWeek
+                                const isFuture = dayOfWeek > currentDayOfWeek
+                                const changeColor = change !== 0
+                                    ? change > 0
+                                        ? 'text-green-400'
+                                        : 'text-red-400'
+                                    : 'text-gray-400';
+                                const changeIcon = change !== 0
+                                    ? change > 0
+                                        ? '↗'
+                                        : '↘'
+                                    : ""
                                 return (
                                     <div key={shortToday}
                                          className={`grid grid-cols-3 gap-4 py-2 px-3 rounded-lg transition-all duration-200 ${
@@ -73,26 +90,44 @@ function StatsTab({
                                          }`}>
                                         <div className="flex items-center">
                                             <span
-                                                className={`font-medium ${isToday ? 'text-purple-300' : isFuture ? 'text-gray-500' : 'text-white'}`}>{today}</span>
+                                                className={`font-medium ${
+                                                    isToday
+                                                        ? 'text-purple-300'
+                                                        : isFuture
+                                                            ? 'text-gray-500'
+                                                            : 'text-white'
+                                                }`
+                                            }>
+                                                {today}
+                                            </span>
                                         </div>
                                         <div className="text-right">
                                             {views !== null ? (
                                                 <span
-                                                    className={`text-lg font-semibold ${isToday ? 'text-purple-300' : 'text-gray-200'}`}>{views.toLocaleString()}</span>
+                                                    className={`text-lg font-semibold ${
+                                                        isToday
+                                                            ? 'text-purple-300'
+                                                            : 'text-gray-200'
+                                                    }`
+                                                }>
+                                                    {views.toLocaleString()}
+                                                </span>
                                             ) : (
                                                 <span className="text-lg font-semibold text-gray-500">-</span>
                                             )}
                                         </div>
                                         <div className="text-right flex items-center justify-end space-x-1">
-                                            {change !== null ? (
-                                                <>
-                                                    <span
-                                                        className={`text-sm font-medium ${changeColor}`}>{change > 0 ? '+' : ''}{change}</span>
-                                                    <span className={`text-xs ${changeColor}`}>{changeIcon}</span>
-                                                </>
-                                            ) : (
-                                                <span className="text-sm font-medium text-gray-500">-</span>
-                                            )}
+                                            <>
+                                                <span className={`text-sm font-medium ${changeColor}`}>
+                                                    {change > 0 ? '+' : ''}
+                                                    {
+                                                        change !== 0
+                                                            ? change
+                                                            : "-"
+                                                    }
+                                                </span>
+                                                <span className={`text-xs ${changeColor}`}>{changeIcon}</span>
+                                            </>
                                         </div>
                                     </div>
                                 )
@@ -114,33 +149,15 @@ function StatsTab({
                         </div>
                     </div>
 
-                    {/* Views Metrics */}
-                    <div className="bg-gray-800 rounded-lg p-4">
-                        <h4 className="text-md font-semibold text-white mb-3">Views Metrics</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-purple-400">{/* 월간 성장률 등은 추후 구현 */}+0.0%</div>
-                                <div className="text-xs text-gray-400">Monthly Growth</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-blue-400">{/* 조회수 랭킹 등은 추후 구현 */}#-</div>
-                                <div className="text-xs text-gray-400">Views Rank</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-green-400">7 Days</div>
-                                <div className="text-xs text-gray-400">Streak Up</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-2xl font-bold text-yellow-400">🔥 Hot</div>
-                                <div className="text-xs text-gray-400">Popularity</div>
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Views Analytics */}
                     <div className="bg-gray-800 rounded-lg p-4">
                         <h4 className="text-md font-semibold text-white mb-3">Views Analytics</h4>
                         <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <span className="text-gray-400">Views Rank</span>
+                                <span
+                                    className="text-blue-400">{userViewsRank ? `#${userViewsRank}` : "-"}</span>
+                            </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Today</span>
                                 <span
@@ -154,7 +171,7 @@ function StatsTab({
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Daily Average</span>
                                 <span
-                                    className="text-blue-400">{averageDailyView} views</span>
+                                    className="text-blue-400">{averageDailyView.toFixed(0)} views</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Peak Day</span>

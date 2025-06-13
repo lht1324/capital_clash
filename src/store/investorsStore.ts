@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { Database } from '@/types/database'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase/supabase'
+import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
 
 export type Investor = {
     id: string
@@ -15,7 +16,8 @@ export type Investor = {
     created_at?: string
     updated_at?: string
     view_count?: number
-    daily_views?: number[]           // JSON 배열로 저장된 문자열인 경우 파싱 필요
+    daily_views: number[]
+    previous_sunday_view: number
     last_viewed_at?: string
     area_color?: string                    // area_color
 }
@@ -29,6 +31,7 @@ interface InvestorsStore {
     // 액션
     fetchInvestors: () => Promise<void>
     addInvestor: (investor: Omit<Investor, 'id'>) => Promise<void>
+    updateInvestorInvestmentAmount: (userId: string, investmentAmount: number) => Promise<void>
     updateInvestor: (id: string, updates: Partial<Investor>) => Promise<void>
     subscribeToInvestors: () => Promise<void>
     unsubscribeFromInvestors: () => void
@@ -54,11 +57,7 @@ export const useInvestorsStore = create<InvestorsStore>((set, get) => {
             console.log('🔄 투자자 정보 불러오기 시작')
 
             try {
-                const { data, error } = await supabase
-                    .from('investors')
-                    .select('*')
-
-                if (error) throw error
+                const data = await investorsAPI.getAll()
 
                 const investorsMap = data.reduce((acc, investor) => ({
                     ...acc,
@@ -79,15 +78,10 @@ export const useInvestorsStore = create<InvestorsStore>((set, get) => {
         addInvestor: async (investor) => {
             console.log('➕ 새 투자자 추가 시작:', investor)
             try {
-                const { data, error } = await supabase
-                    .from('investors')
-                    .insert([investor])
-                    .select()
+                const newInvestor = await investorsAPI.create(investor)
 
-                if (error) throw error
-                if (!data || data.length === 0) throw new Error('투자자 추가 후 데이터를 받지 못했습니다.')
+                if (!newInvestor) throw new Error('투자자 추가 후 데이터를 받지 못했습니다.')
 
-                const newInvestor = data[0]
                 set(state => ({
                     investors: {
                         ...state.investors,
@@ -101,20 +95,45 @@ export const useInvestorsStore = create<InvestorsStore>((set, get) => {
             }
         },
 
+        updateInvestorInvestmentAmount: async (userId: string, additionalInvestmentAmount: number) => {
+            console.log('🔄 투자자 투자금액 업데이트 시작:', userId, additionalInvestmentAmount)
+            try {
+                // user_id로 투자자 찾기
+                const investor = await investorsAPI.getByUserId(userId)
+
+                if (!investor) throw new Error('해당 user_id로 투자자를 찾을 수 없습니다.')
+
+                // 투자자의 investment_amount 업데이트
+                const updatedInvestor = await investorsAPI.update(investor.id, {
+                    investment_amount: investor.investment_amount + additionalInvestmentAmount,
+                    updated_at: new Date().toISOString()
+                })
+
+                if (!updatedInvestor) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
+
+                // 상태 업데이트
+                set(state => ({
+                    investors: {
+                        ...state.investors,
+                        [updatedInvestor.id]: { ...state.investors[updatedInvestor.id], ...updatedInvestor }
+                    }
+                }))
+                console.log('✅ 투자자 투자금액 업데이트 완료:', updatedInvestor.id)
+                return updatedInvestor
+            } catch (error) {
+                console.error('❌ 투자자 투자금액 업데이트 실패:', error)
+                throw error
+            }
+        },
+
         // 투자자 정보 업데이트
         updateInvestor: async (id, updates) => {
             console.log('🔄 투자자 정보 업데이트 시작:', id, updates)
             try {
-                const { data, error } = await supabase
-                    .from('investors')
-                    .update(updates)
-                    .eq('id', id)
-                    .select()
+                const updatedInvestor = await investorsAPI.update(id, updates)
 
-                if (error) throw error
-                if (!data || data.length === 0) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
+                if (!updatedInvestor) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
 
-                const updatedInvestor = data[0]
                 set(state => ({
                     investors: {
                         ...state.investors,

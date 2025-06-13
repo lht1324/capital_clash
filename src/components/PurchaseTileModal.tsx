@@ -3,7 +3,8 @@
 import {useState, useEffect, useMemo, useCallback} from 'react'
 import { useContinentStore, type ContinentId } from '@/store/continentStore'
 import { getCurrentUserTileInfo, type UserTileInfo } from '@/utils/userUtils'
-import {useInvestorsStore} from "@/store/investorsStore";
+import {Investor, useInvestorsStore} from "@/store/investorsStore";
+import {useUserStore} from "@/store/userStore";
 
 interface PurchaseTileModalProps {
     isOpen: boolean
@@ -15,6 +16,7 @@ interface PurchaseTileModalProps {
 export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAdditionalInvestment }: PurchaseTileModalProps) {
     const { continents } = useContinentStore();
     const { investors } = useInvestorsStore();
+    const { user } = useUserStore();
 
     const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null)
     const [investmentAmount, setInvestmentAmount] = useState<number>(0)
@@ -26,10 +28,50 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
         return Object.values(continents).filter((continent) => continent.id !== "central")
     }, [continents]);
 
-    // 현재 사용자의 영역 정보 확인
-    const userTileInfo: UserTileInfo = useMemo(() => {
-        return getCurrentUserTileInfo(Object.values(investors))
+    const investorList = useMemo(() => {
+        return Object.values(investors);
     }, [investors]);
+    const filteredInvestorListByContinent = useMemo(() => {
+        return investorList.filter((investor) => { return investor.continent_id === selectedContinentId; });
+    }, [investorList, selectedContinentId]);
+    const userInvestorInfo: Investor | null = useMemo(() => {
+        const searchResult = investorList.find((investor) => {
+            return investor.user_id === user?.id;
+        })
+
+        return searchResult
+            ? searchResult
+            : null;
+    }, [investorList, user]);
+
+    const continentalTotalInvestmentAmount = useMemo(() => {
+        return filteredInvestorListByContinent.reduce((acc, investor) => { return acc + investor.investment_amount }, 0);
+    }, [filteredInvestorListByContinent]);
+    const userTileInfo: UserTileInfo = useMemo(() => {
+        return getCurrentUserTileInfo(Object.values(investors), user?.id)
+        // return getCurrentUserTileInfo(Object.values(investors), null)
+    }, [investors, user]);
+    const isAdditionalInvestment = useMemo(() => {
+        return userTileInfo.hasExistingTile;
+    }, [userTileInfo]);
+
+    // isAdditionalInvestment (Current Territory)
+    const userContinentId = useMemo(() => {
+        return userTileInfo.continentId
+    }, [userTileInfo]);
+    const userContinentName = useMemo(() => {
+        return continentItemList.find(c => c.id === userContinentId)?.name
+    }, [userTileInfo])
+    const userInvestmentAmount = useMemo(() => {
+        return userTileInfo.investmentAmount
+            ? userTileInfo.investmentAmount
+            : 0;
+    }, [userTileInfo]);
+    const userSharePercentage = useMemo(() => {
+        return userInvestmentAmount
+            ? Number(userInvestmentAmount / continentalTotalInvestmentAmount) * 100
+            : 0;
+    }, [userInvestmentAmount, continentalTotalInvestmentAmount]);
 
     const selectedContinentMaxUserCount = useMemo(() => {
         return selectedContinentId
@@ -37,34 +79,25 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
             : 0
     }, [selectedContinentId, continents]);
 
-    const investorList = useMemo(() => {
-        return Object.values(investors);
-    }, [investors]);
-    const filteredInvestorListByContinent = useMemo(() => {
-        return investorList.filter((investor) => { return investor.continent_id === selectedContinentId; });
-    }, [investorList, selectedContinentId]);
-
     // 실시간 계산 결과
-    const totalInvestmentAmount = useMemo(() => {
-        return filteredInvestorListByContinent.reduce((acc, investor) => { return acc + investor.investment_amount }, 0);
-    }, [filteredInvestorListByContinent]);
     const expectedSharePercentage = useMemo(() => {
         if (!investmentAmount || investmentAmount <= 0) return 0;
 
-        const newTotalInvestment = totalInvestmentAmount + investmentAmount;
-        const newSharePercentage = Number(((investmentAmount / newTotalInvestment) * 100).toFixed(2));
+        const newContinentalTotalInvestment = continentalTotalInvestmentAmount + investmentAmount;
+        const newSharePercentage = !isAdditionalInvestment
+            ? Number((investmentAmount / newContinentalTotalInvestment) * 100)
+            : Number(((userInvestmentAmount + investmentAmount) / newContinentalTotalInvestment) * 100);
 
         if (selectedContinentId) {
-            if (newSharePercentage > 0.01) {
-                return newSharePercentage;
-            } else {
-                // 최소 영역 보장
-                return 0.01;
-            }
+            return newSharePercentage > 0.01
+                ? newSharePercentage
+                : 0.01;
         } else {
-            return 0;
+            return isAdditionalInvestment
+                ? newSharePercentage
+                : 0;
         }
-    }, [selectedContinentId, investmentAmount, totalInvestmentAmount])
+    }, [selectedContinentId, investmentAmount, userInvestmentAmount, continentalTotalInvestmentAmount])
     const expectedCellLength = useMemo(() => {
         const maxAreaSize = selectedContinentMaxUserCount * selectedContinentMaxUserCount
         const cells = Math.round(expectedSharePercentage * maxAreaSize / 100)
@@ -74,21 +107,6 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
         const maxAreaSize = selectedContinentMaxUserCount * selectedContinentMaxUserCount
         return Math.round(expectedSharePercentage * maxAreaSize / 100)
     }, [expectedSharePercentage, selectedContinentMaxUserCount]);
-
-    const isAdditionalInvestment = useMemo(() => {
-        return userTileInfo.hasExistingTile;
-    }, [userTileInfo]);
-    const userContinentId = useMemo(() => {
-        return userTileInfo.continentId
-    }, [userTileInfo]);
-    const userInvestmentAmount = useMemo(() => {
-        return userTileInfo.investmentAmount
-    }, [userTileInfo]);
-    const userSharePercentage = useMemo(() => {
-        return userInvestmentAmount
-            ? Number((userInvestmentAmount / totalInvestmentAmount).toFixed(2))
-            : 0;
-    }, [userInvestmentAmount, totalInvestmentAmount]);
 
     // 대륙별 현재 투자자 수 계산
     const getContinentUserCount = useCallback((continentId: ContinentId) => {
@@ -220,7 +238,7 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                     {/* 헤더 */}
                     <div className="flex items-center justify-between p-6 border-b border-gray-700">
                         <h2 className="text-2xl font-bold text-white">
-                            {isAdditionalInvestment ? '💰 추가 투자' : '🎯 영역 구매'}
+                            {isAdditionalInvestment ? '💰 Additional Investment' : '🎯 Purchase Territory'}
                         </h2>
                         <button
                             onClick={onClose}
@@ -237,25 +255,25 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                             <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 rounded-xl p-6 border border-blue-700/50 backdrop-blur-sm">
                                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                     <span className="text-2xl">📍</span>
-                                    <span>현재 영역 정보</span>
+                                    <span>Territory Information</span>
                                 </h3>
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
-                                        <span className="text-gray-300">대륙</span>
+                                        <span className="text-gray-300">Continent</span>
                                         <span className="text-white font-medium">
-                                            {continentItemList.find(c => c.id === userContinentId)?.name}
+                                            {userContinentName}
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
-                                        <span className="text-gray-300">현재 투자금</span>
+                                        <span className="text-gray-300">Investment Amount</span>
                                         <span className="text-green-400 font-medium">
                                             ${userInvestmentAmount?.toLocaleString()}
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
-                                        <span className="text-gray-300">현재 지분율</span>
+                                        <span className="text-gray-300">Current Continental Share</span>
                                         <span className="text-blue-400 font-medium">
-                                            {userSharePercentage}%
+                                            {userSharePercentage.toFixed(2)}%
                                         </span>
                                     </div>
                                 </div>
@@ -267,7 +285,7 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                             <div>
                                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                     <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-sm">1</span>
-                                    대륙 선택
+                                    Select Continent
                                 </h3>
                                 <div className="grid grid-cols-2 gap-4">
                                     {continentItemList.map((continent) => {
@@ -330,12 +348,12 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                                 {isAdditionalInvestment ? (
                                     <>
                                         <span className="text-2xl">💵</span>
-                                        <span>추가 투자 금액</span>
+                                        <span>Additional Investment Amount</span>
                                     </>
                                 ) : (
                                     <>
                                         <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-sm">2</span>
-                                        <span>투자 금액</span>
+                                        <span>Investment Amount</span>
                                     </>
                                 )}
                             </h3>
@@ -366,19 +384,19 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                                     <div className="bg-gradient-to-br from-gray-800/50 to-gray-700/50 rounded-xl p-6 border border-gray-600/50 space-y-6">
                                         <h4 className="text-white font-medium flex items-center gap-2">
                                             <span className="text-xl">📊</span>
-                                            <span>투자 결과 미리보기</span>
+                                            <span>Result Preview</span>
                                         </h4>
 
                                         {/* 투자 정보 */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="bg-gray-800/50 rounded-xl p-4 space-y-2">
-                                                <div className="text-sm text-gray-400">예상 지분율</div>
+                                                <div className="text-sm text-gray-400">Expected Continental Share</div>
                                                 <div className="text-2xl font-semibold text-blue-400">
                                                     {expectedSharePercentage.toFixed(2)}%
                                                 </div>
                                             </div>
                                             <div className="bg-gray-800/50 rounded-xl p-4 space-y-2">
-                                                <div className="text-sm text-gray-400">예상 영역 크기</div>
+                                                <div className="text-sm text-gray-400">Expected Area Size</div>
                                                 <div className="text-2xl font-semibold text-green-400">
                                                     {expectedCellLength}×{expectedCellLength}
                                                 </div>
@@ -399,8 +417,8 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                                             />
                                             <div className="absolute inset-0 grid place-items-center">
                                                 <div className="text-center bg-gray-900/80 px-6 py-3 rounded-xl backdrop-blur-sm">
-                                                    <div className="text-sm text-gray-400">예상 셀 개수</div>
-                                                    <div className="text-2xl font-semibold text-white">{expectedCells}셀</div>
+                                                    <div className="text-sm text-gray-400">Expected Number of Cells</div>
+                                                    <div className="text-2xl font-semibold text-white">{expectedCells} {expectedCells > 1 ? "cells" : "cell"}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -409,14 +427,14 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                                         <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-4 text-sm text-gray-300 leading-relaxed">
                                             {isAdditionalInvestment ? (
                                                 <>
-                                                    현재 지분율 <span className="text-gray-200 font-medium">{userSharePercentage}%</span>에서{' '}
-                                                    <span className="text-blue-400 font-medium">{expectedSharePercentage.toFixed(2)}%</span>로 증가하며,
-                                                    영역 크기가 <span className="text-green-400 font-medium">{expectedCellLength}×{expectedCellLength}</span>로 변경됩니다.
+                                                    Continental share will be increased from <span className="text-gray-200 font-medium">{userSharePercentage.toFixed(2)}%</span>{' '}
+                                                    to <span className="text-blue-400 font-medium">{expectedSharePercentage.toFixed(2)}%</span>,
+                                                    Territory size will be changed into <span className="text-green-400 font-medium">{expectedCellLength}×{expectedCellLength}</span>.
                                                 </>
                                             ) : (
                                                 <>
-                                                    선택하신 대륙에서 <span className="text-blue-400 font-medium">{expectedSharePercentage.toFixed(2)}%</span>의 지분을 가지며,{' '}
-                                                    <span className="text-green-400 font-medium">{expectedCellLength}×{expectedCellLength}</span> 크기의 영역을 차지하게 됩니다.
+                                                    You will have <span className="text-blue-400 font-medium">{expectedSharePercentage.toFixed(2)}%</span> as continental share,{' '}
+                                                    be occupying an area sized <span className="text-green-400 font-medium">{expectedCellLength}×{expectedCellLength}</span>.
                                                 </>
                                             )}
                                         </div>
@@ -432,7 +450,7 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                             onClick={onClose}
                             className="px-6 py-3 bg-gray-800 text-gray-300 rounded-xl hover:bg-gray-700 transition-colors"
                         >
-                            취소
+                            Cancel
                         </button>
                         <button
                             onClick={handlePurchase}
@@ -445,14 +463,14 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                         >
                             {isCalculating ? (
                                 <span className="flex items-center space-x-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  <span>처리 중...</span>
-                </span>
+                                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    <span>In Progress...</span>
+                                </span>
                             ) : (
-                                isAdditionalInvestment ? '추가 투자하기' : '영역 구매하기'
+                                'Purchase'
                             )}
                         </button>
                     </div>

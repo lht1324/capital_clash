@@ -122,7 +122,7 @@ function TerritoryTab({
                                     >
                                         <span className="font-medium">
                                             {continent.name}
-                                            {isCurrentContinent && ' (현재)'}
+                                            {isCurrentContinent && ' (Current)'}
                                         </span>
                                         <span className={`text-sm ${isFull ? 'text-red-200' : 'text-white'}`}>
                                             {currentCount}/{continent.max_users}
@@ -133,7 +133,7 @@ function TerritoryTab({
                         </div>
 
                         <div className="text-xs text-gray-400 text-center">
-                            빨간색 표시는 인원이 가득 찬 대륙입니다
+                            Red marks indicate that continent is full.
                         </div>
                     </div>
                 </>
@@ -167,7 +167,6 @@ function TerritoryTab({
                                     <div className="flex justify-between items-center">
                                         <span className="font-medium">{continent.name}</span>
                                         <div className="text-right">
-                                            <div className="text-sm">$1부터</div>
                                             <div className={`text-xs ${isFull ? 'text-red-200' : 'text-white/80'}`}>
                                                 {currentCount}/{continent.max_users}
                                             </div>

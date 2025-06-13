@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import { continents } from '@/lib/supabase-api'
+import { continentsAPI } from '@/lib/supabase/supabase-continents-api'
 import type { Database } from '@/types/database'
+import { useInvestorsStore } from './investorsStore'
 
 type ContinentRow = Database['public']['Tables']['continents']['Row']
 
@@ -36,6 +37,8 @@ export type Continent = ContinentRow & {
     is_active: boolean,
     created_at: string,
     updated_at: string,
+
+    // admin에만 남음
     investors: Record<string, Investor>
 }
 
@@ -58,6 +61,7 @@ interface ContinentStore {
     setWorldView: (isWorld: boolean) => void
     setCameraTarget: (target: [number, number, number] | null) => void
     resetSelection: () => void
+    addInvestor: (continentId: ContinentId, investorData: any) => Promise<void>
 
     updateContinentUsers: (id: ContinentId, count: number) => void
     setSidebarOpen: (isOpen: boolean) => void
@@ -79,7 +83,7 @@ export const useContinentStore = create<ContinentStore>((set) => ({
         console.log('🌍 대륙 정보 불러오기 시작')
 
         try {
-            const data = await continents.getAll()
+            const data = await continentsAPI.getAll()
             console.log('📥 받은 대륙 데이터:', data)
 
             const continentsMap = data.reduce((acc, continent) => ({
@@ -103,7 +107,7 @@ export const useContinentStore = create<ContinentStore>((set) => ({
     // 대륙 정보 업데이트
     updateContinent: async (id, updates) => {
         try {
-            const updatedContinent = await continents.update(id, updates)
+            const updatedContinent = await continentsAPI.update(id, updates)
             set(state => ({
                 continents: {
                     ...state.continents,
@@ -143,5 +147,30 @@ export const useContinentStore = create<ContinentStore>((set) => ({
     },
 
     // 사이드바 상태 관리
-    setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen })
+    setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+
+    // 투자자 추가
+    addInvestor: async (continentId, investorData) => {
+        console.log('🔄 투자자 추가 시작:', continentId, investorData)
+        try {
+            // 기존 데이터 형식을 Supabase 형식으로 변환
+            const { investment, imageStatus, profileInfo, ...rest } = investorData
+
+            // useInvestorsStore의 addInvestor 메서드 호출
+            await useInvestorsStore.getState().addInvestor({
+                user_id: rest.userId || rest.user_id || '', // userId 또는 user_id 사용
+                continent_id: continentId,
+                name: rest.name || '',
+                investment_amount: investment || 0,
+                share_percentage: 0, // 초기값, 나중에 계산
+                image_status: imageStatus || 'none',
+                area_color: rest.area_color || '#FFFFFF',
+            })
+
+            console.log('✅ 투자자 추가 완료')
+        } catch (error) {
+            console.error('❌ 투자자 추가 실패:', error)
+            throw error
+        }
+    }
 }))

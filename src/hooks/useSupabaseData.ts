@@ -1,17 +1,10 @@
 import { useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase/supabase'
+import { continentsAPI } from '@/lib/supabase/supabase-continents-api'
+import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
 import { useContinentStore } from '@/store/continentStore'
 import { useInvestorsStore } from '@/store/investorsStore'
-import {
-    auth,
-    users,
-    continents as continentsApi,
-    investors as investorsApi,
-    subscriptions,
-    analytics,
-    investments
-} from '@/lib/supabase-api'
-import { supabase } from '@/lib/supabase'
 import { showSuccess, showError, showInfo } from '@/components/admin/NotificationSystem'
 
 // 인증 상태 관리 훅
@@ -124,7 +117,7 @@ export function useContinentSync() {
         const loadContinents = async () => {
             try {
                 setLoading(true)
-                const continentsData = await continentsApi.getAll()
+                const continentsData = await continentsAPI.getAll()
 
                 // Supabase 데이터를 로컬 스토어 형식으로 변환
                 const formattedContinents = continentsData.reduce((acc, continent) => {
@@ -184,7 +177,7 @@ export function useInvestorSync() {
         const loadInvestors = async () => {
             try {
                 setLoading(true)
-                const investorsData = await investorsApi.getAll()
+                const investorsData = await investorsAPI.getAll()
 
                 // 대륙별로 투자자 데이터 그룹화
                 const groupedInvestors = investorsData.reduce((acc, investor) => {
@@ -301,18 +294,20 @@ export function useUserInvestment(userId: string | null) {
         const loadUserData = async () => {
             try {
                 setLoading(true)
+                console.log('🔄 사용자 투자 데이터 로드 시작:', userId)
 
                 const [investorData, investmentsData] = await Promise.all([
-                    investorsApi.getByUserId(userId),
-                    investments.getByUserId(userId)
+                    investorsAPI.getByUserId(userId),
+                    investorsAPI.getInvestmentsByUserId(userId)
                 ])
 
                 setInvestor(investorData)
                 setInvestments(investmentsData)
+                console.log('✅ 사용자 투자 데이터 로드 완료:', investorData, investmentsData)
 
             } catch (err: any) {
                 setError(err.message)
-                console.error('사용자 투자 데이터 로드 실패:', err)
+                console.error('❌ 사용자 투자 데이터 로드 실패:', err)
             } finally {
                 setLoading(false)
             }

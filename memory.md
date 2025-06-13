@@ -932,7 +932,7 @@ npm run type-check
 1. **Supabase 클라이언트 설정**:
    - `src/lib/supabase.ts`: 환경변수 기반 클라이언트 구성
    - `src/types/database.ts`: 8개 테이블 TypeScript 정의
-   - `src/lib/supabase-api.ts`: 인증, CRUD, 실시간 구독, 파일업로드 API
+   - `src/lib/supabase`: 인증, CRUD, 실시간 구독, 파일업로드 API
    - `src/hooks/useSupabaseData.ts`: 커스텀 훅 (auth, sync, admin, notifications)
 
 2. **완전한 데이터베이스 스키마**:

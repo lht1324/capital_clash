@@ -129,7 +129,7 @@ function OverviewTab({
                             {/*    <span className="text-white">{userInvestmentInfo.tilePosition?.size}×{userInvestmentInfo.tilePosition?.size}</span>*/}
                             {/*</div>*/}
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-300">이미지 상태</span>
+                                <span className="text-gray-300">Image Status</span>
                                 <span className={imageStatusColor}>
                                     {imageStatusText}
                                 </span>
@@ -141,8 +141,8 @@ function OverviewTab({
                 /* 영역이 없는 경우 */
                 <div className="bg-gray-800 rounded-lg p-6 text-center">
                     <div className="text-4xl mb-4">🎯</div>
-                    <h4 className="text-lg font-semibold text-white mb-2">영역이 없습니다</h4>
-                    <p className="text-gray-400 mb-4">Start your investment by purchasing your first territory!</p>
+                    <h4 className="text-lg font-semibold text-white mb-2">No territory</h4>
+                    <p className="text-gray-400 mb-4">Start your investment by purchasing your territory!</p>
                     <button
                         // onClick={() => setIsPurchaseModalOpen(true)}
                         onClick={() => onClickOpenPurchaseModal()}

@@ -209,27 +209,6 @@ C. 상태 업데이트 테스트
    - 영수증 및 증빙 자료 제공 (Lemon Squeezy API)
    - 결제 관련 고객 지원 시스템
 
-## 🗂 주요 파일 구조
-```
-src/
-├── lib/
-│   ├── treemapAlgorithm.ts    # Billboard 알고리즘
-│   ├── supabase.ts            # Supabase 클라이언트
-│   └── supabase-api.ts        # API 래퍼
-├── store/
-│   └── continentStore.ts      # 상태 관리
-├── components/
-│   ├── ContinentMap.tsx       # 3D 맵
-│   ├── TileSettingsPanel.tsx  # 설정 패널
-│   ├── ProfileViewModal.tsx   # 프로필 보기
-│   ├── Header.tsx             # 헤더
-│   └── Sidebar.tsx            # 사이드바
-└── app/
-    ├── page.tsx               # 메인 페이지
-    ├── profile/              # 프로필
-    └── admin/                # 관리자
-```
-
 ## 📞 개발 명령어
 ```bash
 cd /c%3A/Users/Jaeho/Desktop/Projects/Playground/capital_clash_fe

@@ -10,9 +10,13 @@ export interface UserTileInfo {
 
 // 현재 사용자의 영역 소유 상태 확인
 export const getCurrentUserTileInfo = (investorList: Investor[], userId?: string): UserTileInfo => {
+    let tileInfo = null;
+
+    console.log(`userId = ${userId}`)
     investorList.forEach((investor) => {
-        if (userId && investor.id === userId) {
-            return {
+        console.log(`investor.user_id = ${investor.user_id}, userId = ${userId}`)
+        if (userId && investor.user_id === userId) {
+            tileInfo = {
                 hasExistingTile: true,
                 continentId: investor.continent_id as ContinentId,
                 investmentAmount: investor.investment_amount,
@@ -20,7 +24,9 @@ export const getCurrentUserTileInfo = (investorList: Investor[], userId?: string
         }
     })
 
-    return {
-        hasExistingTile: false
-    }
+    return tileInfo
+        ? tileInfo
+        : {
+            hasExistingTile: false
+        }
 }

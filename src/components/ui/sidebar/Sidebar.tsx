@@ -99,6 +99,21 @@ export default function Sidebar() {
         }
     }, [investorList, userInvestmentInfo]);
 
+    const userViewsRank = useMemo(() => {
+        if (userInvestmentInfo) {
+            const sumDailyViews = (dailyViews: number[]) => {
+                return dailyViews.reduce((acc, dailyView) => acc + dailyView, 0);
+            }
+            const userIndex = investorList
+                .sort((a, b) => sumDailyViews(b.daily_views) - sumDailyViews(a.daily_views))
+                .findIndex((investor) => investor.user_id === userInvestmentInfo.user_id);
+
+            return userIndex + 1;
+        } else {
+            return -1
+        }
+    }, [investorList, userInvestmentInfo])
+
     const imageStatus = useMemo(() => {
         return userInvestmentInfo?.image_status
             ? userInvestmentInfo.image_status
@@ -110,11 +125,6 @@ export default function Sidebar() {
             ? continents[userInvestmentInfo.continent_id].name
             : "-";
     }, [continents, userInvestmentInfo]);
-
-    const getContinentUserCount = useCallback((continentId: string) => {
-        const continent = continents[continentId as keyof typeof continents]
-        return Object.keys(continent?.investors || {}).length
-    }, []);
 
     const imageStatusColor = useMemo(() => {
         switch (imageStatus) {
@@ -144,44 +154,55 @@ export default function Sidebar() {
         return userInvestmentInfo?.daily_views
             ? userInvestmentInfo.daily_views
             : [0, 0, 0, 0, 0, 0, 0]
-    }, [userInvestmentInfo])
+    }, [userInvestmentInfo]);
+    const userPreviousSundayView = useMemo(() => {
+        return userInvestmentInfo?.previous_sunday_view
+            ? userInvestmentInfo.previous_sunday_view
+            : 0
+    }, [userInvestmentInfo]);
 
     // Handle territory purchase
     const handlePurchase = useCallback(async (continentId: ContinentId, amount: number) => {
         console.log(`🛒 Territory purchase from sidebar: ${continentId}, $${amount.toLocaleString()}`)
         try {
+            if (!user?.id) {
+                throw new Error('사용자 정보가 없습니다. 로그인이 필요합니다.')
+            }
+
             await addInvestor(continentId, {
-                id: `investor_${Date.now()}`,
-                name: `투자자_${Math.floor(Math.random() * 10000)}`,
+                user_id: user.id,
+                name: user.name || `투자자_${Math.floor(Math.random() * 10000)}`,
                 investment: amount,
                 imageStatus: 'none',
-                profileInfo: { description: '' },
             })
             alert(`🎉 Investment of $${amount.toLocaleString()} in ${continentId} continent completed!`)
         } catch (error) {
             console.error('투자 실패:', error)
             alert('❌ Investment failed. Please try again.')
         }
-    }, []);
+    }, [user]);
 
     // Handle additional investment
     const handleAdditionalInvestment = useCallback(async (amount: number) => {
         if (!userTileInfo.continentId) return
         console.log(`💰 Additional investment from sidebar: ${userTileInfo.continentId}, $${amount.toLocaleString()}`)
         try {
+            if (!user?.id) {
+                throw new Error('사용자 정보가 없습니다. 로그인이 필요합니다.')
+            }
+
             await addInvestor(userTileInfo.continentId, {
-                id: `investor_${Date.now()}`,
+                user_id: user.id,
                 name: `추가투자_${Math.floor(Math.random() * 10000)}`,
                 investment: amount,
                 imageStatus: 'none',
-                profileInfo: { description: '' },
             })
             alert(`💰 Additional investment of $${amount.toLocaleString()} in ${userTileInfo.continentId} continent completed!`)
         } catch (error) {
             console.error('추가 투자 실패:', error)
             alert('❌ Additional investment failed. Please try again.')
         }
-    }, []);
+    }, [user, userTileInfo]);
 
     // Handle image upload
     const handleImageUpload = useCallback(async (file: File) => {
@@ -307,6 +328,8 @@ export default function Sidebar() {
                             <StatsTab
                                 isUserInvestmentInfoExist={isUserInvestmentInfoExist}
                                 dailyViews={userDailyViewList}
+                                previousSundayView={userPreviousSundayView}
+                                userViewsRank={userViewsRank}
                             />
                         )}
                     </div>
