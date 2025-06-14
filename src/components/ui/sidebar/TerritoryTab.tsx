@@ -12,6 +12,7 @@ function TerritoryTab({
     continentList,
     onClickOpenImageUploadModal,
     onClickOpenPurchaseModal,
+    onClickOpenProfileEditModal,
     cycleImageStatus
 } : {
     isUserInvestmentInfoExist: boolean,
@@ -24,6 +25,7 @@ function TerritoryTab({
     continentList: Continent[],
     onClickOpenImageUploadModal: () => void,
     onClickOpenPurchaseModal: () => void,
+    onClickOpenProfileEditModal: () => void,
     cycleImageStatus: () => void,
 }) {
     return (
@@ -78,6 +80,13 @@ function TerritoryTab({
                                 >
                                     <span>📷</span>
                                     <span>Upload Image</span>
+                                </button>
+                                <button
+                                    onClick={() => onClickOpenProfileEditModal()}
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-sm transition-colors flex items-center justify-center space-x-2"
+                                >
+                                    <span>✏️</span>
+                                    <span>Edit Territory Display</span>
                                 </button>
                             </div>
                         </div>

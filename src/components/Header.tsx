@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import {useState, useEffect, useCallback} from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -12,13 +12,44 @@ import { useUserStore } from '@/store/userStore'
 import DropdownMenu from './ui/dropdown-menu'
 import { UserCircleIcon } from '@heroicons/react/24/outline'
 import { useContinentStore } from '@/store/continentStore'
+import ProfileInfoModal from "@/components/ProfileInfoModal";
 
 export default function Header() {
     const router = useRouter()
     const [isRankingModalOpen, setIsRankingModalOpen] = useState(false)
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
+    const [isProfileInfoModalOpen, setIsProfileInfoModalOpen] = useState(false)
     const { user, setUser } = useUserStore()
     const { setSidebarOpen } = useContinentStore()
+
+    const handleGoogleLogin = useCallback(async () => {
+        try {
+            await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    }
+                }
+            })
+        } catch (error) {
+            console.error('로그인 중 오류 발생:', error)
+        }
+    }, []);
+
+    const handleOpenProfileSettingModal = useCallback(() => {
+        setIsProfileInfoModalOpen(true);
+    }, []);
+
+    const handleSignOut = useCallback(async () => {
+        try {
+            await supabase.auth.signOut()
+            setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
+        } catch (error) {
+            console.error('로그아웃 중 오류 발생:', error)
+        }
+    }, []);
 
     useEffect(() => {
         // 초기 로그인 상태 체크
@@ -35,31 +66,6 @@ export default function Header() {
             subscription.unsubscribe()
         }
     }, [setUser, setSidebarOpen])
-
-    const handleGoogleLogin = async () => {
-        try {
-            await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                    }
-                }
-            })
-        } catch (error) {
-            console.error('로그인 중 오류 발생:', error)
-        }
-    }
-
-    const handleSignOut = async () => {
-        try {
-            await supabase.auth.signOut()
-            setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
-        } catch (error) {
-            console.error('로그아웃 중 오류 발생:', error)
-        }
-    }
 
     return (
         <header className="fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white z-50">
@@ -127,7 +133,7 @@ export default function Header() {
                         items={[
                             {
                                 label: '프로필',
-                                onClick: () => router.push('/profile'),
+                                onClick: handleOpenProfileSettingModal,
                                 icon: '👤'
                             },
                             {
@@ -150,6 +156,12 @@ export default function Header() {
             <PurchaseTileModal
                 isOpen={isPurchaseModalOpen}
                 onClose={() => setIsPurchaseModalOpen(false)}
+            />
+
+            {/* 프로필 설정 모달 */}
+            <ProfileInfoModal
+                isOpen={isProfileInfoModalOpen}
+                onClose={() => setIsProfileInfoModalOpen(false)}
             />
         </header>
     )

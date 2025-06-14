@@ -1,12 +1,13 @@
 'use client'
 
 import {useCallback, useEffect, useMemo, useState} from 'react'
-import { useContinentStore, type ContinentId } from '@/store/continentStore'
 import PurchaseTileModal from '../../PurchaseTileModal'
+import ProfileEditModal from "@/components/TerritoryDisplayEditModal";
 import ImageUploadModal from '../../ImageUploadModal'
 import { getCurrentUserTileInfo } from '@/utils/userUtils'
 import { useUserStore } from '@/store/userStore'
-import {useInvestorStore} from "@/store/investorsStore";
+import { useContinentStore } from '@/store/continentStore'
+import { useInvestorStore } from "@/store/investorsStore";
 import OverviewTab from "@/components/ui/sidebar/OverviewTab";
 import TerritoryTab from "@/components/ui/sidebar/TerritoryTab";
 import StatsTab from "@/components/ui/sidebar/StatsTab";
@@ -15,6 +16,7 @@ export default function Sidebar() {
     const [activeTab, setActiveTab] = useState<'overview' | 'tile' | 'stats'>('overview')
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
     const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false)
+    const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false)
     // const [imageStatus, setImageStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('pending')
 
     // 각 대륙별 현재 유저 수 계산
@@ -281,6 +283,7 @@ export default function Sidebar() {
                                 continentList={continentList}
                                 onClickOpenImageUploadModal={() => setIsImageUploadModalOpen(true)}
                                 onClickOpenPurchaseModal={() => { setIsPurchaseModalOpen(true) }}
+                                onClickOpenProfileEditModal={() => { setIsProfileEditModalOpen(true) }}
                                 cycleImageStatus={cycleImageStatus}
                             />
                         )}
@@ -301,6 +304,12 @@ export default function Sidebar() {
             <PurchaseTileModal
                 isOpen={isPurchaseModalOpen}
                 onClose={() => setIsPurchaseModalOpen(false)}
+            />
+
+            {/* 프로필 수정 모달 */}
+            <ProfileEditModal
+                isOpen={isProfileEditModalOpen}
+                onClose={() => setIsProfileEditModalOpen(false)}
             />
 
             {/* 이미지 업로드 모달 */}

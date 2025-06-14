@@ -42,11 +42,11 @@ export const investorsAPI = {
     },
 
     // 투자자 정보 업데이트
-    async update(id: string, updates: Partial<InvestorRow>) {
+    async update(investor: Partial<InvestorRow>) {
         const { data, error } = await supabase
             .from('investors')
-            .update(updates)
-            .eq('id', id)
+            .update(investor)
+            .eq('user_id', investor.user_id)
             .select()
             .single()
 

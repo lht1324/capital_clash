@@ -173,9 +173,9 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
         setIsCalculating(true)
 
         try {
-            if (user) {
+            if (user && userInvestorInfo) {
                 if (isAdditionalInvestment) {
-                    await updateInvestorInvestmentAmount(user?.id, investmentAmount);
+                    await updateInvestorInvestmentAmount(userInvestorInfo, investmentAmount);
                 } else {
                     if (selectedContinentId) {
                         await insertInvestor(user?.id, selectedContinentId, investmentAmount);

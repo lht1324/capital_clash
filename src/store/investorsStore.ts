@@ -8,7 +8,9 @@ export type Investor = {
     user_id: string
     continent_id: string
     name?: string
-    title?: string
+    description?: string
+    website_url?: string
+    contact_email?: string
     investment_amount: number
     image_url?: string                  // image_url
     image_status?: 'none' | 'pending' | 'approved' | 'rejected'  // image_status
@@ -29,8 +31,8 @@ interface InvestorStore {
     // 액션
     fetchInvestors: () => Promise<void>
     insertInvestor: (userId: string, selectedContinentId: string, investmentAmount: number) => Promise<void>
-    updateInvestor: (id: string, updates: Partial<Investor>) => Promise<void>
-    updateInvestorInvestmentAmount: (userId: string, investmentAmount: number) => Promise<void>
+    updateInvestor: (investor: Partial<Investor>) => Promise<void>
+    updateInvestorInvestmentAmount: (investor: Partial<Investor>, investmentAmount: number) => Promise<void>
     subscribeToInvestors: () => Promise<void>
     unsubscribeFromInvestors: () => void
 
@@ -123,37 +125,37 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
         },
 
         // 투자자 정보 업데이트
-        updateInvestor: async (id, updates) => {
-            console.log('🔄 투자자 정보 업데이트 시작:', id, updates)
+        updateInvestor: async (investor) => {
+            console.log('🔄 투자자 정보 업데이트 시작:', investor)
             try {
-                const updatedInvestor = await investorsAPI.update(id, updates)
+                const updatedInvestor = await investorsAPI.update(investor)
 
                 if (!updatedInvestor) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
 
                 set(state => ({
                     investors: {
                         ...state.investors,
-                        [id]: { ...state.investors[id], ...updatedInvestor }
+                        [updatedInvestor.id]: { ...state.investors[updatedInvestor.id], ...updatedInvestor }
                     }
                 }))
-                console.log('✅ 투자자 정보 업데이트 완료:', id)
+                console.log('✅ 투자자 정보 업데이트 완료:', updatedInvestor.id)
             } catch (error) {
                 console.error('❌ 투자자 정보 업데이트 실패:', error)
                 throw error
             }
         },
 
-        updateInvestorInvestmentAmount: async (userId: string, additionalInvestmentAmount: number) => {
-            console.log('🔄 투자자 투자금액 업데이트 시작:', userId, additionalInvestmentAmount)
+        updateInvestorInvestmentAmount: async (investor: Partial<Investor>, additionalInvestmentAmount: number) => {
+            console.log('🔄 투자자 투자금액 업데이트 시작:', investor.user_id, additionalInvestmentAmount)
             try {
-                // user_id로 투자자 찾기
-                const investor = await investorsAPI.getByUserId(userId)
-
-                if (!investor) throw new Error('해당 user_id로 투자자를 찾을 수 없습니다.')
+                const originalInvestmentAmount = investor.investment_amount
+                    ? investor.investment_amount
+                    : 0
 
                 // 투자자의 investment_amount 업데이트
-                const updatedInvestor = await investorsAPI.update(investor.id, {
-                    investment_amount: investor.investment_amount + additionalInvestmentAmount,
+                const updatedInvestor = await investorsAPI.update({
+                    ...investor,
+                    investment_amount: originalInvestmentAmount + additionalInvestmentAmount,
                     updated_at: new Date().toISOString()
                 })
 
