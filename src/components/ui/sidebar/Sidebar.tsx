@@ -6,7 +6,7 @@ import PurchaseTileModal from '../../PurchaseTileModal'
 import ImageUploadModal from '../../ImageUploadModal'
 import { getCurrentUserTileInfo } from '@/utils/userUtils'
 import { useUserStore } from '@/store/userStore'
-import {useInvestorsStore} from "@/store/investorsStore";
+import {useInvestorStore} from "@/store/investorsStore";
 import OverviewTab from "@/components/ui/sidebar/OverviewTab";
 import TerritoryTab from "@/components/ui/sidebar/TerritoryTab";
 import StatsTab from "@/components/ui/sidebar/StatsTab";
@@ -18,8 +18,8 @@ export default function Sidebar() {
     // const [imageStatus, setImageStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('pending')
 
     // 각 대륙별 현재 유저 수 계산
-    const { continents, addInvestor, isSidebarOpen, setSidebarOpen } = useContinentStore();
-    const { investors } = useInvestorsStore();
+    const { continents, isSidebarOpen, setSidebarOpen } = useContinentStore();
+    const { investors } = useInvestorStore();
     const { user } = useUserStore()
 
     // 로그인하지 않은 경우 아무것도 렌더링하지 않음
@@ -72,7 +72,11 @@ export default function Sidebar() {
     }, [userInvestmentInfo, investorList]);
 
     const sharePercentage = useMemo(() => {
-        return investmentAmount / totalInvestmentAmount * 100;
+        const newSharePercentage = investmentAmount / totalInvestmentAmount;
+
+        return newSharePercentage > 0.01
+            ? newSharePercentage
+            : 0.01;
     }, [investmentAmount, totalInvestmentAmount]);
 
     const userContinentRank = useMemo(() => {
@@ -140,7 +144,7 @@ export default function Sidebar() {
             case 'approved': return '✅ Approved'
             case 'pending': return '⏳ Under Review'
             case 'rejected': return '❌ Rejected'
-            default: return '📷 Image not uploaded'
+            default: return '📷 Not uploaded'
         }
     }, [imageStatus]);
 
@@ -160,49 +164,6 @@ export default function Sidebar() {
             ? userInvestmentInfo.previous_sunday_view
             : 0
     }, [userInvestmentInfo]);
-
-    // Handle territory purchase
-    const handlePurchase = useCallback(async (continentId: ContinentId, amount: number) => {
-        console.log(`🛒 Territory purchase from sidebar: ${continentId}, $${amount.toLocaleString()}`)
-        try {
-            if (!user?.id) {
-                throw new Error('사용자 정보가 없습니다. 로그인이 필요합니다.')
-            }
-
-            await addInvestor(continentId, {
-                user_id: user.id,
-                name: user.name || `투자자_${Math.floor(Math.random() * 10000)}`,
-                investment: amount,
-                imageStatus: 'none',
-            })
-            alert(`🎉 Investment of $${amount.toLocaleString()} in ${continentId} continent completed!`)
-        } catch (error) {
-            console.error('투자 실패:', error)
-            alert('❌ Investment failed. Please try again.')
-        }
-    }, [user]);
-
-    // Handle additional investment
-    const handleAdditionalInvestment = useCallback(async (amount: number) => {
-        if (!userTileInfo.continentId) return
-        console.log(`💰 Additional investment from sidebar: ${userTileInfo.continentId}, $${amount.toLocaleString()}`)
-        try {
-            if (!user?.id) {
-                throw new Error('사용자 정보가 없습니다. 로그인이 필요합니다.')
-            }
-
-            await addInvestor(userTileInfo.continentId, {
-                user_id: user.id,
-                name: `추가투자_${Math.floor(Math.random() * 10000)}`,
-                investment: amount,
-                imageStatus: 'none',
-            })
-            alert(`💰 Additional investment of $${amount.toLocaleString()} in ${userTileInfo.continentId} continent completed!`)
-        } catch (error) {
-            console.error('추가 투자 실패:', error)
-            alert('❌ Additional investment failed. Please try again.')
-        }
-    }, [user, userTileInfo]);
 
     // Handle image upload
     const handleImageUpload = useCallback(async (file: File) => {
@@ -340,8 +301,6 @@ export default function Sidebar() {
             <PurchaseTileModal
                 isOpen={isPurchaseModalOpen}
                 onClose={() => setIsPurchaseModalOpen(false)}
-                onPurchase={handlePurchase}
-                onAdditionalInvestment={handleAdditionalInvestment}
             />
 
             {/* 이미지 업로드 모달 */}

@@ -10,19 +10,17 @@ export type Investor = {
     name?: string
     title?: string
     investment_amount: number
-    share_percentage: number
     image_url?: string                  // image_url
     image_status?: 'none' | 'pending' | 'approved' | 'rejected'  // image_status
     created_at?: string
     updated_at?: string
-    view_count?: number
     daily_views: number[]
     previous_sunday_view: number
     last_viewed_at?: string
     area_color?: string                    // area_color
 }
 
-interface InvestorsStore {
+interface InvestorStore {
     // 상태
     isLoading: boolean
     error: Error | null
@@ -30,9 +28,9 @@ interface InvestorsStore {
 
     // 액션
     fetchInvestors: () => Promise<void>
-    addInvestor: (investor: Omit<Investor, 'id'>) => Promise<void>
-    updateInvestorInvestmentAmount: (userId: string, investmentAmount: number) => Promise<void>
+    insertInvestor: (userId: string, selectedContinentId: string, investmentAmount: number) => Promise<void>
     updateInvestor: (id: string, updates: Partial<Investor>) => Promise<void>
+    updateInvestorInvestmentAmount: (userId: string, investmentAmount: number) => Promise<void>
     subscribeToInvestors: () => Promise<void>
     unsubscribeFromInvestors: () => void
 
@@ -41,7 +39,7 @@ interface InvestorsStore {
     getTotalInvestmentByContinent: (continentId: string) => number
 }
 
-export const useInvestorsStore = create<InvestorsStore>((set, get) => {
+export const useInvestorStore = create<InvestorStore>((set, get) => {
     // 실시간 구독 핸들러
     let investorsSubscription: ReturnType<typeof supabase.channel> | null = null;
 
@@ -74,23 +72,73 @@ export const useInvestorsStore = create<InvestorsStore>((set, get) => {
             }
         },
 
-        // 새 투자자 추가
-        addInvestor: async (investor) => {
-            console.log('➕ 새 투자자 추가 시작:', investor)
-            try {
-                const newInvestor = await investorsAPI.create(investor)
 
-                if (!newInvestor) throw new Error('투자자 추가 후 데이터를 받지 못했습니다.')
+        /*
+        const handlePurchase = async (continentId: ContinentId, amount: number) => {
+            console.log(`🛒 프로필에서 영역 구매: ${continentId}, $${amount.toLocaleString()}`)
+
+            // 새로운 투자자 생성
+            const newInvestor = {
+                user_id: user?.id,
+                continent_id: continentId,
+                investment_amount: amount,
+                area_color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+            }
+
+            try {
+                // 🔥 Supabase에 투자자 추가
+                await addInvestor(continentId, newInvestor)
+                alert(`🎉 ${continentId} 대륙에 $${amount.toLocaleString()} 투자가 완료되었습니다!`)
+            } catch (error) {
+                console.error('투자 실패:', error)
+                alert('❌ 투자에 실패했습니다. 다시 시도해주세요.')
+            }
+        }
+         */
+        // 새 투자자 추가
+        insertInvestor: async (userId: string, continentId: string, investmentAmount: number) => {
+            try {
+                const newInvestorInfo = {
+                    user_id: userId,
+                    continent_id: continentId,
+                    investment_amount: investmentAmount,
+                    area_color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+                }
+                console.log('➕ 새 투자자 추가 시작:', newInvestorInfo)
+                const result = await investorsAPI.create(newInvestorInfo)
+
+                if (!result) throw new Error('투자자 추가 후 데이터를 받지 못했습니다.')
 
                 set(state => ({
                     investors: {
                         ...state.investors,
-                        [newInvestor.id]: newInvestor
+                        [result.id]: result
                     }
                 }))
-                console.log('✅ 새 투자자 추가 완료:', newInvestor.id)
+                console.log('✅ 새 투자자 추가 완료:', result.id)
             } catch (error) {
                 console.error('❌ 투자자 추가 실패:', error)
+                throw error
+            }
+        },
+
+        // 투자자 정보 업데이트
+        updateInvestor: async (id, updates) => {
+            console.log('🔄 투자자 정보 업데이트 시작:', id, updates)
+            try {
+                const updatedInvestor = await investorsAPI.update(id, updates)
+
+                if (!updatedInvestor) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
+
+                set(state => ({
+                    investors: {
+                        ...state.investors,
+                        [id]: { ...state.investors[id], ...updatedInvestor }
+                    }
+                }))
+                console.log('✅ 투자자 정보 업데이트 완료:', id)
+            } catch (error) {
+                console.error('❌ 투자자 정보 업데이트 실패:', error)
                 throw error
             }
         },
@@ -122,27 +170,6 @@ export const useInvestorsStore = create<InvestorsStore>((set, get) => {
                 return updatedInvestor
             } catch (error) {
                 console.error('❌ 투자자 투자금액 업데이트 실패:', error)
-                throw error
-            }
-        },
-
-        // 투자자 정보 업데이트
-        updateInvestor: async (id, updates) => {
-            console.log('🔄 투자자 정보 업데이트 시작:', id, updates)
-            try {
-                const updatedInvestor = await investorsAPI.update(id, updates)
-
-                if (!updatedInvestor) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
-
-                set(state => ({
-                    investors: {
-                        ...state.investors,
-                        [id]: { ...state.investors[id], ...updatedInvestor }
-                    }
-                }))
-                console.log('✅ 투자자 정보 업데이트 완료:', id)
-            } catch (error) {
-                console.error('❌ 투자자 정보 업데이트 실패:', error)
                 throw error
             }
         },

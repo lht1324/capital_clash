@@ -117,7 +117,7 @@ function OverviewTab({
                         )}
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-300">대륙</span>
+                                <span className="text-gray-300">Continent</span>
                                 <span className="text-white font-medium">{continentName}</span>
                             </div>
                             {/*<div className="flex justify-between items-center">*/}
@@ -144,7 +144,6 @@ function OverviewTab({
                     <h4 className="text-lg font-semibold text-white mb-2">No territory</h4>
                     <p className="text-gray-400 mb-4">Start your investment by purchasing your territory!</p>
                     <button
-                        // onClick={() => setIsPurchaseModalOpen(true)}
                         onClick={() => onClickOpenPurchaseModal()}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
                     >

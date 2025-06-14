@@ -23,7 +23,8 @@ export function calculateSquareLayout(investorList: Investor[], maxUserCount: nu
 
     try {
         // Billboard 알고리즘 사용
-        const result = calculateBillboardLayout(investorList, maxUserCount)
+        // const result = calculateBillboardLayout(investorList, maxUserCount)
+        const result = calculateRectangularSquareLayout(investorList, maxUserCount);
         console.log(`✅ Billboard 배치 완료: ${result.placements.length}개 정사방형`)
         return result
     } catch (error) {
@@ -45,133 +46,112 @@ export function calculateSquareLayout(investorList: Investor[], maxUserCount: nu
     }
 }
 
-export function calculateBillboardLayout(investorList: Investor[], maxUsers: number) {
-    console.log('🏢 새로운 셀 기반 배치 알고리즘 시작', investorList);
+type Square = {
+    investor: Investor,
+    sideLength: number, // 최소 1×1
+}
 
-    if (investorList.length === 0) return {
-        placements: [],
-        boundary: { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 0, height: 0 }
-    };
+type Placement = {
+    investor: Investor,
+    x: number,  // 중심 기준으로 좌표 조정
+    y: number,
+    width: number,
+    height: number
+}
 
-    // 1. 각 사용자의 지분율에 따라 차지할 셀 개수 계산
-    const totalCells = maxUsers * maxUsers;
-    const totalInvestmentAmount = investorList.reduce((acc, investor) => { return acc + investor.investment_amount; }, 0);
+type Boundary = {
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number,
+    width: number,
+    height: number
+}
+
+function calculateRectangularSquareLayout(investorList: Investor[], maxUsers: number) {
+    // 1. 각 투자자의 지분율에 따라 정사각형 크기 계산
+    const totalInvestmentAmount = investorList.reduce((acc, investor) => acc + investor.investment_amount, 0);
     const squares = investorList.map(investor => {
-        const allowedCellCount = Math.round(Number((investor.investment_amount / totalInvestmentAmount).toFixed(2)) * totalCells);
-        const squareLength = Math.floor(Math.sqrt(allowedCellCount)); // 정사각형으로 만들기 위한 한 변의 길이
+        const sharePercentage = investor.investment_amount / totalInvestmentAmount;
+        const area = sharePercentage * maxUsers * maxUsers;
+        const sideLength = Math.floor(Math.sqrt(area));
+
         return {
-            id: investor.id,
-            investor: investor,
-            length: Math.max(1, squareLength), // 최소 1×1
-            allowedCellCount: allowedCellCount
+            investor,
+            sideLength: Math.max(1, sideLength)
         };
     });
 
-    // 2. 사각형 크기에 따른 내림차순 정렬
-    squares.sort((a, b) => b.length - a.length);
+    // 2. 정사각형을 크기 기준 내림차순 정렬
+    squares.sort((a, b) => b.sideLength - a.sideLength);
 
-    console.log('📊 정렬된 사각형들:');
-    squares.forEach((square, i) => {
-        console.log(`  ${i+1}. ${square.investor.name || square.id}: ${square.length}×${square.length} (지분: ${(square.investor.investment_amount / totalInvestmentAmount * 100).toFixed(1)}%, 셀: ${square.allowedCellCount}개)`);
-    });
+    // 3. 직사각형 영역 내에 정사각형 배치 (가로 직사각형 형태)
+    return placeSquaresInHorizontalRectangle(squares, maxUsers);
+}
 
-    // 3. 배치 상태 초기화
-    let currentBoundaryW = maxUsers; // 가로 경계 (셀 단위)
-    let currentBoundaryH = maxUsers; // 세로 경계 (셀 단위)
-    const placed = []; // 배치된 사각형들
+function placeSquaresInRectangle(squares: Square[], maxSize: number) {
+    // 초기 직사각형 영역 설정 (가로:세로 = 1:1 시작)
+    let width = maxSize;
+    let height = maxSize;
 
-    // 4. 순회 배치 알고리즘
-    for (let i = 0; i < squares.length; i++) {
-        const square = squares[i];
-        let foundPosition = false;
+    // 배치된 정사각형 정보
+    const placements: Placement[] = [];
 
-        console.log(`🔍 배치 시도 ${i+1}/${squares.length}: [${square.id}] ${square.length}×${square.length}`);
+    // 현재 행과 열의 위치
+    let currentX = 0;
+    let currentY = 0;
+    let rowHeight = 0;
 
-        // y=0부터 순회 시작
-        for (let row = 0; row < currentBoundaryH && !foundPosition; row++) {
-            for (let column = 0; column < currentBoundaryW && !foundPosition; column++) {
-
-                // 겹침 검사: 기존 배치된 사각형들과 겹치지 않는지 확인
-                let canPlace = true;
-                for (const existing of placed) {
-                    if (!(column + square.length <= existing.x ||
-                        existing.x + existing.length <= column ||
-                        row + square.length <= existing.y ||
-                        existing.y + existing.length <= row)) {
-                        canPlace = false;
-                        break;
-                    }
-                }
-
-                if (canPlace) {
-                    // y=0일 때: 경계 확장 가능
-                    if (row === 0) {
-                        // 경계를 넘는 경우 경계 확장
-                        if (column + square.length > currentBoundaryW) {
-                            currentBoundaryW = column + square.length;
-                            console.log(`🔧 y=0에서 경계 확장: 가로 ${currentBoundaryW}셀로 확장`);
-                        }
-
-                        // 배치 실행
-                        placed.push({
-                            ...square,
-                            x: column,
-                            y: row
-                        });
-
-                        console.log(`✅ 배치 완료: ${square.id} at (${column}, ${row}) ${square.length}×${square.length} [y=0, 경계확장가능]`);
-                        foundPosition = true;
-
-                    } else {
-                        // y≥1일 때: 확장된 경계 내에서만 배치
-                        if (column + square.length <= currentBoundaryW) {
-                            // 배치 실행
-                            placed.push({
-                                ...square,
-                                x: column,
-                                y: row
-                            });
-
-                            console.log(`✅ 배치 완료: ${square.id} at (${column}, ${row}) ${square.length}×${square.length} [y≥1, 경계내]`);
-                            foundPosition = true;
-                        } else {
-                            // 경계를 넘으면 x=0으로 돌아가서 다음 행으로
-                            console.log(`⚠️ y≥1에서 경계 초과: (${column}, ${row}) + ${square.length} > ${currentBoundaryW}, 다음 행으로`);
-                            break; // 내부 x 루프 종료, 다음 y로
-                        }
-                    }
-                }
-            }
-        }
-
-        // 배치하지 못한 경우 강제 배치 (새 행 생성)
-        if (!foundPosition) {
-            const newY = currentBoundaryH;
-            placed.push({
-                ...square,
-                x: 0,
-                y: newY
+    for (const square of squares) {
+        // 현재 행에 배치 가능한지 확인
+        if (currentX + square.sideLength <= width) {
+            // 현재 행에 배치
+            placements.push({
+                investor: square.investor,
+                x: currentX,
+                y: currentY,
+                width: square.sideLength,
+                height: square.sideLength
             });
 
-            currentBoundaryW = Math.max(currentBoundaryW, square.length);
-            currentBoundaryH = newY + square.length;
+            // 현재 행의 높이 업데이트
+            rowHeight = Math.max(rowHeight, square.sideLength);
 
-            console.log(`🆘 강제 배치: ${square.id} at (0,${newY}) ${square.length}×${square.length}, 새 경계: ${currentBoundaryW}×${currentBoundaryH}`);
+            // X 위치 업데이트
+            currentX += square.sideLength;
+        } else {
+            // 새 행으로 이동
+            currentX = 0;
+            currentY += rowHeight;
+            rowHeight = square.sideLength;
+
+            // 새 행에 배치
+            placements.push({
+                investor: square.investor,
+                x: currentX,
+                y: currentY,
+                width: square.sideLength,
+                height: square.sideLength
+            });
+
+            // X 위치 업데이트
+            currentX += square.sideLength;
         }
     }
 
-    // 5. Placement 형식으로 변환
-    const placements = placed.map(square => {
-        return {
-            investor: square.investor,
-            x: square.x - Math.floor(currentBoundaryW / 2),  // 중심 기준으로 좌표 조정
-            y: square.y - Math.floor(currentBoundaryH / 2),
-            width: square.length,
-            height: square.length
-        };
-    });
+    // 전체 경계 계산
+    const boundary = calculateBoundary(placements);
 
-    // 6. 경계 계산
+    // 중앙 정렬을 위한 좌표 조정
+    const centeredPlacements = centerPlacements(placements, boundary);
+
+    return {
+        placements: centeredPlacements,
+        boundary
+    };
+}
+
+function calculateBoundary(placements: Placement[]) {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
     placements.forEach(p => {
@@ -181,19 +161,86 @@ export function calculateBillboardLayout(investorList: Investor[], maxUsers: num
         maxY = Math.max(maxY, p.y + p.height);
     });
 
-    const boundary = {
+    return {
         minX, maxX, minY, maxY,
         width: maxX - minX,
         height: maxY - minY
     };
+}
 
-    // 7. 결과 출력
-    console.log(`🏢 배치 완료: ${placed.length}/${squares.length}개`);
-    console.log(`📐 최종 경계: ${currentBoundaryW}×${currentBoundaryH} (셀 단위)`);
-    console.log(`🎯 배치 결과:`);
-    placements.forEach((p, i) => {
-        console.log(`  ${i+1}. ${p.investor.name || p.investor.id}: (${p.x},${p.y}) ${p.width}×${p.height}`);
-    });
+function centerPlacements(placements: Placement[], boundary: Boundary) {
+    const offsetX = Math.floor(boundary.width / 2);
+    const offsetY = Math.floor(boundary.height / 2);
 
-    return { placements, boundary };
+    return placements.map(p => ({
+        ...p,
+        x: p.x - offsetX,
+        y: p.y - offsetY
+    }));
+}
+
+/**
+ * 가로 직사각형 형태로 정사각형을 배치하는 함수
+ * 세로 방향으로 먼저 채우고, 세로 공간이 부족하면 가로로 확장
+ */
+function placeSquaresInHorizontalRectangle(squares: Square[], maxSize: number) {
+    // 초기 직사각형 영역 설정 (가로:세로 = 1:1 시작)
+    let width = maxSize;
+    let height = maxSize;
+
+    // 배치된 정사각형 정보
+    const placements: Placement[] = [];
+
+    // 현재 열과 행의 위치 (세로 방향 우선)
+    let currentX = 0;
+    let currentY = 0;
+    let columnWidth = 0;
+
+    for (const square of squares) {
+        // 현재 열에 배치 가능한지 확인
+        if (currentY + square.sideLength <= height) {
+            // 현재 열에 배치
+            placements.push({
+                investor: square.investor,
+                x: currentX,
+                y: currentY,
+                width: square.sideLength,
+                height: square.sideLength
+            });
+
+            // 현재 열의 너비 업데이트
+            columnWidth = Math.max(columnWidth, square.sideLength);
+
+            // Y 위치 업데이트 (세로 방향으로 이동)
+            currentY += square.sideLength;
+        } else {
+            // 새 열로 이동
+            currentY = 0;
+            currentX += columnWidth;
+            columnWidth = square.sideLength;
+
+            // 새 열에 배치
+            placements.push({
+                investor: square.investor,
+                x: currentX,
+                y: currentY,
+                width: square.sideLength,
+                height: square.sideLength
+            });
+
+            // Y 위치 업데이트
+            currentY += square.sideLength;
+        }
+    }
+
+    // 전체 경계 계산
+    const boundary = calculateBoundary(placements);
+
+    // 중앙 정렬을 위한 좌표 조정
+    const centeredPlacements = centerPlacements(placements, boundary);
+
+    return {
+        placements: centeredPlacements,
+        boundary
+    };
 }

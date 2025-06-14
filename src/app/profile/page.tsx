@@ -6,7 +6,8 @@ import Link from 'next/link'
 import PurchaseTileModal from '@/components/PurchaseTileModal'
 import { useContinentStore, type ContinentId } from '@/store/continentStore'
 import { getCurrentUserTileInfo } from '@/utils/userUtils'
-import {useInvestorsStore} from "@/store/investorsStore";
+import {useInvestorStore} from "@/store/investorsStore";
+import {useUserStore} from "@/store/userStore";
 
 interface UserProfile {
     id: string
@@ -44,20 +45,12 @@ export default function ProfilePage() {
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
 
     const { addInvestor, continents } = useContinentStore();
-    const { investors } = useInvestorsStore();
+    const { investors, insertInvestor, updateInvestorInvestmentAmount } = useInvestorStore();
+    const { user } = useUserStore();
 
 
     // 현재 사용자의 영역 정보 확인
     const userTileInfo = getCurrentUserTileInfo(Object.values(investors))
-
-    // 현재 사용자 정보
-    const user: UserProfile = {
-        id: 'user_001',
-        name: 'investor_01',
-        email: 'investor01@example.com',
-        joinDate: '2024-01-15',
-        bio: '전략적 투자를 통해 안정적인 수익을 추구합니다.'
-    }
 
     // 사용자의 단일 영역 정보
     const myTile: MyTile | null = {
@@ -152,24 +145,16 @@ export default function ProfilePage() {
         }
     }
 
-    // 영역 구매 처리
+    // 영역 구매 처리 (Insert into investors)
     const handlePurchase = async (continentId: ContinentId, amount: number) => {
         console.log(`🛒 프로필에서 영역 구매: ${continentId}, $${amount.toLocaleString()}`)
 
         // 새로운 투자자 생성
         const newInvestor = {
-            id: `investor_${Date.now()}`,
-            name: `새 투자자 ${Math.floor(Math.random() * 1000)}`,
-            investment: amount,
-            color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
-            imageUrl: '/test.jpg',
-            ratio: 16/9,
-            imageStatus: 'none' as const,
-            profileInfo: {
-                description: '새로운 투자자입니다.',
-                website: '',
-                contact: ''
-            }
+            user_id: user?.id,
+            continent_id: continentId,
+            investment_amount: amount,
+            area_color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
         }
 
         try {
@@ -182,7 +167,7 @@ export default function ProfilePage() {
         }
     }
 
-    // 추가 투자 처리
+    // 추가 투자 처리 (Update into investors, investment_amount)
     const handleAdditionalInvestment = async (amount: number) => {
         if (!userTileInfo.continentId) return
 
@@ -190,17 +175,16 @@ export default function ProfilePage() {
 
         const additionalInvestor = {
             id: `investor_${Date.now()}`,
+            user_id: `user_${Date.now()}`,
+            continent_id: userTileInfo.continentId,
             name: `추가 투자 ${Math.floor(Math.random() * 1000)}`,
-            investment: amount,
-            color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
-            imageUrl: '/test.jpg',
-            ratio: 16/9,
-            imageStatus: 'none' as const,
-            profileInfo: {
-                description: '추가 투자입니다.',
-                website: '',
-                contact: ''
-            }
+            investment_amount: amount,
+            share_percentage: 0, // 초기값, 실제로는 계산 필요
+            image_url: '/test.jpg',
+            image_status: 'none' as const,
+            area_color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+            daily_views: [],
+            previous_sunday_view: 0
         }
 
         try {
@@ -706,8 +690,6 @@ export default function ProfilePage() {
             <PurchaseTileModal
                 isOpen={isPurchaseModalOpen}
                 onClose={() => setIsPurchaseModalOpen(false)}
-                onPurchase={handlePurchase}
-                onAdditionalInvestment={handleAdditionalInvestment}
             />
         </div>
     )

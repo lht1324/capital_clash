@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase/supabase'
 import { continentsAPI } from '@/lib/supabase/supabase-continents-api'
 import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
 import { useContinentStore } from '@/store/continentStore'
-import { useInvestorsStore } from '@/store/investorsStore'
+import { useInvestorStore } from '@/store/investorsStore'
 import { showSuccess, showError, showInfo } from '@/components/admin/NotificationSystem'
 
 // 인증 상태 관리 훅
@@ -168,7 +168,7 @@ export function useContinentSync() {
 // 투자자 데이터 실시간 동기화 훅
 export function useInvestorSync() {
     const { setInvestors, setLoading } = useContinentStore()
-    const { fetchInvestors, subscribeToInvestors, unsubscribeFromInvestors } = useInvestorsStore()
+    const { fetchInvestors, subscribeToInvestors, unsubscribeFromInvestors } = useInvestorStore()
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
@@ -405,7 +405,7 @@ export function useSupabaseData(onSuccess: () => void) {
         fetchInvestors,
         subscribeToInvestors,
         unsubscribeFromInvestors
-    } = useInvestorsStore()
+    } = useInvestorStore()
 
     useEffect(() => {
         // 초기 데이터 로드

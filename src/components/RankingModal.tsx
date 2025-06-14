@@ -1,91 +1,95 @@
-import { useState } from 'react'
-import { useContinentStore, type ContinentId } from '@/store/continentStore'
-import { useInvestorsStore, type Investor } from "@/store/investorsStore";
+import {useCallback, useMemo, useState} from 'react'
+import {useContinentStore, type ContinentId, Continent} from '@/store/continentStore'
+import { useInvestorStore, type Investor } from "@/store/investorsStore";
 
 interface RankingModalProps {
     isOpen: boolean
     onClose: () => void
 }
 
-interface RankingItem {
+interface RankingData {
     id: string
     name?: string
-    investment: number
+    investmentAmount: number
     sharePercentage: number
     continentId: ContinentId
     continentName: string
-    view_count: number
-    daily_views: number[]
+    dailyViews: number[]
 }
 
 export default function RankingModal({ isOpen, onClose }: RankingModalProps) {
     const [activeTab, setActiveTab] = useState<'investment' | 'views'>('investment')
-    const [selectedContinent, setSelectedContinent] = useState<ContinentId | null>(null)
+    const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null)
     const { continents } = useContinentStore()
-    const { investors } = useInvestorsStore();
+    const { investors } = useInvestorStore();
 
-    // 모든 투자자 데이터 수집 및 정렬
-    const getAllInvestors = () => {
-        const continentList = Object.values(continents).filter((continent) => continent.id !== "central");
-        const investorList = Object.values(investors);
-        const rankingDataList: RankingItem[] = []
+    const continentList = useMemo(() => {
+        return Object.values(continents).filter((continent) => continent.id !== "central");
+    }, [continents]);
+    const investorList = useMemo(() => {
+        return Object.values(investors);
+    }, [investors]);
 
-        continentList.forEach((continent) => {
-            const filteredInvestorListByContinent = investorList.filter((investor) => {
-                return investor.continent_id === continent.id;
-            })
-            const totalInvestmentByContinent = filteredInvestorListByContinent
-                .reduce((acc, investor) => acc + investor.investment_amount, 0);
+    const continentInfoMap = useMemo(() => {
+        return new Map(continentList.map((continent) => {
+            return [
+                continent.id,
+                {
+                    name: continent.name,
+                    color: continent.color,
+                    totalInvestment: investorList.filter((investor: Investor) => {
+                        return investor.continent_id === continent.id
+                    }).reduce((acc, investor) => {
+                        return acc + investor.investment_amount
+                    }, 0)
+                }
+            ]
+        }))
+    }, [continentList, investorList])
 
-            filteredInvestorListByContinent.forEach((investor) => {
-                rankingDataList.push({
-                    id: investor.id,
-                    name: investor.name,
-                    investment: investor.investment_amount,
-                    sharePercentage: (investor.investment_amount / totalInvestmentByContinent) * 100,
-                    continentId: continent.id as ContinentId,
-                    continentName: continent.name,
-                    view_count: investor.view_count || 0,
-                    daily_views: investor.daily_views || [0,0,0,0,0,0,0]
-                })
-            })
+    const rankingDataList: RankingData[] = useMemo(() => {
+        return investorList.map((investor: Investor) => {
+            const continentInfo = continentInfoMap.get(investor.continent_id);
+
+            const continentName = continentInfo?.name
+                ? continentInfo?.name
+                : "-"
+            const totalInvestment = continentInfo?.totalInvestment
+                ? continentInfo.totalInvestment
+                : 0;
+
+            return {
+                id: investor.id,
+                name: investor.name,
+                investmentAmount: investor.investment_amount,
+                sharePercentage: (investor.investment_amount / totalInvestment) * 100,
+                continentId: investor.continent_id,
+                continentName: continentName,
+                dailyViews: investor.daily_views || [0, 0, 0, 0, 0, 0, 0]
+            }
         })
+    }, [investorList, continentInfoMap]);
 
-        return rankingDataList
-    }
+    const filteredRankingDataList = useMemo(() => {
+        console.log(`continentId: ${selectedContinentId}`)
+        return selectedContinentId
+            ? rankingDataList.filter((rankingItem) => rankingItem.continentId === selectedContinentId)
+            : rankingDataList;
+    }, [rankingDataList, selectedContinentId]);
 
-    // 대륙별 투자자 필터링
-    const getFilteredRankingDataList = () => {
-        const rankingDataList = getAllInvestors()
-
-        if (selectedContinent) {
-            return rankingDataList.filter(rankingData => rankingData.continentId === selectedContinent)
+    const rankingItemList = useMemo(() => {
+        const getTotalViewCount = (dailyViews: number[]) => {
+            return dailyViews.reduce((acc, dailyView) => acc + dailyView, 0);
         }
 
-        return rankingDataList
-    }
-
-    // 투자금액 기준 정렬
-    const getInvestmentRanking = () => {
-        return getFilteredRankingDataList().sort((a, b) => b.investment - a.investment)
-    }
-
-    // 조회수 기준 정렬
-    const getViewsRanking = () => {
-        return getFilteredRankingDataList().sort((a, b) => b.view_count - a.view_count)
-    }
-
-    // 대륙 옵션
-    const continentOptions = [
-        { id: 'northwest' as ContinentId, name: 'Northwest', color: '#3B82F6' },
-        { id: 'northeast' as ContinentId, name: 'Northeast', color: '#EF4444' },
-        { id: 'southwest' as ContinentId, name: 'Southwest', color: '#10B981' },
-        { id: 'southeast' as ContinentId, name: 'Southeast', color: '#F59E0B' }
-    ]
+        return filteredRankingDataList.sort((a, b) => {
+            return activeTab === "investment"
+                ? b.investmentAmount - a.investmentAmount
+                : getTotalViewCount(b.dailyViews) - getTotalViewCount(a.dailyViews);
+        })
+    }, [activeTab, filteredRankingDataList]);
 
     if (!isOpen) return null
-
-    const rankingData = activeTab === 'investment' ? getInvestmentRanking() : getViewsRanking()
 
     return (
         <>
@@ -116,21 +120,21 @@ export default function RankingModal({ isOpen, onClose }: RankingModalProps) {
                             {/* 대륙 필터 */}
                             <div className="flex flex-wrap gap-2">
                                 <button
-                                    onClick={() => setSelectedContinent(null)}
+                                    onClick={() => setSelectedContinentId(null)}
                                     className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                                        !selectedContinent
+                                        !selectedContinentId
                                             ? 'bg-blue-600 text-white'
                                             : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                                     }`}
                                 >
                                     All Continents
                                 </button>
-                                {continentOptions.map((continent) => (
+                                {continentList.map((continent) => (
                                     <button
                                         key={continent.id}
-                                        onClick={() => setSelectedContinent(continent.id)}
+                                        onClick={() => setSelectedContinentId(continent.id)}
                                         className={`px-3 py-1.5 rounded-lg text-sm transition-all flex items-center space-x-2 ${
-                                            selectedContinent === continent.id
+                                            selectedContinentId === continent.id
                                                 ? 'bg-blue-600 text-white'
                                                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                                         }`}
@@ -173,7 +177,7 @@ export default function RankingModal({ isOpen, onClose }: RankingModalProps) {
                     {/* 랭킹 목록 */}
                     <div className="p-6">
                         <div className="space-y-3">
-                            {rankingData.map((investor, index) => (
+                            {rankingItemList.map((investor, index) => (
                                 <div
                                     key={investor.id}
                                     className="bg-gray-800 rounded-lg p-4 flex items-center space-x-4"
@@ -198,28 +202,30 @@ export default function RankingModal({ isOpen, onClose }: RankingModalProps) {
                                             <div className="flex items-center space-x-1 text-sm">
                                                 <div
                                                     className="w-2 h-2 rounded-full"
-                                                    style={{ backgroundColor: continentOptions.find(c => c.id === investor.continentId)?.color }}
+                                                    style={{ backgroundColor: continentInfoMap.get(investor.continentId)?.color }}
                                                 />
                                                 <span className="text-gray-400">{investor.continentName}</span>
                                             </div>
                                         </div>
                                         <div className="mt-1 flex items-center space-x-4 text-sm">
                                             <div className="text-green-400">
-                                                ${investor.investment.toLocaleString()}
+                                                ${investor.investmentAmount.toLocaleString()}
                                             </div>
                                             <div className="text-blue-400">
                                                 {investor.sharePercentage.toFixed(2)}%
                                             </div>
                                             <div className="text-purple-400">
-                                                {investor.view_count.toLocaleString()} views
+                                                {investor.dailyViews.reduce((acc, dailyView) => {
+                                                    return acc + dailyView
+                                                }, 0).toLocaleString()} views
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* 추세 */}
                                     <div className="hidden sm:flex items-end space-x-1 h-8">
-                                        {investor.daily_views.map((views, i) => {
-                                            const maxViews = Math.max(...investor.daily_views, 1)
+                                        {investor.dailyViews.map((views, i) => {
+                                            const maxViews = Math.max(...investor.dailyViews, 1)
                                             const height = (views / maxViews) * 100
 
                                             return (
@@ -237,7 +243,7 @@ export default function RankingModal({ isOpen, onClose }: RankingModalProps) {
                                 </div>
                             ))}
 
-                            {rankingData.length === 0 && (
+                            {rankingItemList.length === 0 && (
                                 <div className="text-center py-8">
                                     <div className="text-4xl mb-3">🏆</div>
                                     <h3 className="text-lg font-medium text-white mb-2">No Data Available</h3>

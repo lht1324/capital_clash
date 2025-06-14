@@ -1,11 +1,11 @@
 import {useContinentStore} from "@/store/continentStore";
 import {memo, useEffect, useMemo} from "react";
 import SingleContinent from "@/components/continent_map/SingleContinent";
-import {useInvestorsStore} from "@/store/investorsStore";
+import {useInvestorStore} from "@/store/investorsStore";
 
 function WorldScene() {
     const { continents } = useContinentStore();
-    const { investors, getInvestorsByContinent } = useInvestorsStore();
+    const { investors, getInvestorsByContinent } = useInvestorStore();
 
     const investorList = useMemo(() => {
         return Object.values(investors)

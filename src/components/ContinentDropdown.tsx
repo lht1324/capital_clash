@@ -2,7 +2,7 @@
 
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import { useContinentStore, ContinentId, Continent } from '@/store/continentStore'
-import { useInvestorsStore } from '@/store/investorsStore'
+import { useInvestorStore } from '@/store/investorsStore'
 
 const DROPDOWN_CAMERA_MOVE_Z = 25;
 
@@ -13,13 +13,15 @@ export default function ContinentDropdown() {
       resetSelection,
       isWorldView
     } = useContinentStore()
-    const { getTotalInvestmentByContinent, getInvestorsByContinent } = useInvestorsStore()
+    const { getTotalInvestmentByContinent, getInvestorsByContinent } = useInvestorStore()
 
     const [isOpen, setIsOpen] = useState(false)
 
-    useEffect(() => {
-        console.log("initial")
-    }, []);
+    const loadedContinentCount = useMemo(() => {
+        return continents
+            ? Object.keys(continents).length
+            : 0
+    }, [continents]);
 
     const handleContinentSelect = useCallback((continentId: ContinentId) => {
         // 🛡️ 선택하려는 대륙이 실제로 존재하는지 확인
@@ -64,8 +66,8 @@ export default function ContinentDropdown() {
 
     const currentDisplay = useMemo(() => {
         return isWorldView
-            ? { name: '세계 지도', description: '모든 대륙 보기', color: '#6B7280' }
-            : selectedContinentData || { name: '로딩 중...', description: '대륙 정보 불러오는 중', color: '#6B7280' }
+            ? { name: 'World Map', description: 'All continents at a glance.', color: '#6B7280' }
+            : selectedContinentData || { name: 'Loading...', description: 'Loading continent data', color: '#6B7280' }
     }, [isWorldView, selectedContinentData]);
 
     // 현재 대륙의 투자 통계 (안전한 접근)
@@ -84,7 +86,7 @@ export default function ContinentDropdown() {
                 {/* 현재 선택된 뷰 버튼 */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center space-x-3 bg-black bg-opacity-80 text-white p-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 min-w-[200px]"
+                    className="flex items-center space-x-3 bg-black bg-opacity-80 text-white p-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 min-w-[300px]"
                     style={{ borderLeft: `4px solid ${currentDisplay.color}` }}
                 >
                     <div
@@ -97,12 +99,12 @@ export default function ContinentDropdown() {
                         {!isWorldView && currentContinentInfo && (
                             <div className="text-xs text-gray-400 mt-1 space-y-0.5">
                                 <div className="flex justify-between">
-                                    <span>💰 투자금:</span>
+                                    <span>💰 Total Investment:</span>
                                     <span
                                         className="text-green-400">${currentContinentInfo.totalInvestment.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span>👥 투자자:</span>
+                                    <span>👥 Number of Investors:</span>
                                     <span
                                         className="text-blue-400">{currentContinentInfo.investorCount}/{currentContinentInfo.maxUsers}</span>
                                 </div>
@@ -132,9 +134,9 @@ export default function ContinentDropdown() {
                         >
                             <div className="w-3 h-3 rounded-full bg-gray-500"/>
                             <div className="flex-1 text-left">
-                                <div className="font-bold text-sm text-white">🌍 세계 지도</div>
-                                <div className="text-xs text-gray-300">모든 대륙 한눈에 보기</div>
-                                <div className="text-xs text-gray-400">전체 뷰</div>
+                                <div className="font-bold text-sm text-white">🌍 World Map</div>
+                                <div className="text-xs text-gray-300">All continents at a glance.</div>
+                                {/*<div className="text-xs text-gray-400">전체 뷰</div>*/}
                             </div>
                         </button>
 
@@ -163,7 +165,7 @@ export default function ContinentDropdown() {
                                     <div className="font-bold text-sm text-white">{continent.name}</div>
                                     <div className="text-xs text-gray-300">{continent.description}</div>
                                     <div className="text-xs text-gray-400">
-                                        {continent.current_users}/{continent.max_users} 명
+                                        {continent.current_users}/{continent.max_users} people
                                     </div>
                                 </div>
                             </button>
@@ -181,7 +183,7 @@ export default function ContinentDropdown() {
                 <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-gray-500 rounded-full animate-pulse"></div>
                     <span
-                        className="text-sm">대륙 데이터 로딩 중... ({continents ? Object.keys(continents).length : 0}/5)</span>
+                        className="text-sm">Loading continent data... ({loadedContinentCount}/5)</span>
                 </div>
             </div>)}
         </div>

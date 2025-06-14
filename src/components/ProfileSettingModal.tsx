@@ -1,22 +1,22 @@
 'use client'
 
 import { useContinentStore, type ContinentId } from '@/store/continentStore'
-import { useEffect } from 'react'
+import {memo, useEffect} from 'react'
 import {useInvestorStore} from "@/store/investorsStore";
 
-interface ProfileViewModalProps {
+interface ProfileSettingModalProps {
     isOpen: boolean
     onClose: () => void
     investorId: string
     continentId: ContinentId
 }
 
-export default function ProfileViewModal({
+function ProfileSettingModal({
     isOpen,
     onClose,
     investorId,
     continentId
-}: ProfileViewModalProps) {
+}: ProfileSettingModalProps) {
     const { continents, updateInvestorViews } = useContinentStore();
     const { investors } = useInvestorStore();
 
@@ -216,3 +216,5 @@ export default function ProfileViewModal({
         </div>
     )
 }
+
+export default memo(ProfileSettingModal);

@@ -110,7 +110,6 @@ export interface Database {
                     image_status?: 'none' | 'pending' | 'approved' | 'rejected'
                     created_at?: string
                     updated_at?: string
-                    view_count?: number
                     daily_views: number[]
                     previous_sunday_view: number
                     last_viewed_at?: string
@@ -128,7 +127,6 @@ export interface Database {
                     image_status?: 'none' | 'pending' | 'approved' | 'rejected'
                     created_at?: string
                     updated_at?: string
-                    view_count?: number
                     daily_views: number[]
                     previous_sunday_view: number
                     last_viewed_at?: string
@@ -145,7 +143,6 @@ export interface Database {
                     image_url?: string
                     image_status?: 'none' | 'pending' | 'approved' | 'rejected'
                     updated_at?: string
-                    view_count?: number
                     daily_views: number[]
                     previous_sunday_view: number
                     last_viewed_at?: string

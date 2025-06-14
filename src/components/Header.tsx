@@ -150,12 +150,6 @@ export default function Header() {
             <PurchaseTileModal
                 isOpen={isPurchaseModalOpen}
                 onClose={() => setIsPurchaseModalOpen(false)}
-                onPurchase={(continentId: ContinentId, amount: number) => {
-                    // 일단 넣었으나 필요할 경우 지워도 무방함
-                }}
-                onAdditionalInvestment={(amount: number) => {
-                    // 일단 넣었으나 필요할 경우 지워도 무방함
-                }}
             />
         </header>
     )

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { continentsAPI } from '@/lib/supabase/supabase-continents-api'
 import type { Database } from '@/types/database'
-import { useInvestorsStore } from './investorsStore'
+import { useInvestorStore } from './investorsStore'
 
 type ContinentRow = Database['public']['Tables']['continents']['Row']
 
@@ -157,7 +157,7 @@ export const useContinentStore = create<ContinentStore>((set) => ({
             const { investment, imageStatus, profileInfo, ...rest } = investorData
 
             // useInvestorsStore의 addInvestor 메서드 호출
-            await useInvestorsStore.getState().addInvestor({
+            await useInvestorStore.getState().addInvestor({
                 user_id: rest.userId || rest.user_id || '', // userId 또는 user_id 사용
                 continent_id: continentId,
                 name: rest.name || '',

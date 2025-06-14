@@ -1,22 +1,23 @@
 'use client'
 
-import {useState, useEffect, useMemo, useCallback} from 'react'
+import {useState, useEffect, useMemo, useCallback, useRef} from 'react'
 import { useContinentStore, type ContinentId } from '@/store/continentStore'
 import { getCurrentUserTileInfo, type UserTileInfo } from '@/utils/userUtils'
-import {Investor, useInvestorsStore} from "@/store/investorsStore";
+import {Investor, useInvestorStore} from "@/store/investorsStore";
 import {useUserStore} from "@/store/userStore";
 
 interface PurchaseTileModalProps {
     isOpen: boolean
     onClose: () => void
-    onPurchase?: (continentId: ContinentId, amount: number) => void
-    onAdditionalInvestment?: (amount: number) => void
 }
 
-export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAdditionalInvestment }: PurchaseTileModalProps) {
+export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModalProps) {
     const { continents } = useContinentStore();
-    const { investors } = useInvestorsStore();
+    const { investors, insertInvestor, updateInvestorInvestmentAmount } = useInvestorStore();
     const { user } = useUserStore();
+
+    // 드래그 상태를 추적하기 위한 ref
+    const isDragging = useRef(false);
 
     const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null)
     const [investmentAmount, setInvestmentAmount] = useState<number>(0)
@@ -172,13 +173,13 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
         setIsCalculating(true)
 
         try {
-            if (isAdditionalInvestment) {
-                if (onAdditionalInvestment) {
-                    await onAdditionalInvestment(investmentAmount)
-                }
-            } else {
-                if (onPurchase && selectedContinentId) {
-                    await onPurchase(selectedContinentId, investmentAmount)
+            if (user) {
+                if (isAdditionalInvestment) {
+                    await updateInvestorInvestmentAmount(user?.id, investmentAmount);
+                } else {
+                    if (selectedContinentId) {
+                        await insertInvestor(user?.id, selectedContinentId, investmentAmount);
+                    }
                 }
             }
 
@@ -187,7 +188,6 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                 setIsCalculating(false)
                 onClose()
             }, 1000)
-
         } catch (error) {
             setIsCalculating(false)
             setValidationError('투자 처리 중 오류가 발생했습니다. 다시 시도해주세요.')
@@ -221,6 +221,36 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
         return () => document.removeEventListener('keydown', handleEscape)
     }, [isOpen, onClose])
 
+    // 마우스 드래그 상태 추적
+    useEffect(() => {
+        const handleMouseDown = () => {
+            isDragging.current = false;
+        };
+
+        const handleMouseMove = () => {
+            isDragging.current = true;
+        };
+
+        const handleMouseUp = () => {
+            // mouseup 이벤트 발생 후 약간의 지연을 두고 드래그 상태 초기화
+            setTimeout(() => {
+                isDragging.current = false;
+            }, 10);
+        };
+
+        if (isOpen) {
+            window.addEventListener('mousedown', handleMouseDown);
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            window.removeEventListener('mousedown', handleMouseDown);
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null
 
     return (
@@ -228,7 +258,12 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
             {/* 배경 오버레이 */}
             <div
                 className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-start justify-center pt-20 p-4"
-                onClick={onClose}
+                onClick={(e) => {
+                    // 드래그 중일 때는 모달이 닫히지 않도록 함
+                    if (!isDragging.current) {
+                        onClose();
+                    }
+                }}
             >
                 {/* 모달 콘텐츠 */}
                 <div
@@ -369,6 +404,7 @@ export default function PurchaseTileModal({ isOpen, onClose, onPurchase, onAddit
                                             className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border-2 border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-lg"
                                             min="1"
                                             step="1"
+                                            onWheel={(e) => e.currentTarget.blur()}
                                         />
                                     </div>
                                     {validationError && (

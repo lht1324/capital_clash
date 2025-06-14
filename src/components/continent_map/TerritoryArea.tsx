@@ -1,39 +1,67 @@
 import * as THREE from "three";
-import {memo, useRef, useState} from "react";
+import {memo, useEffect, useMemo, useRef, useState} from "react";
 
 // 🌳 NEW: 개별 영역 컴포넌트 (직사각형) - 최적화된 버전
 function TerritoryArea(
     {
         placement,
-        boundary,
         cellLength,
-        onTileClick,
-        sharedTexture
+        onTileClick
     }: {
         placement: any,
         boundary: any,
         cellLength: number,
-        onTileClick: (investorId: string) => void,
-        sharedTexture: THREE.Texture | null
+        onTileClick: (investorId: string) => void
     }
 ) {
     const meshRef = useRef<THREE.Mesh>(null)
     const imageMeshRef = useRef<THREE.Mesh>(null)
     const [hovered, setHovered] = useState(false)
-
-    // 🚀 개별 애니메이션 제거 - 호버 상태만 관리
-    // useFrame 제거로 50개 × 60fps = 3000회/초 → 0회/초
+    const [imageTexture, setImageTexture] = useState<THREE.Texture | null>(null)
 
     // 🌳 NEW: Treemap 좌표를 3D 좌표로 변환 (직사각형)
-    const width = placement.width * cellLength
-    const height = placement.height * cellLength
-    const x = (placement.x + placement.width/2) * cellLength
-    const y = -(placement.y + placement.height/2) * cellLength
+    const width = useMemo(() => {
+        return placement.width * cellLength;
+    }, [placement.width, cellLength])
+    const height = useMemo(() => {
+        return placement.height * cellLength;
+    }, [placement.height, cellLength])
+    const x = useMemo(() => {
+        return (placement.x + placement.width / 2) * cellLength;
+    }, [placement.width, cellLength])
+    const y = useMemo(() => {
+        return -(placement.y + placement.height / 2) * cellLength;
+    }, [placement.width, cellLength])
 
     // 🚀 호버 시에만 간단한 CSS 변환 사용
-    const baseScale = hovered ? 1.05 : 1.0
-    const baseZ = hovered ? 0.15 : 0.1
-    const imageZ = hovered ? 0.35 : 0.3
+    const baseScale = useMemo(() => {
+        return hovered ? 1.05 : 1.0;
+    }, [hovered])
+    const baseZ = useMemo(() => {
+        return hovered ? 0.15 : 0.1;
+    }, [hovered]);
+    const imageZ = useMemo(() => {
+        return hovered ? 0.35 : 0.3;
+    }, [hovered]);
+
+    useEffect(() => {
+        const loader = new THREE.TextureLoader()
+        const randomId: number = Math.floor(Math.random() * 30);
+        loader.load(
+            // '/test.jpg',
+            `https://picsum.photos/id/${randomId}/800/800`,
+            (loadedTexture) => {
+                loadedTexture.flipY = true
+                setImageTexture(loadedTexture)
+                console.log(`🚀 공통 텍스처 로드 완료: test.jpg`)
+            },
+            undefined,
+            (error) => {
+                console.log(`randomId = ${randomId}`)
+                console.error(`❌ 공통 텍스처 로드 실패:`, error)
+            }
+        )
+    }, [])
 
     return (
         <group position={[x, y, 1.1]}>
@@ -54,13 +82,13 @@ function TerritoryArea(
                     color={placement.investor.color}
                     opacity={hovered ? 1.0 : 0.9}
                     transparent={!hovered}
-                    roughness={0.3}
+                    // roughness={0.3}
                     metalness={0.1}
                 />
             </mesh>
 
             {/* 🌳 NEW: 프로필 이미지 - 공통 텍스처 사용 */}
-            {sharedTexture && (
+            {imageTexture && (
                 <mesh
                     ref={imageMeshRef}
                     position={[0, 0, imageZ]}
@@ -73,12 +101,10 @@ function TerritoryArea(
                     }}
                 >
                     <planeGeometry args={[width, height]} />
-                    <meshStandardMaterial
-                        map={sharedTexture}
+                    <meshBasicMaterial
+                        map={imageTexture}
                         transparent={false}
                         opacity={1.0}
-                        roughness={0.1}
-                        metalness={0.0}
                     />
                 </mesh>
             )}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useContinentStore, type ContinentId } from '@/store/continentStore'
-import {type Investor, useInvestorsStore} from '@/store/investorsStore'
+import {type Investor, useInvestorStore} from '@/store/investorsStore'
 
 interface TileSettingsPanelProps {
     isOpen: boolean
@@ -18,7 +18,7 @@ export default function TileSettingsPanel({
     continentId
 }: TileSettingsPanelProps) {
     const { continents } = useContinentStore()
-    const { investors, updateInvestorProfile, updateImageStatus } = useInvestorsStore()
+    const { investors, updateInvestorProfile, updateImageStatus } = useInvestorStore()
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string>('')
     const [profileData, setProfileData] = useState({
