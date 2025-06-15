@@ -1,5 +1,4 @@
-import {memo, useMemo, useState} from "react";
-import * as THREE from "three";
+import {memo, useMemo} from "react";
 import {calculateSquareLayout} from "@/lib/treemapAlgorithm";
 import TerritoryArea from "@/components/continent_map/TerritoryArea";
 import {Investor} from "@/store/investorsStore";
@@ -11,13 +10,11 @@ function TerritorySystem(
         maxUserCount,
         cellLength,
         onTileClick,
-        continentId
     }: {
         investorList: Investor[],
         maxUserCount: number,
         cellLength: number,
-        onTileClick: (investorId: string) => void,
-        continentId: string
+        onTileClick: (investorId: string) => void
     }
 ) {
     const placementResult = useMemo(() => {

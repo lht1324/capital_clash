@@ -89,96 +89,6 @@ function calculateRectangularSquareLayout(investorList: Investor[], maxUsers: nu
     return placeSquaresInHorizontalRectangle(squares, maxUsers);
 }
 
-function placeSquaresInRectangle(squares: Square[], maxSize: number) {
-    // 초기 직사각형 영역 설정 (가로:세로 = 1:1 시작)
-    let width = maxSize;
-    let height = maxSize;
-
-    // 배치된 정사각형 정보
-    const placements: Placement[] = [];
-
-    // 현재 행과 열의 위치
-    let currentX = 0;
-    let currentY = 0;
-    let rowHeight = 0;
-
-    for (const square of squares) {
-        // 현재 행에 배치 가능한지 확인
-        if (currentX + square.sideLength <= width) {
-            // 현재 행에 배치
-            placements.push({
-                investor: square.investor,
-                x: currentX,
-                y: currentY,
-                width: square.sideLength,
-                height: square.sideLength
-            });
-
-            // 현재 행의 높이 업데이트
-            rowHeight = Math.max(rowHeight, square.sideLength);
-
-            // X 위치 업데이트
-            currentX += square.sideLength;
-        } else {
-            // 새 행으로 이동
-            currentX = 0;
-            currentY += rowHeight;
-            rowHeight = square.sideLength;
-
-            // 새 행에 배치
-            placements.push({
-                investor: square.investor,
-                x: currentX,
-                y: currentY,
-                width: square.sideLength,
-                height: square.sideLength
-            });
-
-            // X 위치 업데이트
-            currentX += square.sideLength;
-        }
-    }
-
-    // 전체 경계 계산
-    const boundary = calculateBoundary(placements);
-
-    // 중앙 정렬을 위한 좌표 조정
-    const centeredPlacements = centerPlacements(placements, boundary);
-
-    return {
-        placements: centeredPlacements,
-        boundary
-    };
-}
-
-function calculateBoundary(placements: Placement[]) {
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-
-    placements.forEach(p => {
-        minX = Math.min(minX, p.x);
-        maxX = Math.max(maxX, p.x + p.width);
-        minY = Math.min(minY, p.y);
-        maxY = Math.max(maxY, p.y + p.height);
-    });
-
-    return {
-        minX, maxX, minY, maxY,
-        width: maxX - minX,
-        height: maxY - minY
-    };
-}
-
-function centerPlacements(placements: Placement[], boundary: Boundary) {
-    const offsetX = Math.floor(boundary.width / 2);
-    const offsetY = Math.floor(boundary.height / 2);
-
-    return placements.map(p => ({
-        ...p,
-        x: p.x - offsetX,
-        y: p.y - offsetY
-    }));
-}
-
 /**
  * 가로 직사각형 형태로 정사각형을 배치하는 함수
  * 세로 방향으로 먼저 채우고, 세로 공간이 부족하면 가로로 확장
@@ -243,4 +153,32 @@ function placeSquaresInHorizontalRectangle(squares: Square[], maxSize: number) {
         placements: centeredPlacements,
         boundary
     };
+}
+
+function calculateBoundary(placements: Placement[]) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+
+    placements.forEach(p => {
+        minX = Math.min(minX, p.x);
+        maxX = Math.max(maxX, p.x + p.width);
+        minY = Math.min(minY, p.y);
+        maxY = Math.max(maxY, p.y + p.height);
+    });
+
+    return {
+        minX, maxX, minY, maxY,
+        width: maxX - minX,
+        height: maxY - minY
+    };
+}
+
+function centerPlacements(placements: Placement[], boundary: Boundary) {
+    const offsetX = Math.floor(boundary.width / 2);
+    const offsetY = Math.floor(boundary.height / 2);
+
+    return placements.map(p => ({
+        ...p,
+        x: p.x - offsetX,
+        y: p.y - offsetY
+    }));
 }

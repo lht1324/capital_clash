@@ -11,6 +11,7 @@ import { useInvestorStore } from "@/store/investorsStore";
 import OverviewTab from "@/components/ui/sidebar/OverviewTab";
 import TerritoryTab from "@/components/ui/sidebar/TerritoryTab";
 import StatsTab from "@/components/ui/sidebar/StatsTab";
+import { storageAPI } from '@/lib/supabase/supabase-storage-api';
 
 export default function Sidebar() {
     const [activeTab, setActiveTab] = useState<'overview' | 'tile' | 'stats'>('overview')
@@ -74,7 +75,7 @@ export default function Sidebar() {
     }, [userInvestmentInfo, investorList]);
 
     const sharePercentage = useMemo(() => {
-        const newSharePercentage = investmentAmount / totalInvestmentAmount;
+        const newSharePercentage = investmentAmount / totalInvestmentAmount * 100;
 
         return newSharePercentage > 0.01
             ? newSharePercentage
@@ -171,15 +172,35 @@ export default function Sidebar() {
     const handleImageUpload = useCallback(async (file: File) => {
         console.log(`🖼️ Image uploaded: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`)
 
+        if (!user || !userInvestmentInfo) {
+            alert('❌ 로그인 상태 또는 투자 정보를 확인할 수 없습니다.')
+            return
+        }
+
         try {
-            // TODO: Supabase Storage에 이미지 업로드
-            // TODO: 업로드된 이미지 URL을 투자자 정보에 저장
-            alert(`✅ Image "${file.name}" uploaded successfully! Your image is now under review.`)
+            // 로딩 상태 표시 (실제 구현에서는 상태 변수를 사용할 수 있음)
+            const loadingMessage = `이미지를 업로드 중입니다...`
+            console.log(loadingMessage)
+
+            // Supabase Storage에 이미지 업로드
+            const { imageData, error } = await storageAPI.uploadImage(
+                file, 
+                user.id, 
+                userInvestmentInfo.id
+            )
+
+            if (error) {
+                throw error
+            }
+
+            // 성공 메시지 표시
+            alert(`✅ 이미지 "${file.name}"가 성공적으로 업로드되었습니다! 이미지는 현재 검토 중입니다.`)
+            console.log('업로드 성공:', imageData)
         } catch (error) {
             console.error('이미지 업로드 실패:', error)
-            alert('❌ Image upload failed. Please try again.')
+            alert('❌ 이미지 업로드에 실패했습니다. 다시 시도해 주세요.')
         }
-    }, []);
+    }, [user, userInvestmentInfo]);
 
     // Test function to cycle through different image states
     const cycleImageStatus = useCallback(() => {

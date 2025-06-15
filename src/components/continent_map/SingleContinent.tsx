@@ -1,9 +1,9 @@
 import {Continent, useContinentStore} from "@/store/continentStore";
-import {memo, useEffect} from "react";
+import {memo, useEffect, useMemo} from "react";
 import TerritorySystem from "@/components/continent_map/TerritorySystem";
 import {Investor} from "@/store/investorsStore";
 
-const CELL_SIZE = 0.8 // 셀 크기 2배 증가
+const CONTINENT_DEFAULT_LENGTH = 20 // 셀 크기 2배 증가
 function SingleContinent({ continent, investorList }: { continent: Continent, investorList: Investor[] }) {
     const { updateContinentUsers } = useContinentStore()
 
@@ -14,10 +14,11 @@ function SingleContinent({ continent, investorList }: { continent: Continent, in
         continent.position_z || 0
     ]
 
-    const continentLength = 20;
-
-    // 스토어에서 실제 투자자 데이터 가져오기
-    // const investorsList = Object.values(continent.investors || {})
+    const continentLength = useMemo(() => {
+        return continent.id !== "central"
+            ? CONTINENT_DEFAULT_LENGTH
+            : CONTINENT_DEFAULT_LENGTH * 1.2;
+    }, [continent]);
 
     // 투자자 수 업데이트
     useEffect(() => {
@@ -26,11 +27,10 @@ function SingleContinent({ continent, investorList }: { continent: Continent, in
         }
     }, [continent.id, investorList.length, updateContinentUsers])
 
-    console.log("length", (continentLength / continent.max_users))
     return (
         <group position={position}>
             {/* 대륙 기본 모양 */}
-            <mesh>
+            {investorList.length === 0 && <mesh>
                 <boxGeometry args={[continentLength, continentLength, 1]} /> {/* 대륙 크기 2배 증가 */}
                 <meshStandardMaterial
                     color={continent.color}
@@ -39,16 +39,15 @@ function SingleContinent({ continent, investorList }: { continent: Continent, in
                     roughness={0.7}
                     metalness={0.3}
                 />
-            </mesh>
+            </mesh>}
 
             {/* 투자자 영역 시스템 */}
-            <TerritorySystem
+            {investorList.length !== 0 && <TerritorySystem
                 investorList={investorList}
                 maxUserCount={continent.max_users}
                 cellLength={continentLength / continent.max_users}
                 onTileClick={(investorId) => { }}
-                continentId={continent.id}
-            />
+            />}
         </group>
     )
 }

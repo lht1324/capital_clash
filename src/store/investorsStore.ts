@@ -37,7 +37,7 @@ interface InvestorStore {
     unsubscribeFromInvestors: () => void
 
     // 헬퍼 함수
-    getInvestorsByContinent: (continentId: string) => Investor[]
+    getFilteredInvestorListByContinent: (continentId: string) => Investor[]
     getTotalInvestmentByContinent: (continentId: string) => number
 }
 
@@ -239,28 +239,22 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
         },
 
         // 특정 대륙의 투자자 목록 가져오기
-        getInvestorsByContinent: (continentId) => {
+        getFilteredInvestorListByContinent: (continentId) => {
             const state = get()
             const investorList = Object.values(state.investors)
 
-            if (continentId !== "central") {
-                return investorList
-                    .filter(investor => investor.continent_id === continentId)
-            } else {
-                const temp = Object.values(
-                    investorList.reduce((vipList, investor) => {
-                        const investorContinentId = investor.continent_id;
-
-                        if (!vipList[investorContinentId] || investor.investment_amount > vipList[investorContinentId].investment_amount) {
-                            vipList[investorContinentId] = investor
-                        }
-
-                        return vipList
-                    }, { } as Record<string, Investor>)
-                )
-                console.log("temp", temp)
-                return temp;
-            }
+            return continentId !== "central"
+                ? investorList.filter((investor) => investor.continent_id === continentId)
+                : Object.values(
+                    investorList
+                        .reduce((acc, inv) => {
+                            const id = inv.continent_id;
+                            if (!acc[id] || inv.investment_amount > acc[id].investment_amount) {
+                                acc[id] = inv; // 최고 투자금액 기준
+                            }
+                            return acc;
+                        }, {} as Record<string, Investor>)
+                );
         },
 
         // 특정 대륙의 총 투자금 계산
