@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import {memo, useEffect, useMemo, useRef, useState} from "react";
+import {Placement} from "@/lib/treemapAlgorithm";
 
 // 🌳 NEW: 개별 영역 컴포넌트 (직사각형) - 최적화된 버전
 function TerritoryArea(
@@ -8,8 +9,7 @@ function TerritoryArea(
         cellLength,
         onTileClick
     }: {
-        placement: any,
-        boundary: any,
+        placement: Placement,
         cellLength: number,
         onTileClick: (investorId: string) => void
     }
@@ -45,22 +45,24 @@ function TerritoryArea(
     }, [hovered]);
 
     useEffect(() => {
-        const loader = new THREE.TextureLoader()
-        const randomId: number = Math.floor(Math.random() * 30);
-        loader.load(
-            // '/test.jpg',
-            `https://picsum.photos/id/${randomId}/800/800`,
-            (loadedTexture) => {
-                loadedTexture.flipY = true
-                setImageTexture(loadedTexture)
-                console.log(`🚀 공통 텍스처 로드 완료: test.jpg`)
-            },
-            undefined,
-            (error) => {
-                console.log(`randomId = ${randomId}`)
-                console.error(`❌ 공통 텍스처 로드 실패:`, error)
-            }
-        )
+        if (placement.investor.image_url) {
+            const loader = new THREE.TextureLoader()
+            const randomId: number = Math.floor(Math.random() * 30);
+            loader.load(
+                // `https://picsum.photos/id/${randomId}/800/800`,
+                placement.investor.image_url,
+                (loadedTexture) => {
+                    loadedTexture.flipY = true
+                    setImageTexture(loadedTexture)
+                    console.log(`🚀 공통 텍스처 로드 완료: test.jpg`)
+                },
+                undefined,
+                (error) => {
+                    console.log(`randomId = ${randomId}`)
+                    console.error(`❌ 공통 텍스처 로드 실패:`, error)
+                }
+            )
+        }
     }, [])
 
     return (
@@ -73,13 +75,12 @@ function TerritoryArea(
                 onPointerOver={() => setHovered(true)}
                 onPointerOut={() => setHovered(false)}
                 onClick={() => {
-                    console.log(`🎯 ${placement.investor.name} 클릭: ${placement.width}×${placement.height} (지분: ${(placement.investor.share_percentage * 100).toFixed(1)}%, 비율: ${(placement.investor.ratio || 1).toFixed(2)})`)
                     onTileClick(placement.investor.id)
                 }}
             >
                 <boxGeometry args={[width, height, 0.2]} />
                 <meshStandardMaterial
-                    color={placement.investor.color}
+                    color={placement.investor.area_color}
                     opacity={hovered ? 1.0 : 0.9}
                     transparent={!hovered}
                     // roughness={0.3}
@@ -96,7 +97,6 @@ function TerritoryArea(
                     onPointerOver={() => setHovered(true)}
                     onPointerOut={() => setHovered(false)}
                     onClick={() => {
-                        console.log(`🖼️ ${placement.investor.name} 이미지 클릭 (지분: ${(placement.investor.share_percentage * 100).toFixed(1)}%, 비율: ${(placement.investor.ratio || 1).toFixed(2)})`)
                         onTileClick(placement.investor.id)
                     }}
                 >

@@ -3,7 +3,6 @@ import { Database } from '@/types/database'
 
 type Tables = Database['public']['Tables']
 type InvestorRow = Tables['investors']['Row']
-type InvestmentRow = Tables['investments']['Row']
 
 // 🧑‍💼 투자자 관련 함수들
 export const investorsAPI = {

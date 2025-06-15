@@ -13,6 +13,28 @@
 
 import {Investor} from "@/store/investorsStore";
 
+export type Square = {
+    investor: Investor,
+    sideLength: number, // 최소 1×1
+}
+
+export type Placement = {
+    investor: Investor,
+    x: number,  // 중심 기준으로 좌표 조정
+    y: number,
+    width: number,
+    height: number
+}
+
+export type Boundary = {
+    minX: number,
+    maxX: number,
+    minY: number,
+    maxY: number,
+    width: number,
+    height: number
+}
+
 /**---------------------------------------------------------------------------*
  * 광고판 스타일 배치 알고리즘 (Billboard-Style Placement)
  *---------------------------------------------------------------------------*/
@@ -44,28 +66,6 @@ export function calculateSquareLayout(investorList: Investor[], maxUserCount: nu
             boundary: { minX: -10, maxX: 15, minY: -10, maxY: 15, width: 25, height: 25 }
         }
     }
-}
-
-type Square = {
-    investor: Investor,
-    sideLength: number, // 최소 1×1
-}
-
-type Placement = {
-    investor: Investor,
-    x: number,  // 중심 기준으로 좌표 조정
-    y: number,
-    width: number,
-    height: number
-}
-
-type Boundary = {
-    minX: number,
-    maxX: number,
-    minY: number,
-    maxY: number,
-    width: number,
-    height: number
 }
 
 function calculateRectangularSquareLayout(investorList: Investor[], maxUsers: number) {

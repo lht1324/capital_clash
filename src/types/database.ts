@@ -243,47 +243,6 @@ export interface Database {
                 }
             }
 
-            // 카메라 투어 테이블
-            camera_tours: {
-                Row: {
-                    id: string
-                    name: string
-                    description?: string
-                    waypoints: Json
-                    transitions: Json
-                    loop: boolean
-                    auto_start: boolean
-                    is_default: boolean
-                    created_by: string
-                    created_at: string
-                    updated_at: string
-                }
-                Insert: {
-                    id?: string
-                    name: string
-                    description?: string
-                    waypoints: Json
-                    transitions: Json
-                    loop?: boolean
-                    auto_start?: boolean
-                    is_default?: boolean
-                    created_by: string
-                    created_at?: string
-                    updated_at?: string
-                }
-                Update: {
-                    id?: string
-                    name?: string
-                    description?: string
-                    waypoints?: Json
-                    transitions?: Json
-                    loop?: boolean
-                    auto_start?: boolean
-                    is_default?: boolean
-                    updated_at?: string
-                }
-            }
-
             // 알림 테이블
             notifications: {
                 Row: {

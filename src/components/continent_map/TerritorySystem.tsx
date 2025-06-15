@@ -43,7 +43,6 @@ function TerritorySystem(
                 <TerritoryArea
                     key={placement.investor.id}
                     placement={placement}
-                    boundary={placementResult.boundary}
                     cellLength={cellLength}
                     onTileClick={onTileClick}
                 />
