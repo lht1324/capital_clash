@@ -1,55 +1,63 @@
-import {Continent, useContinentStore} from "@/store/continentStore";
-import {memo, useEffect, useMemo} from "react";
-import TerritorySystem from "@/components/continent_map/TerritorySystem";
-import {Investor} from "@/store/investorsStore";
+// src/components/continent_map/SingleContinent.tsx
+import { Continent, useContinentStore } from "@/store/continentStore";
+import { memo, useEffect, useMemo } from "react";
+import TerritoryArea from "@/components/continent_map/TerritoryArea";
+import {Boundary, Placement, PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import * as THREE from "three";
 
-const CONTINENT_DEFAULT_LENGTH = 20 // 셀 크기 2배 증가
-function SingleContinent({ continent, investorList }: { continent: Continent, investorList: Investor[] }) {
-    const { updateContinentUsers } = useContinentStore()
-
-    // Supabase 데이터 구조에 맞게 position 처리
-    const position: [number, number, number] = [
-        continent.position_x || 0,
-        continent.position_y || 0,
-        continent.position_z || 0
-    ]
-
-    const continentLength = useMemo(() => {
-        return continent.id !== "central"
-            ? CONTINENT_DEFAULT_LENGTH
-            : CONTINENT_DEFAULT_LENGTH * 1.2;
-    }, [continent]);
+function SingleContinent({
+    continent,
+    placementResult,
+    position,
+    cellLength,
+    onTileClick
+}: {
+    continent: Continent;
+    placementResult: PlacementResult;
+    position: Position;
+    cellLength: number;
+    onTileClick: (investorId: string) => void;
+}) {
+    const { updateContinentUsers } = useContinentStore();
 
     // 투자자 수 업데이트
     useEffect(() => {
         if (updateContinentUsers) {
-            updateContinentUsers(continent.id, investorList.length)
+            // updateContinentUsers(continent.id, placementResult?.placements.length || 0);
         }
-    }, [continent.id, investorList.length, updateContinentUsers])
+    }, [continent.id, placementResult, updateContinentUsers]);
 
     return (
-        <group position={position}>
+        <group position={[position.x, position.y, position.z]}>
             {/* 대륙 기본 모양 */}
-            {investorList.length === 0 && <mesh>
-                <boxGeometry args={[continentLength, continentLength, 1]} /> {/* 대륙 크기 2배 증가 */}
-                <meshStandardMaterial
-                    color={continent.color}
-                    opacity={0.9}
-                    transparent={true}
-                    roughness={0.7}
-                    metalness={0.3}
-                />
-            </mesh>}
+            {!placementResult && (
+                <mesh>
+                    <boxGeometry args={[cellLength * continent.max_users, cellLength * continent.max_users, 1]} />
+                    <meshStandardMaterial
+                        color={continent.color}
+                        opacity={0.9}
+                        transparent={true}
+                        roughness={0.7}
+                        metalness={0.3}
+                    />
+                </mesh>
+            )}
 
-            {/* 투자자 영역 시스템 */}
-            {investorList.length !== 0 && <TerritorySystem
-                investorList={investorList}
-                maxUserCount={continent.max_users}
-                cellLength={continentLength / continent.max_users}
-                onTileClick={(investorId) => { }}
-            />}
+            {/* 투자자 영역 */}
+            {placementResult && (
+                <group>
+                    {placementResult.placements.map(placement => (
+                        <TerritoryArea
+                            key={placement.investor.id}
+                            placement={placement}
+                            cellLength={cellLength}
+                            onTileClick={onTileClick}
+                        />
+                    ))}
+                </group>
+            )}
         </group>
-    )
+    );
 }
 
 export default memo(SingleContinent);

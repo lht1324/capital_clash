@@ -12,14 +12,16 @@ export type Investor = {
     website_url?: string
     contact_email?: string
     investment_amount: number
-    image_url?: string                  // image_url
-    image_status?: 'none' | 'pending' | 'approved' | 'rejected'  // image_status
+    image_url?: string
+    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
     created_at?: string
     updated_at?: string
     daily_views: number[]
     previous_sunday_view: number
     last_viewed_at?: string
-    area_color?: string                    // area_color
+    area_color?: string
+    position_x: number
+    position_y: number
 }
 
 interface InvestorStore {

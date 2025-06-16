@@ -2,6 +2,7 @@ import {memo} from "react";
 
 function OverviewTab({
     isUserInvestmentInfoExist,
+    isVip,
     investmentAmount,
     sharePercentage,
     userContinentRank,
@@ -14,6 +15,7 @@ function OverviewTab({
     onClickOpenPurchaseModal
 } : {
     isUserInvestmentInfoExist: boolean,
+    isVip: boolean,
     investmentAmount: number,
     sharePercentage: number,
     userContinentRank: number,
@@ -101,7 +103,6 @@ function OverviewTab({
                                 </div>
 
                                 <button
-                                    // onClick={() => setIsImageUploadModalOpen(true)}
                                     onClick={() => onClickOpenImageUploadModal()}
                                     className="w-full text-xs bg-gray-600 hover:bg-gray-500 text-white py-1 px-2 rounded transition-colors"
                                 >
@@ -118,7 +119,10 @@ function OverviewTab({
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-300">Continent</span>
-                                <span className="text-white font-medium">{continentName}</span>
+                                <div className="flex items-end gap-1 w-fit">
+                                    {isVip && <span className="text-white font-medium "><b>Central</b></span>}
+                                    <span className="text-white font-medium">{isVip ? `(${continentName})` : continentName}</span>
+                                </div>
                             </div>
                             {/*<div className="flex justify-between items-center">*/}
                             {/*    <span className="text-gray-300">위치</span>*/}

@@ -116,6 +116,8 @@ export interface Database {
                     previous_sunday_view: number
                     last_viewed_at?: string
                     area_color?: string
+                    position_x: number
+                    position_y: number
                 }
                 Insert: {
                     id?: string
@@ -135,6 +137,8 @@ export interface Database {
                     previous_sunday_view: number
                     last_viewed_at?: string
                     area_color?: string
+                    position_x: number
+                    position_y: number
                 }
                 Update: {
                     id?: string
@@ -153,6 +157,8 @@ export interface Database {
                     previous_sunday_view: number
                     last_viewed_at?: string
                     area_color?: string
+                    position_x: number
+                    position_y: number
                 }
             }
 

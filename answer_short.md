@@ -1,97 +1,101 @@
-# 대륙 배치 시스템 접근 방식 분석
+# getPositionByUserPlacementInfo() 함수 분석: 유저 영역의 중심 좌표 계산
 
-## 제안된 접근 방식 분석
+## 함수의 목적과 역할
 
-이슈 설명에서 제안된 접근 방식은 다음과 같습니다:
+`getPositionByUserPlacementInfo()` 함수는 유저 영역의 중심 좌표를 계산하는 함수입니다. 이 함수는 다음과 같은 매개변수를 받습니다:
 
-1. WorldScene에서 모든 영역의 배치 정보를 계산한다.
-2. 계산 결과를 토대로 각 대륙의 크기를 계산한다.
-3. 중앙 대륙의 꼭짓점을 구한다.
-4. 타 대륙의 꼭짓점을 구한 뒤 그걸 기준으로 각 대륙의 크기를 이용해 배치될 위치를 구한다.
-5. 배치한다.
+1. `userPlacementInfo`: 유저의 배치 정보(x, y, width, height)
+2. `cellLength`: 셀 크기 (스케일 팩터)
+3. `continentLocationInfo`: 대륙 위치 정보(선택적)
 
-## 구현 가능성 분석
+## 좌표 계산 방식 분석
 
-### 1. WorldScene에서 모든 영역의 배치 정보 계산
+함수는 두 가지 경우를 처리합니다:
 
-**가능성**: ✅ 가능
+### 1. `continentLocationInfo`가 없을 때 (중앙 대륙의 경우)
+```typescript
+return {
+    x: (userPlacementInfo.x + userPlacementInfo.width / 2) * cellLength,
+    y: (userPlacementInfo.y + userPlacementInfo.height / 2) * cellLength,
+    z: 20
+}
+```
+이 경우, 유저 영역의 중심 좌표는 단순히 유저 배치 정보의 중심점을 계산하고 cellLength를 곱하여 구합니다.
 
-**구현 방법**:
-- WorldScene 컴포넌트에서 모든 대륙의 투자자 목록을 가져와 통합 처리할 수 있습니다.
-- 현재는 SingleContinent → TerritorySystem에서 각 대륙별로 영역 배치를 계산하고 있으나, 이 로직을 WorldScene으로 이동시킬 수 있습니다.
-- `calculateSquareLayout` 함수를 WorldScene에서 직접 호출하여 모든 대륙의 영역 배치 정보를 계산할 수 있습니다.
+### 2. `continentLocationInfo`가 있을 때 (일반 대륙의 경우)
+```typescript
+const userMiddleX = (userPlacementInfo.x + userPlacementInfo.width / 2) * cellLength;
+const userMiddleY = (userPlacementInfo.y + userPlacementInfo.height / 2) * cellLength;
 
-**장점**:
-- 모든 배치 정보를 한 곳에서 관리하므로 일관성 있는 처리가 가능합니다.
-- 대륙 간 관계를 더 쉽게 설정할 수 있습니다.
+const position = {
+    x: continentMiddleX + userMiddleX,
+    y: continentMiddleY + userMiddleY,
+    z: 20
+}
+```
+이 경우, 유저 영역의 중심 좌표는 대륙의 중심 좌표에 유저 배치 정보의 중심점을 더하여 구합니다.
 
-**단점**:
-- 계산 로직이 복잡해질 수 있습니다.
-- 모든 계산을 한 번에 처리하므로 초기 렌더링 시간이 길어질 수 있습니다.
+## 렌더링 계층 구조와 좌표 계산
 
-### 2. 계산 결과를 토대로 각 대륙의 크기 계산
+지도 렌더링 시스템은 다음과 같은 계층 구조로 이루어져 있습니다:
 
-**가능성**: ✅ 가능
+1. **WorldScene**: 전체 월드 맵을 관리하고 모든 대륙을 배치합니다.
+2. **SingleContinent**: 개별 대륙을 표현하며, 해당 대륙 내의 영토(TerritoryArea)들을 배치합니다.
+3. **TerritoryArea**: 개별 투자자의 영토를 표현합니다.
 
-**구현 방법**:
-- 각 대륙별로 계산된 영역 배치 정보에서 경계(boundary)를 추출합니다.
-- 경계 정보를 기반으로 각 대륙의 실제 크기(width, height)를 계산합니다.
-- 이 크기 정보는 대륙의 시각적 표현과 꼭짓점 계산에 사용됩니다.
+각 계층에서의 좌표 계산 방식:
 
-**장점**:
-- 투자자 영역의 실제 크기에 맞게 대륙 크기가 결정됩니다.
-- 동적으로 변하는 투자자 구성에 따라 대륙 크기가 자동으로 조정됩니다.
+1. **WorldScene**: `getContinentPositions()` 함수를 사용하여 각 대륙의 위치를 계산합니다. 이 위치는 전체 월드 맵에서의 절대 좌표입니다.
+2. **SingleContinent**: WorldScene으로부터 받은 절대 좌표에 위치하고, 그 안에 TerritoryArea 컴포넌트들을 배치합니다.
+3. **TerritoryArea**: 대륙 내에서의 상대적인 좌표를 계산하여 위치합니다.
 
-### 3. 중앙 대륙의 꼭짓점 구하기
+## TerritoryArea 컴포넌트와의 비교
 
-**가능성**: ✅ 가능
+TerritoryArea 컴포넌트에서의 좌표 계산:
+```typescript
+const x = useMemo(() => {
+    return (placement.x + placement.width / 2) * cellLength;
+}, [placement.width, cellLength])
 
-**구현 방법**:
-- 중앙 대륙의 크기(width, height)를 기반으로 네 개의 꼭짓점 좌표를 계산합니다.
-- 중앙 대륙의 중심을 (0,0,0)으로 가정하고, 상대적인 꼭짓점 위치를 계산합니다.
-  - 북서(NW): [-width/2, height/2, 0]
-  - 북동(NE): [width/2, height/2, 0]
-  - 남서(SW): [-width/2, -height/2, 0]
-  - 남동(SE): [width/2, -height/2, 0]
+const y = useMemo(() => {
+    return -(placement.y + placement.height / 2) * cellLength;
+}, [placement.width, cellLength])
+```
 
-### 4. 타 대륙의 꼭짓점 구하기 및 배치 위치 계산
+`getPositionByUserPlacementInfo()` 함수의 좌표 계산 방식은 TerritoryArea 컴포넌트의 좌표 계산 방식과 유사합니다. 다만, TerritoryArea에서는 y 좌표에 음수를 취하는 반면, `getPositionByUserPlacementInfo()` 함수에서는 그렇지 않습니다. 이는 Three.js의 좌표계와 관련이 있을 수 있습니다.
 
-**가능성**: ✅ 가능
+## 유저 영역의 중심 좌표 계산 정확성 분석
 
-**구현 방법**:
-- 각 타 대륙(북서, 북동, 남서, 남동)의 크기를 계산합니다.
-- 중앙 대륙의 꼭짓점과 연결될 타 대륙의 꼭짓점을 결정합니다:
-  - 북서 대륙: 남동 꼭짓점이 중앙 대륙의 북서 꼭짓점과 연결
-  - 북동 대륙: 남서 꼭짓점이 중앙 대륙의 북동 꼭짓점과 연결
-  - 남서 대륙: 북동 꼭짓점이 중앙 대륙의 남서 꼭짓점과 연결
-  - 남동 대륙: 북서 꼭짓점이 중앙 대륙의 남동 꼭짓점과 연결
-- 연결 지점을 기준으로 각 대륙의 중심 위치를 계산합니다.
+### 중심 좌표 계산 공식
 
-### 5. 배치하기
+유저 영역의 중심 좌표는 다음과 같이 계산됩니다:
+```
+중심 X = (placement.x + placement.width / 2) * cellLength
+중심 Y = (placement.y + placement.height / 2) * cellLength
+```
 
-**가능성**: ✅ 가능
+이 공식은 유저 영역의 왼쪽 상단 좌표(placement.x, placement.y)에 너비와 높이의 절반을 더하여 중심점을 구한 후, cellLength를 곱하여 실제 3D 공간의 좌표로 변환합니다.
 
-**구현 방법**:
-- 계산된 위치 정보를 사용하여 각 대륙 컴포넌트를 3D 공간에 배치합니다.
-- SingleContinent 컴포넌트에 계산된 위치 정보를 전달합니다.
-- Three.js의 group 요소의 position 속성을 사용하여 대륙을 배치합니다.
+### 대륙 내에서의 상대 좌표
 
-## 종합 평가
+`getPositionByUserPlacementInfo()` 함수에서 계산하는 좌표는 대륙 내에서의 상대 좌표입니다. 대륙이 있을 경우, 대륙의 중심 좌표에 유저 영역의 상대 좌표를 더하여 최종 좌표를 계산합니다.
 
-제안된 접근 방식은 **기술적으로 구현 가능**합니다. 현재 코드베이스를 크게 변경하지 않고도 구현할 수 있으며, 다음과 같은 이점이 있습니다:
+### 좌표 계산의 정확성
 
-1. **일관된 배치**: 중앙 대륙을 기준으로 다른 대륙들이 일관되게 배치됩니다.
-2. **동적 크기 조정**: 투자자 구성 변화에 따라 대륙 크기가 자동으로 조정됩니다.
-3. **시각적 명확성**: 대륙 간의 관계가 시각적으로 명확하게 표현됩니다.
+분석 결과, `getPositionByUserPlacementInfo()` 함수는 유저 영역의 중심 좌표를 정확히 계산하고 있습니다. 이 함수는 다음과 같은 방식으로 작동합니다:
 
-다만, 다음과 같은 도전 과제가 있습니다:
-
-1. **계산 복잡성**: WorldScene에서 모든 계산을 처리하면 로직이 복잡해질 수 있습니다.
-2. **성능 영향**: 초기 렌더링 시 모든 계산을 한 번에 처리하므로 성능에 영향을 줄 수 있습니다.
-3. **상태 관리**: 계산된 정보를 효율적으로 관리하기 위한 상태 관리 전략이 필요합니다.
-
-이러한 도전 과제는 useMemo, useCallback 등의 React 최적화 기법과 적절한 상태 관리를 통해 해결할 수 있습니다.
+1. 유저 배치 정보(placement)로부터 중심점을 계산합니다.
+2. 이 중심점에 cellLength를 곱하여 실제 3D 공간의 좌표로 변환합니다.
+3. 대륙이 있을 경우, 대륙의 중심 좌표에 유저 영역의 상대 좌표를 더하여 최종 좌표를 계산합니다.
 
 ## 결론
 
-제안된 접근 방식은 기술적으로 구현 가능하며, 대륙 간의 관계를 시각적으로 명확하게 표현할 수 있는 장점이 있습니다. 특히, 중앙 대륙을 중심으로 다른 대륙들이 일관되게 배치되므로, 사용자가 전체 구조를 쉽게 이해할 수 있습니다. 적절한 최적화 전략을 적용한다면, 성능 이슈 없이 효과적으로 구현할 수 있을 것입니다.
+`getPositionByUserPlacementInfo()` 함수는 유저 영역의 중심 좌표를 정확히 계산하고 있습니다. 이 함수는 유저 배치 정보로부터 중심점을 계산하고, 필요한 경우 대륙의 위치를 고려하여 최종 좌표를 계산합니다.
+
+다만, 코드의 가독성을 높이기 위해 다음과 같은 개선이 가능합니다:
+
+1. 불필요한 변수 제거 (continentX, continentY, continentZ, continentWidth, continentHeight)
+2. 중복된 로그 출력 제거
+3. 주석 처리된 이전 코드 정리
+
+이러한 개선을 통해 코드의 가독성과 유지보수성을 높일 수 있습니다.

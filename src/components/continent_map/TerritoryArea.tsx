@@ -163,8 +163,10 @@ function TerritoryArea(
                 onPointerOver={() => setHovered(true)}
                 onPointerOut={() => setHovered(false)}
                 onClick={() => {
-                    console.log(`name = ${placement.investor.name}, width = ${placement.width}, height = ${placement.height}, cellLength = ${cellLength}`)
-                    onTileClick(placement.investor.id)
+                    if (!imageTexture) {
+                        console.log(`(Calc) name = ${placement.investor.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
+                        onTileClick(placement.investor.id)
+                    }
                 }}
             >
                 <boxGeometry args={[width, height, 0.2]} />
@@ -186,7 +188,7 @@ function TerritoryArea(
                     onPointerOver={() => setHovered(true)}
                     onPointerOut={() => setHovered(false)}
                     onClick={() => {
-                        console.log(`name = ${placement.investor.name}, width = ${placement.width}, height = ${placement.height}, cellLength = ${cellLength}`)
+                        console.log(`(Calc) name = ${placement.investor.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
                         onTileClick(placement.investor.id)
                     }}
                 >

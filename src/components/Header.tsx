@@ -7,12 +7,11 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/supabase'
 import RankingModal from './RankingModal'
 import PurchaseTileModal from './PurchaseTileModal'
-import { ContinentId } from '@/store/continentStore'
 import { useUserStore } from '@/store/userStore'
-import DropdownMenu from './ui/dropdown-menu'
 import { UserCircleIcon } from '@heroicons/react/24/outline'
 import { useContinentStore } from '@/store/continentStore'
 import ProfileInfoModal from "@/components/ProfileInfoModal";
+import DropDownMenu from "@/components/ui/DropDownMenu";
 
 export default function Header() {
     const router = useRouter()
@@ -123,7 +122,7 @@ export default function Header() {
                         />
                     </button>
                 ) : (
-                    <DropdownMenu
+                    <DropDownMenu
                         trigger={
                             <div className="flex items-center space-x-2">
                                 <UserCircleIcon className="h-6 w-6" />

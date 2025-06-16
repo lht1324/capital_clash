@@ -7,11 +7,12 @@ import ImageUploadModal from '../../ImageUploadModal'
 import { getCurrentUserTileInfo } from '@/utils/userUtils'
 import { useUserStore } from '@/store/userStore'
 import { useContinentStore } from '@/store/continentStore'
-import { useInvestorStore } from "@/store/investorsStore";
+import {Investor, useInvestorStore} from "@/store/investorsStore";
 import OverviewTab from "@/components/ui/sidebar/OverviewTab";
 import TerritoryTab from "@/components/ui/sidebar/TerritoryTab";
 import StatsTab from "@/components/ui/sidebar/StatsTab";
 import { storageAPI } from '@/lib/supabase/supabase-storage-api';
+import {calculateInvestorCoordinates} from "@/lib/treemapAlgorithm";
 
 export default function Sidebar() {
     const [activeTab, setActiveTab] = useState<'overview' | 'tile' | 'stats'>('overview')
@@ -21,7 +22,7 @@ export default function Sidebar() {
     // const [imageStatus, setImageStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('pending')
 
     // 각 대륙별 현재 유저 수 계산
-    const { continents, isSidebarOpen, setSidebarOpen } = useContinentStore();
+    const { continents, isSidebarOpen, setSidebarOpen, setCameraTarget } = useContinentStore();
     const { investors } = useInvestorStore();
     const { user } = useUserStore()
 
@@ -42,10 +43,16 @@ export default function Sidebar() {
             ? list
             : [];
     }, [investors]);
-    // 현재 사용자의 영역 정보 가져오기
-    const userTileInfo = useMemo(() => {
-        return getCurrentUserTileInfo(Object.values(investors), user?.id)
-    }, []);
+    const vipInvestorRecord = useMemo(() => {
+        return investorList
+            .reduce((acc, investor) => {
+                const id = investor.continent_id;
+                if (!acc[id] || investor.investment_amount > acc[id].investment_amount) {
+                    acc[id] = investor; // 최고 투자금액 기준
+                }
+                return acc;
+            }, {} as Record<string, Investor>)
+    }, [investorList]);
 
     // user.user_id -> investors.user_id
     // 현재 사용자의 정보 (실제 데이터 사용)
@@ -53,6 +60,19 @@ export default function Sidebar() {
     const userInvestmentInfo = useMemo(() => {
         return investorList.find((investor) => investor.user_id === user?.id)
     }, [user, investorList]);
+
+    const filteredInvestorListByContinent = useMemo(() => {
+        return investorList.filter((investor) => {
+            return investor.continent_id === userInvestmentInfo?.continent_id;
+        })
+    }, [investorList, userInvestmentInfo])
+
+    const isVip = useMemo(() => {
+        const vipInvestor = vipInvestorRecord[userInvestmentInfo?.continent_id ?? ""];
+        const isUserIdValid = !(!userInvestmentInfo?.user_id);
+
+        return isUserIdValid && vipInvestor?.user_id === userInvestmentInfo?.user_id;
+    }, [vipInvestorRecord, userInvestmentInfo]);
 
     const isUserInvestmentInfoExist = useMemo(() => {
         return !(!userInvestmentInfo);
@@ -66,13 +86,13 @@ export default function Sidebar() {
 
     const totalInvestmentAmount = useMemo(() => {
         if (userInvestmentInfo) {
-            return investorList.filter((investor) => {
-                return investor.continent_id === userInvestmentInfo.continent_id
-            }).reduce((acc, investor) => acc + investor.investment_amount, 0);
+            return filteredInvestorListByContinent.reduce((acc, investor) => {
+                return acc + investor.investment_amount;
+            }, 0);
         } else {
             return 0;
         }
-    }, [userInvestmentInfo, investorList]);
+    }, [userInvestmentInfo, filteredInvestorListByContinent]);
 
     const sharePercentage = useMemo(() => {
         const newSharePercentage = investmentAmount / totalInvestmentAmount * 100;
@@ -84,21 +104,25 @@ export default function Sidebar() {
 
     const userContinentRank = useMemo(() => {
         if (userInvestmentInfo) {
-            const userIndex = investorList.filter((investor) => investor.continent_id === userInvestmentInfo.continent_id)
-                .sort((a, b) => b.investment_amount - a.investment_amount)
-                .findIndex((investor) => investor.user_id === userInvestmentInfo.user_id);
+            const userIndex = filteredInvestorListByContinent.sort((a, b) => {
+                return b.investment_amount - a.investment_amount;
+            }).findIndex((investor) => {
+                return investor.user_id === userInvestmentInfo.user_id;
+            });
 
             return userIndex + 1;
         } else {
             return -1
         }
-    }, [investorList, userInvestmentInfo]);
+    }, [userInvestmentInfo, filteredInvestorListByContinent]);
 
     const userOverallRank = useMemo(() => {
         if (userInvestmentInfo) {
-            const userIndex = investorList
-                .sort((a, b) => b.investment_amount - a.investment_amount)
-                .findIndex((investor) => investor.user_id === userInvestmentInfo.user_id);
+            const userIndex = investorList.sort((a, b) => {
+                return b.investment_amount - a.investment_amount;
+            }).findIndex((investor) => {
+                return investor.user_id === userInvestmentInfo.user_id;
+            });
 
             return userIndex + 1;
         } else {
@@ -168,6 +192,20 @@ export default function Sidebar() {
             : 0
     }, [userInvestmentInfo]);
 
+    const onClickMoveToTerritory = useCallback(() => {
+        const userCoordinates = calculateInvestorCoordinates(
+            Object.values(vipInvestorRecord),
+            filteredInvestorListByContinent,
+            continentName.toLowerCase(),
+            isVip,
+            user?.id,
+        );
+
+        if (userCoordinates) {
+            setCameraTarget([userCoordinates.x, userCoordinates.y, userCoordinates.z]);
+        }
+    }, [vipInvestorRecord, filteredInvestorListByContinent, isVip, user?.id, setCameraTarget]);
+
     // Handle image upload
     const handleImageUpload = useCallback(async (file: File) => {
         console.log(`🖼️ Image uploaded: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`)
@@ -201,16 +239,6 @@ export default function Sidebar() {
             alert('❌ 이미지 업로드에 실패했습니다. 다시 시도해 주세요.')
         }
     }, [user, userInvestmentInfo]);
-
-    // Test function to cycle through different image states
-    const cycleImageStatus = useCallback(() => {
-        const statusCycle = ['none', 'pending', 'approved', 'rejected'] as const
-        const currentIndex = statusCycle.indexOf(imageStatus ? imageStatus : "none");
-        const nextIndex = (currentIndex + 1) % statusCycle.length
-        const nextStatus = statusCycle[nextIndex]
-
-        alert(`Status changed to: ${nextStatus}`)
-    }, [imageStatus]);
 
     return (
         (user && <>
@@ -279,6 +307,7 @@ export default function Sidebar() {
                         {activeTab === 'overview' && (
                             <OverviewTab
                                 isUserInvestmentInfoExist={isUserInvestmentInfoExist}
+                                isVip={isVip}
                                 investmentAmount={investmentAmount}
                                 sharePercentage={sharePercentage}
                                 userContinentRank={userContinentRank}
@@ -295,6 +324,7 @@ export default function Sidebar() {
                         {activeTab === 'tile' && (
                             <TerritoryTab
                                 isUserInvestmentInfoExist={isUserInvestmentInfoExist}
+                                investorList={investorList}
                                 investmentAmount={investmentAmount}
                                 sharePercentage={sharePercentage}
                                 imageStatusColor={imageStatusColor}
@@ -302,10 +332,10 @@ export default function Sidebar() {
                                 createdDate={userCreatedDate}
                                 continentName={continentName}
                                 continentList={continentList}
+                                onClickMoveToTerritory={onClickMoveToTerritory}
                                 onClickOpenImageUploadModal={() => setIsImageUploadModalOpen(true)}
                                 onClickOpenPurchaseModal={() => { setIsPurchaseModalOpen(true) }}
                                 onClickOpenProfileEditModal={() => { setIsProfileEditModalOpen(true) }}
-                                cycleImageStatus={cycleImageStatus}
                             />
                         )}
 

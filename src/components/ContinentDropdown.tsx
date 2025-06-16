@@ -13,7 +13,7 @@ export default function ContinentDropdown() {
       resetSelection,
       isWorldView
     } = useContinentStore()
-    const { getTotalInvestmentByContinent, getInvestorsByContinent } = useInvestorStore()
+    const { getTotalInvestmentByContinent, getFilteredInvestorListByContinent } = useInvestorStore()
 
     const [isOpen, setIsOpen] = useState(false)
 
@@ -75,7 +75,7 @@ export default function ContinentDropdown() {
         return selectedContinentId && selectedContinentData
             ? {
                 totalInvestment: getTotalInvestmentByContinent(selectedContinentId),
-                investorCount: getInvestorsByContinent(selectedContinentId).length,
+                investorCount: getFilteredInvestorListByContinent(selectedContinentId).length,
                 maxUsers: selectedContinentData.max_users || 0
             } : null
     }, [selectedContinentId, selectedContinentData]);
@@ -144,8 +144,10 @@ export default function ContinentDropdown() {
                         <div className="border-t border-gray-600 my-1"></div>
 
                         {/* 개별 대륙 옵션들 */}
-                        {Object.values(continents).map((continent: Continent) => (
-                            <button
+                        {Object.values(continents).map((continent: Continent) => {
+                            const isCentral = continent.id === "central";
+
+                            return <button
                                 key={continent.id}
                                 onClick={() => handleContinentSelect(continent.id)}
                                 className={`w-full flex items-center space-x-3 p-3 hover:bg-white hover:bg-opacity-10 transition-colors ${
@@ -162,14 +164,14 @@ export default function ContinentDropdown() {
                                     style={{backgroundColor: continent.color}}
                                 />
                                 <div className="flex-1 text-left">
-                                    <div className="font-bold text-sm text-white">{continent.name}</div>
-                                    <div className="text-xs text-gray-300">{continent.description}</div>
-                                    <div className="text-xs text-gray-400">
-                                        {continent.current_users}/{continent.max_users} people
+                                    <div className={`font-bold text-sm ${isCentral ? "text-yellow-400" : "text-white"}`}>{continent.name}</div>
+                                    <div className={`text-xs ${isCentral ? "text-yellow-400" : "text-gray-300"}`}>{continent.description}</div>
+                                    <div className={`${isCentral ? "font-bold " : ""}text-xs ${isCentral ? "text-yellow-400" : "text-gray-400"}`}>
+                                        {getFilteredInvestorListByContinent(continent.id).length}/{continent.max_users} people
                                     </div>
                                 </div>
                             </button>
-                        ))}
+                        })}
                     </div>
                 )}
 

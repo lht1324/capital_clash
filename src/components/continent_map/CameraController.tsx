@@ -19,7 +19,7 @@ function CameraController() {
     const [isDragging, setIsDragging] = useState(false)
     const [currentCameraPosition, setCurrentCameraPosition] = useState({ x: 0, y: 0 });
     const previousMouse = useRef({ x: 0, y: 0 })
-    const cameraPosition = useRef(new THREE.Vector3(0, 0, 40))
+    const cameraPosition = useRef(new THREE.Vector3(0, 20, 40))
     const targetPosition = useRef(new THREE.Vector3(0, 0, 40))
 
     const nearestContinentId = useMemo(() => {
@@ -100,8 +100,8 @@ function CameraController() {
     useEffect(() => {
         console.log('🏠 CameraController 초기화: 월드 뷰로 설정')
         // 카메라를 월드 뷰 위치로 설정
-        targetPosition.current.set(0, 0, 60)
-        cameraPosition.current.set(0, 0, 60)
+        targetPosition.current.set(0, -2.5, 60)
+        cameraPosition.current.set(0, -2.5, 60)
         resetSelection()
     }, [])
 

@@ -60,7 +60,7 @@
 - UI 컴포넌트 제거:
   - `src/components/ui/button.tsx`
   - `src/components/ui/avatar.tsx`
-  - `src/components/ui/dropdown-menu.tsx`
+  - `src/components/ui/DropDownMenu.tsx`
 - Three.js 관련:
   - `src/components/ThreeCanvas.tsx`
   - `src/components/ThreeProvider.tsx`

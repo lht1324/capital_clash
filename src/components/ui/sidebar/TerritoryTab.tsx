@@ -1,8 +1,11 @@
 import {memo} from "react";
-import {Continent} from "@/store/continentStore";
+import {Continent, useContinentStore} from "@/store/continentStore";
+import {Investor, useInvestorStore} from "@/store/investorsStore";
+import {useUserStore} from "@/store/userStore";
 
 function TerritoryTab({
     isUserInvestmentInfoExist,
+    investorList,
     investmentAmount,
     sharePercentage,
     imageStatusColor,
@@ -10,12 +13,13 @@ function TerritoryTab({
     createdDate,
     continentName,
     continentList,
+    onClickMoveToTerritory,
     onClickOpenImageUploadModal,
     onClickOpenPurchaseModal,
     onClickOpenProfileEditModal,
-    cycleImageStatus
 } : {
     isUserInvestmentInfoExist: boolean,
+    investorList: Investor[],
     investmentAmount: number,
     sharePercentage: number,
     imageStatusColor: string,
@@ -23,10 +27,10 @@ function TerritoryTab({
     createdDate: string,
     continentName: string,
     continentList: Continent[],
+    onClickMoveToTerritory: () => void,
     onClickOpenImageUploadModal: () => void,
     onClickOpenPurchaseModal: () => void,
     onClickOpenProfileEditModal: () => void,
-    cycleImageStatus: () => void,
 }) {
     return (
         <div className="space-y-4">
@@ -36,16 +40,8 @@ function TerritoryTab({
                 <>
                     {/* 현재 영역 상세 정보 */}
                     <div className="bg-gray-800 rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <h4 className="font-medium text-white text-lg">{continentName}</h4>
-                                {/*<p className="text-sm text-gray-400">*/}
-                                {/*    위치: ({userInvestmentInfo.tilePosition?.x}, {userInvestmentInfo.tilePosition?.y})*/}
-                                {/*</p>*/}
-                                {/*<p className="text-sm text-gray-400">*/}
-                                {/*    크기: {userInvestmentInfo.tilePosition?.size}×{userInvestmentInfo.tilePosition?.size} 셀*/}
-                                {/*</p>*/}
-                            </div>
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-medium text-white text-lg">{continentName}</h4>
                             <div className="text-right">
                                 <div
                                     className="text-green-400 font-medium text-lg">${investmentAmount.toLocaleString()}</div>
@@ -62,18 +58,12 @@ function TerritoryTab({
                             </div>
 
                             <div className="space-y-2">
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={cycleImageStatus}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded text-sm transition-colors"
-                                    >
-                                        Test Status 🔄
-                                    </button>
-                                    <button
-                                        className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm transition-colors">
-                                        View 👁️
-                                    </button>
-                                </div>
+                                <button
+                                    className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm transition-colors"
+                                    onClick={() => { onClickMoveToTerritory(); }}
+                                >
+                                    🚀 Move to Territory
+                                </button>
                                 <button
                                     onClick={() => onClickOpenImageUploadModal()}
                                     className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 rounded text-sm transition-colors flex items-center justify-center space-x-2"
@@ -99,6 +89,7 @@ function TerritoryTab({
                             Increase your territory size and secure higher share percentage with additional investment.
                         </p>
                         <button
+                            onClick={() => onClickOpenPurchaseModal()}
                             className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors font-medium">
                             + Add Investment
                         </button>
@@ -114,7 +105,9 @@ function TerritoryTab({
                         {/* X 모양 대륙 현황 */}
                         <div className="space-y-2 mb-3">
                             {continentList.map((continent) => {
-                                const currentCount = continent.current_users;
+                                const currentCount = investorList.filter((investor) => {
+                                    return investor.continent_id === continent.id;
+                                }).length;
                                 const isFull = currentCount >= continent.max_users;
                                 const isCurrentContinent = continentName === continent.name
 
@@ -160,7 +153,9 @@ function TerritoryTab({
                     {/* 대륙 선택 옵션 */}
                     <div className="space-y-2">
                         {continentList.map((continent) => {
-                            const currentCount = continent.current_users
+                            const currentCount = investorList.filter((investor) => {
+                                return investor.continent_id === continent.id;
+                            }).length;
                             const isFull = currentCount >= continent.max_users
 
                             return (

@@ -11,11 +11,16 @@
        4) 결과 → 3D 공간        : 셀 좌표 → 3D 월드 좌표 변환
    ========================================================================== */
 
+import {
+    CENTRAL_INCREASE_RATIO,
+    CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
+} from "@/components/continent_map/continent_map_public_variables";
 import {Investor} from "@/store/investorsStore";
 
-export type Square = {
-    investor: Investor,
-    sideLength: number, // 최소 1×1
+export type PlacementResult = {
+    placements: Placement[],
+    boundary: Boundary,
+    continentId: string
 }
 
 export type Placement = {
@@ -35,25 +40,52 @@ export type Boundary = {
     height: number
 }
 
+export type Square = {
+    investor: Investor,
+    sideLength: number, // 최소 1×1
+}
+
+export type Position = {
+    x: number,
+    y: number,
+    z: number
+}
+
 /**---------------------------------------------------------------------------*
  * 광고판 스타일 배치 알고리즘 (Billboard-Style Placement)
  *---------------------------------------------------------------------------*/
-export function calculateSquareLayout(investorList: Investor[], maxUserCount: number) {
+export function calculateSquareLayout(filteredInvestorListByContinent: Investor[], continentId: string): PlacementResult {
     console.log('🏢 Billboard-Style 배치 알고리즘 시작')
 
-    if (investorList.length === 0) return { placements: [], boundary: { minX: 0, maxX: 0, minY: 0, maxY: 0, width: 0, height: 0 } }
+    if (filteredInvestorListByContinent.length === 0) {
+        return {
+            placements: [],
+            boundary: {
+                minX: 0,
+                maxX: 0,
+                minY: 0,
+                maxY: 0,
+                width: 0,
+                height: 0
+            },
+            continentId: continentId
+        }
+    }
 
     try {
         // Billboard 알고리즘 사용
         // const result = calculateBillboardLayout(investorList, maxUserCount)
-        const result = calculateRectangularSquareLayout(investorList, maxUserCount);
+        const result = calculateRectangularSquareLayout(filteredInvestorListByContinent);
         console.log(`✅ Billboard 배치 완료: ${result.placements.length}개 정사방형`)
-        return result
+        return {
+            ...result,
+            continentId: continentId
+        }
     } catch (error) {
         console.error(`❌ Billboard 에러, 간단 배치로 대체:`, error)
 
         // 에러 시 간단한 배치로 대체
-        const placements = investorList.map((investor, index) => ({
+        const placements = filteredInvestorListByContinent.map((investor, index) => ({
             investor,
             x: (index % 2) * 10 - 5,
             y: Math.floor(index / 2) * 10 - 5,
@@ -62,18 +94,21 @@ export function calculateSquareLayout(investorList: Investor[], maxUserCount: nu
         }))
 
         return {
-            placements,
-            boundary: { minX: -10, maxX: 15, minY: -10, maxY: 15, width: 25, height: 25 }
+            placements: placements,
+            boundary: { minX: -10, maxX: 15, minY: -10, maxY: 15, width: 25, height: 25 },
+            continentId: continentId
         }
     }
 }
 
-function calculateRectangularSquareLayout(investorList: Investor[], maxUsers: number) {
+function calculateRectangularSquareLayout(investorList: Investor[]) {
     // 1. 각 투자자의 지분율에 따라 정사각형 크기 계산
-    const totalInvestmentAmount = investorList.reduce((acc, investor) => acc + investor.investment_amount, 0);
+    const totalInvestmentAmount = investorList.reduce((acc, investor) => {
+        return acc + investor.investment_amount;
+    }, 0);
     const squares = investorList.map(investor => {
         const sharePercentage = investor.investment_amount / totalInvestmentAmount;
-        const area = sharePercentage * maxUsers * maxUsers;
+        const area = sharePercentage * CONTINENT_MAX_USER_COUNT * CONTINENT_MAX_USER_COUNT;
         const sideLength = Math.floor(Math.sqrt(area));
 
         return {
@@ -86,17 +121,16 @@ function calculateRectangularSquareLayout(investorList: Investor[], maxUsers: nu
     squares.sort((a, b) => b.sideLength - a.sideLength);
 
     // 3. 직사각형 영역 내에 정사각형 배치 (가로 직사각형 형태)
-    return placeSquaresInHorizontalRectangle(squares, maxUsers);
+    return placeSquaresInHorizontalRectangle(squares);
 }
 
 /**
  * 가로 직사각형 형태로 정사각형을 배치하는 함수
  * 세로 방향으로 먼저 채우고, 세로 공간이 부족하면 가로로 확장
  */
-function placeSquaresInHorizontalRectangle(squares: Square[], maxSize: number) {
+function placeSquaresInHorizontalRectangle(squares: Square[]) {
     // 초기 직사각형 영역 설정 (가로:세로 = 1:1 시작)
-    let width = maxSize;
-    let height = maxSize;
+    let maxLength = CONTINENT_MAX_USER_COUNT;
 
     // 배치된 정사각형 정보
     const placements: Placement[] = [];
@@ -108,7 +142,7 @@ function placeSquaresInHorizontalRectangle(squares: Square[], maxSize: number) {
 
     for (const square of squares) {
         // 현재 열에 배치 가능한지 확인
-        if (currentY + square.sideLength <= height) {
+        if (currentY + square.sideLength <= maxLength) {
             // 현재 열에 배치
             placements.push({
                 investor: square.investor,
@@ -181,4 +215,163 @@ function centerPlacements(placements: Placement[], boundary: Boundary) {
         x: p.x - offsetX,
         y: p.y - offsetY
     }));
+}
+
+// 투자자 좌표 계산 함수
+export function calculateInvestorCoordinates(
+    centralInvestorList: Investor[],
+    filteredInvestorListByUserContinent: Investor[],
+    userContinentId: string,
+    isVip: boolean,
+    userId?: string,
+): Position | null {
+    if (!userId) return null;
+
+    const cellLength = !isVip
+        ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT
+        : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
+
+    // 4. 영역 배치 계산
+    const centralPlacementResult = calculateSquareLayout(centralInvestorList, "central");
+    const userPlacementResult = isVip
+        ? centralPlacementResult
+        : calculateSquareLayout(filteredInvestorListByUserContinent, userContinentId);
+
+    const userPlacementInfo = userPlacementResult.placements.find((placement) => {
+        console.log(`(Calc) ${placement.investor.user_id}, ${userId}, ${placement.investor.user_id === userId}`)
+        return placement.investor.user_id === userId;
+    });
+
+    if (!userPlacementInfo) return null;
+
+    if (!isVip) {
+        const placementResultRecord: Record<string, PlacementResult> = {
+            "central": centralPlacementResult,
+            [userContinentId]: userPlacementResult
+        };
+        const userContinentPosition = getContinentPositions(placementResultRecord)[userContinentId];
+
+        return getPositionByUserPlacementInfo(
+            userPlacementInfo,
+            cellLength,
+            userContinentPosition,
+        );
+    }
+
+    return getPositionByUserPlacementInfo(userPlacementInfo, cellLength);
+}
+
+function getPositionByUserPlacementInfo(userPlacementInfo: Placement, cellLength: number, continentPosition?: Position) {
+    if (continentPosition) {
+        const continentMiddleX = continentPosition.x;
+        const continentMiddleY = continentPosition.y;
+        const userMiddleX = (userPlacementInfo.x + userPlacementInfo.width / 2) * cellLength;
+        const userMiddleY = -(userPlacementInfo.y + userPlacementInfo.height / 2) * cellLength; // y좌표계 방향 치환
+
+        return {
+            x: continentMiddleX + userMiddleX,
+            y: continentMiddleY + userMiddleY,
+            z: 20 + (userPlacementInfo.width / 10 * 2)
+        };
+    } else {
+        return {
+            x: (userPlacementInfo.x + userPlacementInfo.width / 2) * cellLength,
+            y: (userPlacementInfo.y + userPlacementInfo.height / 2) * cellLength,
+            z: 20 + (userPlacementInfo.width / 10 * 2)
+        }
+    }
+}
+
+// 대륙 위치 계산
+export function getContinentPositions(placementResultByContinent: Record<string, PlacementResult>) {
+    const continentSizes = getContinentSizes(placementResultByContinent);
+    const centralCornerCoordinatesRecord = getCentralCornerCoordinatesRecord(continentSizes["central"]);
+
+    if (!centralCornerCoordinatesRecord) return {};
+
+    const positions: Record<string, Position> = {
+        central: {
+            x: 0,
+            y: 0,
+            z: 0
+        }
+    };
+
+    Object.entries(continentSizes).forEach(([continentId, continentSize]) => {
+        if (continentId === "central") return;
+
+        const cornerCoordinate = centralCornerCoordinatesRecord[continentId];
+
+        // 대륙 배치 방식 수정: 각 대륙이 중앙 대륙의 꼭짓점에 닿도록 조정
+        // 대륙 ID에 따라 위치 조정 방식을 다르게 적용
+        let x = 0, y = 0;
+
+        switch(continentId) {
+            case "northwest":
+                // 북서쪽 대륙: 오른쪽 아래 모서리가 중앙 대륙의 북서쪽 꼭짓점에 닿도록
+                x = cornerCoordinate.x - (continentSize.width / 2) - (continentSize.width * 0.2);
+                y = cornerCoordinate.y + (continentSize.height / 2) - (continentSize.height * 0.4);
+                break;
+            case "northeast":
+                // 북동쪽 대륙: 왼쪽 아래 모서리가 중앙 대륙의 북동쪽 꼭짓점에 닿도록
+                x = cornerCoordinate.x + (continentSize.width / 2) + (continentSize.width * 0.2);
+                y = cornerCoordinate.y + (continentSize.height / 2) - (continentSize.height * 0.4);
+                break;
+            case "southwest":
+                // 남서쪽 대륙: 오른쪽 위 모서리가 중앙 대륙의 남서쪽 꼭짓점에 닿도록
+                x = cornerCoordinate.x - (continentSize.width / 2) - (continentSize.width * 0.2);
+                y = cornerCoordinate.y - (continentSize.height / 2) + (continentSize.height * 0.4);
+                break;
+            case "southeast":
+                // 남동쪽 대륙: 왼쪽 위 모서리가 중앙 대륙의 남동쪽 꼭짓점에 닿도록
+                x = cornerCoordinate.x + (continentSize.width / 2) + (continentSize.width * 0.2);
+                y = cornerCoordinate.y - (continentSize.height / 2) + (continentSize.height * 0.4);
+                break;
+            default:
+                // 기본 계산 방식 (기존 코드와 동일)
+                x = cornerCoordinate.x - continentSize.width / 2;
+                y = cornerCoordinate.y - continentSize.height / 2;
+        }
+
+        positions[continentId] = {
+            x: x,
+            y: y,
+            z: 0
+        }
+    });
+
+    return positions;
+}
+
+// 중앙 대륙 꼭짓점 계산
+function getCentralCornerCoordinatesRecord(
+    centralContinentSize: { width: number, height: number },
+) {
+    const cornerCoordinatesRecord: Record<string, Position> = { };
+    const { width, height } = centralContinentSize;
+
+    cornerCoordinatesRecord["northwest"] = { x: -(width / 2), y: height / 2, z: 0 };
+    cornerCoordinatesRecord["northeast"] = { x: width / 2, y: height / 2, z: 0 };
+    cornerCoordinatesRecord["southwest"] = { x: -(width / 2), y: -(height / 2), z: 0 };
+    cornerCoordinatesRecord["southeast"] = { x: width / 2, y: -(height / 2), z: 0 };
+
+    return cornerCoordinatesRecord;
+}
+
+function getContinentSizes(placementResultByContinent: Record<string, PlacementResult>) {
+    const sizes: Record<string, { width: number, height: number }> = {};
+
+    Object.values(placementResultByContinent).forEach((placementResult) => {
+        // cellLength 계산 방식을 WorldScene.tsx와 통일
+        const cellLength = placementResult.continentId !== "central"
+            ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT  // 일반 대륙은 max_users 대신 100 사용
+            : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
+
+        sizes[placementResult.continentId] = {
+            width: placementResult.boundary.width * cellLength,
+            height: placementResult.boundary.height * cellLength
+        };
+    });
+
+    return sizes;
 }
