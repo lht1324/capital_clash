@@ -20,8 +20,6 @@ export type Investor = {
     previous_sunday_view: number
     last_viewed_at?: string
     area_color?: string
-    position_x: number
-    position_y: number
 }
 
 interface InvestorStore {
@@ -32,9 +30,10 @@ interface InvestorStore {
 
     // 액션
     fetchInvestors: () => Promise<void>
-    insertInvestor: (userId: string, selectedContinentId: string, investmentAmount: number) => Promise<void>
+    insertInvestor: (userId: string, selectedContinentId: string, investmentAmount: number, name: string) => Promise<void>
     updateInvestor: (investor: Partial<Investor>) => Promise<void>
     updateInvestorInvestmentAmount: (investor: Partial<Investor>, investmentAmount: number) => Promise<void>
+    updateInvestorDailyViews: (investor: Partial<Investor>) => Promise<void>
     subscribeToInvestors: () => Promise<void>
     unsubscribeFromInvestors: () => void
 
@@ -100,13 +99,14 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
         }
          */
         // 새 투자자 추가
-        insertInvestor: async (userId: string, continentId: string, investmentAmount: number) => {
+        insertInvestor: async (userId: string, continentId: string, investmentAmount: number, name: string) => {
             try {
                 const newInvestorInfo = {
                     user_id: userId,
                     continent_id: continentId,
                     investment_amount: investmentAmount,
                     area_color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+                    name: name
                 }
                 console.log('➕ 새 투자자 추가 시작:', newInvestorInfo)
                 const result = await investorsAPI.create(newInvestorInfo)
@@ -176,6 +176,10 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
                 console.error('❌ 투자자 투자금액 업데이트 실패:', error)
                 throw error
             }
+        },
+
+        updateInvestorDailyViews: async () => {
+
         },
 
         // 실시간 구독 설정

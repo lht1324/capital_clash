@@ -1,10 +1,15 @@
 'use client'
 
-import { Canvas } from '@react-three/fiber'
+import {Canvas, useThree} from '@react-three/fiber'
 import CameraController from "@/components/continent_map/CameraController";
 import WorldScene from "@/components/continent_map/WorldScene";
+import TerritoryInfoModal from "@/components/TerritoryInfoModal";
+import {memo, useEffect, useMemo, useState} from "react";
 
-export default function ContinentMap() {
+function ContinentMap() {
+    const [isTerritoryInfoModalOpen, setIsTerritoryInfoModalOpen] = useState(false);
+    const [investorId, setInvestorId] = useState<string | null>(null);
+
     return (
         <main className="w-full h-screen" style={{ backgroundColor: '#37aff7' }}>
             {/* 3D Canvas */}
@@ -16,9 +21,45 @@ export default function ContinentMap() {
                 className="w-full h-full"
                 style={{ cursor: 'grab' }}
             >
+                <CameraInitialSetup/>
                 <CameraController />
-                <WorldScene />
+                <WorldScene
+                    onTileClick={(investorId) => {
+                        setInvestorId(investorId);
+                        setIsTerritoryInfoModalOpen(true);
+                    }}
+                />
             </Canvas>
+            {investorId && <TerritoryInfoModal
+                isOpen={isTerritoryInfoModalOpen}
+                onClose={() => {
+                    setInvestorId(null);
+                    setIsTerritoryInfoModalOpen(false);
+                }}
+                investorId={investorId}
+            />}
         </main>
     )
 }
+
+function CameraInitialSetup() {
+    const { size, camera } = useThree();
+
+    useEffect(() => {
+        // 화면 크기에 따른 줌 레벨 계산
+        const monitorWidth = window.screen.width;
+        const monitorHeight = window.screen.height;
+
+        const maxContinentRange = 40;
+        const aspectRatio = monitorWidth / monitorHeight;
+        const adjustmentFactor = aspectRatio <= (16 / 9) ? 2 : 3;
+
+        console.log(`ratio = ${aspectRatio}, 16/9 = ${16 / 9}`)
+        // 카메라 위치 설정
+        camera.position.z = maxContinentRange * adjustmentFactor * (1 + 0.2 * (1 - Math.min(monitorWidth, monitorHeight) / 1000));
+    }, [camera]);
+
+    return null;
+}
+
+export default memo(ContinentMap);

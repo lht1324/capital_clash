@@ -1,6 +1,6 @@
 'use client'
 
-import {useState, useEffect, useMemo, useCallback, useRef} from 'react'
+import {useState, useEffect, useMemo, useCallback, useRef, ChangeEvent} from 'react'
 import { useContinentStore, type ContinentId } from '@/store/continentStore'
 import { getCurrentUserTileInfo, type UserTileInfo } from '@/utils/userUtils'
 import {Investor, useInvestorStore} from "@/store/investorsStore";
@@ -20,7 +20,8 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
     const isDragging = useRef(false);
 
     const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null)
-    const [investmentAmount, setInvestmentAmount] = useState<number>(0)
+    const [investmentAmount, setInvestmentAmount] = useState<number>(1)
+    const [investorName, setInvestorName] = useState<string>('')
     const [isCalculating, setIsCalculating] = useState(false)
     const [validationError, setValidationError] = useState<string>('')
     const [showPreview, setShowPreview] = useState(false)
@@ -120,17 +121,17 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
     const validateInvestmentAmount = useCallback((value: string) => {
         const amount = parseFloat(value)
         if (!value) {
-            setValidationError('투자 금액을 입력해주세요.')
+            setValidationError('Please enter an investment amount.')
             return false
         }
         if (isNaN(amount)) {
-            setValidationError('유효한 숫자를 입력해주세요.')
+            setValidationError('Please enter a valid number.')
             return false
         }
 
         // 최소 투자금액 체크
         if (amount < 1) {
-            setValidationError('최소 투자 금액은 $1입니다.')
+            setValidationError('The minimum investment amount is $1.')
             return false
         }
 
@@ -145,7 +146,7 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
         // 선택한 대륙이 가득 찬 경우
         const userCount = getContinentUserCount(continentId)
         if (userCount >= selectedContinentMaxUserCount) {
-            setValidationError('선택한 대륙이 가득 찼습니다. 다른 대륙을 선택해주세요.')
+            setValidationError('The selected continent is full. Please select another continent.')
             return false
         }
 
@@ -156,15 +157,25 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
     const isPurchasePossible = useMemo(() => {
         const isValidAmount = investmentAmount >= 1;
         const isValidContinent = isAdditionalInvestment || (selectedContinentId && validateDuplicateInvestment(selectedContinentId))
-        return isValidAmount && isValidContinent && !validationError
-    }, [investmentAmount, validationError])
+        const isValidName = isAdditionalInvestment || (investorName.trim() !== '')
+        return isValidAmount && isValidContinent && isValidName && !validationError
+    }, [investmentAmount, investorName, isAdditionalInvestment, validationError])
 
     // 투자 금액 변경 핸들러
-    const handleAmountChange = useCallback((value: string) => {
-        setInvestmentAmount(Number(value))
-        validateInvestmentAmount(value)
-        setShowPreview(!!value && parseFloat(value) > 0)
+    const handleAmountChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        const updatedValue = e.target.value;
+
+        setInvestmentAmount(Number(updatedValue))
+        validateInvestmentAmount(updatedValue)
+        setShowPreview(!!updatedValue && parseFloat(updatedValue) > 0)
+    }, [validateInvestmentAmount]);
+
+    // 투자자 이름 변경 핸들러
+    const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setInvestorName(e.target.value);
     }, []);
+
+    // 이름, 설명 추가
 
     // 구매/추가투자 처리
     const handlePurchase = useCallback(async () => {
@@ -173,12 +184,14 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
         setIsCalculating(true)
 
         try {
-            if (user && userInvestorInfo) {
+            if (user) {
                 if (isAdditionalInvestment) {
-                    await updateInvestorInvestmentAmount(userInvestorInfo, investmentAmount);
+                    if (userInvestorInfo) {
+                        await updateInvestorInvestmentAmount(userInvestorInfo, investmentAmount);
+                    }
                 } else {
                     if (selectedContinentId) {
-                        await insertInvestor(user?.id, selectedContinentId, investmentAmount);
+                        await insertInvestor(user?.id, selectedContinentId, investmentAmount, investorName);
                     }
                 }
             }
@@ -190,9 +203,9 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
             }, 1000)
         } catch (error) {
             setIsCalculating(false)
-            setValidationError('투자 처리 중 오류가 발생했습니다. 다시 시도해주세요.')
+            setValidationError('An error occurred while processing your investment. Please try again.')
         }
-    }, [selectedContinentId, investmentAmount, isPurchasePossible]);
+    }, [isPurchasePossible, selectedContinentId, investmentAmount, investorName]);
 
 
     // 모달 열림/닫힘 시 초기화
@@ -203,7 +216,7 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
             } else {
                 setSelectedContinentId(null)
             }
-            setInvestmentAmount(0)
+            setInvestorName('')
             setValidationError('')
             setShowPreview(false)
         }
@@ -399,8 +412,8 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
                                         <input
                                             type="number"
                                             value={investmentAmount}
-                                            onChange={(e) => handleAmountChange(e.target.value)}
-                                            placeholder="투자 금액을 입력하세요"
+                                            onChange={handleAmountChange}
+                                            placeholder="Input contribution amount."
                                             className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border-2 border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-lg"
                                             min="1"
                                             step="1"
@@ -413,6 +426,20 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
                                             <span>{validationError}</span>
                                         </p>
                                     )}
+                                </div>
+
+                                {/* 투자자 이름 입력 */}
+                                <div>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-semibold text-gray-400">👑</div>
+                                        <input
+                                            type="text"
+                                            value={investorName}
+                                            onChange={handleNameChange}
+                                            placeholder="Input the name as territory owner."
+                                            className="w-full pl-12 pr-4 py-3 bg-gray-800/50 border-2 border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-lg"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* 실시간 미리보기 */}

@@ -276,8 +276,8 @@ function getPositionByUserPlacementInfo(userPlacementInfo: Placement, cellLength
     } else {
         return {
             x: (userPlacementInfo.x + userPlacementInfo.width / 2) * cellLength,
-            y: (userPlacementInfo.y + userPlacementInfo.height / 2) * cellLength,
-            z: 20 + (userPlacementInfo.width / 10 * 2)
+            y: -(userPlacementInfo.y + userPlacementInfo.height / 2) * cellLength,
+            z: 20 + (userPlacementInfo.width / 10 * 2 * CENTRAL_INCREASE_RATIO)
         }
     }
 }
@@ -348,6 +348,7 @@ function getCentralCornerCoordinatesRecord(
     centralContinentSize: { width: number, height: number },
 ) {
     const cornerCoordinatesRecord: Record<string, Position> = { };
+    console.log("centralContinentSize", centralContinentSize)
     const { width, height } = centralContinentSize;
 
     cornerCoordinatesRecord["northwest"] = { x: -(width / 2), y: height / 2, z: 0 };

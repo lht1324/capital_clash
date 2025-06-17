@@ -5,8 +5,6 @@ import SingleContinent from "@/components/continent_map/SingleContinent";
 import {Investor, useInvestorStore} from "@/store/investorsStore";
 import {
     calculateSquareLayout,
-    Boundary,
-    Placement,
     PlacementResult,
     getContinentPositions
 } from "@/lib/treemapAlgorithm";
@@ -15,8 +13,13 @@ import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
 } from "@/components/continent_map/continent_map_public_variables";
+import TerritoryInfoModal from "@/components/TerritoryInfoModal";
 
-function WorldScene() {
+function WorldScene({
+    onTileClick,
+}: {
+    onTileClick: (investorId: string) => void;
+}) {
     const { continents } = useContinentStore();
     const { getFilteredInvestorListByContinent, investors } = useInvestorStore();
 
@@ -118,7 +121,7 @@ function WorldScene() {
                         placementResult={placementResult}
                         position={position}
                         cellLength={cellLength}
-                        onTileClick={(investorId) => {}}
+                        onTileClick={onTileClick}
                     />
                 );
             })}
