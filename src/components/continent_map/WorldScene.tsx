@@ -13,7 +13,6 @@ import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
 } from "@/components/continent_map/continent_map_public_variables";
-import TerritoryInfoModal from "@/components/TerritoryInfoModal";
 
 function WorldScene({
     onTileClick,

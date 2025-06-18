@@ -104,7 +104,8 @@ export interface Database {
                     continent_id: string
                     name?: string
                     description?: string
-                    website_url?: string
+                    x_url?: string
+                    instagram_url?: string
                     contact_email?: string
                     investment_amount: number
                     share_percentage: number
@@ -123,7 +124,8 @@ export interface Database {
                     continent_id: string
                     name?: string
                     description?: string
-                    website_url?: string
+                    x_url?: string
+                    instagram_url?: string
                     contact_email?: string
                     investment_amount: number
                     share_percentage: number
@@ -142,7 +144,8 @@ export interface Database {
                     continent_id?: string
                     name?: string
                     description?: string
-                    website_url?: string
+                    x_url?: string
+                    instagram_url?: string
                     contact_email?: string
                     investment_amount?: number
                     share_percentage?: number

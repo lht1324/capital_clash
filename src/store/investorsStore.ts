@@ -9,7 +9,8 @@ export type Investor = {
     continent_id: string
     name?: string
     description?: string
-    website_url?: string
+    x_url?: string
+    instagram_url?: string
     contact_email?: string
     investment_amount: number
     image_url?: string

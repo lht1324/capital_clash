@@ -2,7 +2,7 @@
 
 import {useCallback, useEffect, useMemo, useState} from 'react'
 import PurchaseTileModal from '../../PurchaseTileModal'
-import ProfileEditModal from "@/components/TerritoryDisplayEditModal";
+import TerritoryInfoEditModal from "@/components/TerritoryInfoEditModal";
 import ImageUploadModal from '../../ImageUploadModal'
 import { getCurrentUserTileInfo } from '@/utils/userUtils'
 import { useUserStore } from '@/store/userStore'
@@ -145,10 +145,12 @@ export default function Sidebar() {
         }
     }, [investorList, userInvestmentInfo])
 
+    const imageUrl = useMemo(() => {
+        return userInvestmentInfo?.image_url
+    }, [userInvestmentInfo]);
+
     const imageStatus = useMemo(() => {
-        return userInvestmentInfo?.image_status
-            ? userInvestmentInfo.image_status
-            : "none"
+        return userInvestmentInfo?.image_status ?? "none"
     }, [userInvestmentInfo]);
 
     const continentName = useMemo(() => {
@@ -312,6 +314,7 @@ export default function Sidebar() {
                                 sharePercentage={sharePercentage}
                                 userContinentRank={userContinentRank}
                                 userOverallRank={userOverallRank}
+                                imageUrl={imageUrl}
                                 imageStatus={imageStatus}
                                 imageStatusColor={imageStatusColor}
                                 imageStatusText={imageStatusText}
@@ -358,7 +361,7 @@ export default function Sidebar() {
             />
 
             {/* 프로필 수정 모달 */}
-            <ProfileEditModal
+            <TerritoryInfoEditModal
                 isOpen={isProfileEditModalOpen}
                 onClose={() => setIsProfileEditModalOpen(false)}
             />

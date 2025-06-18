@@ -156,7 +156,7 @@ function TerritoryArea(
     return (
         <group position={[x, y, 1.1]}>
             {/* 🌳 NEW: 기본 직사각형 베이스 - 최적화된 애니메이션 */}
-            <mesh
+            {!imageTexture && <mesh
                 ref={meshRef}
                 position={[0, 0, baseZ]}
                 scale={[baseScale, baseScale, baseScale]}
@@ -177,7 +177,7 @@ function TerritoryArea(
                     // roughness={0.3}
                     // metalness={0.1}
                 />
-            </mesh>
+            </mesh>}
 
             {/* 🌳 NEW: 프로필 이미지 - 공통 텍스처 사용 */}
             {imageTexture && (
@@ -195,7 +195,7 @@ function TerritoryArea(
                     <planeGeometry args={[width, height]} />
                     <meshBasicMaterial
                         map={imageTexture}
-                        transparent={false}
+                        transparent={true}
                         opacity={1.0}
                     />
                 </mesh>

@@ -1,27 +1,65 @@
-## How it works
+# 투명 배경 이미지 지원 가능성 분석
 
-1. **Choose a continent** (North-West, North-East, South-West, South-East).
-2. **Name your price** — \$1 or more, no upper limit.
-3. Your tile appears **instantly** on the live map.
-4. **Upload** an image, link, and profile.
+## 문제 상황
+현재 사용자가 투명 배경(transparent background)을 가진 이미지를 업로드했을 때, 이미지가 표시될 때 배경이 검은색으로 나타나는 문제가 있습니다.
 
-> **Territory size** = (your total contribute amount) ÷ (total contribute amount in the chosen continent)
+## 원인 분석
+TerritoryArea 컴포넌트를 분석한 결과, 이미지 텍스처를 표시하는 부분에서 투명도(transparency)가 비활성화되어 있는 것을 확인했습니다.
 
----
+문제가 되는 코드는 다음과 같습니다:
+```tsx
+<meshBasicMaterial
+    map={imageTexture}
+    transparent={false}  // 투명도 비활성화
+    opacity={1.0}
+/>
+```
 
-### Rise to the Center
+Three.js에서 `transparent` 속성이 `false`로 설정되면, 텍스처의 알파 채널(투명도)이 무시되고 배경이 검은색으로 표시됩니다.
 
-Hold the #1 spend rank in your continent and you’ll be
-**auto-promoted to the Central Zone** — the billboard’s prime real estate.
+## 해결 가능성
 
----
+**결론: 네, 가능합니다.**
 
-## Key points
+투명 배경을 지원하기 위해서는 다음과 같이 코드를 수정하면 됩니다:
 
-- **One-off payments only**: no subscriptions, no hidden fees.
-- **Digital ad space**—this is *not* an investment or revenue-sharing product.
-- Content must respect our community guidelines  
-  (no adult, gambling, or hateful material).
-- You can **edit or replace** your creative anytime from your dashboard.
+```tsx
+<meshBasicMaterial
+    map={imageTexture}
+    transparent={true}  // 투명도 활성화
+    opacity={1.0}
+    alphaTest={0.1}     // 선택적: 알파 테스트 임계값 설정
+/>
+```
 
-Ready to stand out? **Contribute now** and watch your territory grow!
+## 구현 방법 상세 설명
+
+1. **transparent 속성 활성화**: 
+   - `transparent={true}`로 설정하여 Three.js가 텍스처의 알파 채널을 인식하도록 합니다.
+
+2. **alphaTest 속성 추가 (선택사항)**: 
+   - `alphaTest` 값을 설정하면 특정 투명도 임계값 이하의 픽셀은 완전히 투명하게 처리됩니다.
+   - 이는 반투명 픽셀로 인한 렌더링 문제를 방지하는 데 도움이 됩니다.
+
+3. **텍스처 로드 시 설정**:
+   - 텍스처 로드 시 `premultiplyAlpha` 속성을 설정하여 알파 블렌딩을 개선할 수 있습니다.
+   ```tsx
+   loadedTexture.premultiplyAlpha = true;
+   ```
+
+## 추가 고려사항
+
+1. **성능 영향**:
+   - 투명도를 활성화하면 렌더링 파이프라인에 약간의 추가 부하가 발생할 수 있습니다.
+   - 그러나 현대 브라우저와 하드웨어에서는 이 정도의 차이는 미미합니다.
+
+2. **Z-정렬 문제**:
+   - 투명한 객체는 Three.js에서 특별한 렌더링 순서가 필요할 수 있습니다.
+   - 현재 구현에서는 이미 적절한 z-index 설정이 되어 있어 문제가 없을 것으로 보입니다.
+
+3. **배경 처리**:
+   - 투명 배경 이미지 아래에 표시될 요소(예: 기본 직사각형 베이스)의 색상과 투명도도 함께 고려해야 합니다.
+
+## 결론
+
+TerritoryArea 컴포넌트에서 이미지 텍스처의 투명 배경을 지원하는 것은 간단한 코드 수정으로 가능합니다. `transparent` 속성을 `true`로 변경하고, 필요에 따라 `alphaTest` 값을 설정하면 사용자가 업로드한 투명 배경 이미지가 의도한 대로 표시될 수 있습니다.

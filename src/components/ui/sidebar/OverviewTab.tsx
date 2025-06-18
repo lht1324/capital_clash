@@ -7,6 +7,7 @@ function OverviewTab({
     sharePercentage,
     userContinentRank,
     userOverallRank,
+    imageUrl,
     imageStatus,
     imageStatusColor,
     imageStatusText,
@@ -20,6 +21,7 @@ function OverviewTab({
     sharePercentage: number,
     userContinentRank: number,
     userOverallRank: number,
+    imageUrl?: string,
     imageStatus: string,
     imageStatusColor: string,
     imageStatusText: string,
@@ -79,9 +81,9 @@ function OverviewTab({
                                 </div>
 
                                 <div className="aspect-square bg-gray-600 rounded-lg overflow-hidden mb-2">
-                                    {imageStatus === 'approved' ? (
+                                    {imageUrl && imageStatus === 'approved' ? (
                                         <img
-                                            src="/test.jpg"
+                                            src={imageUrl}
                                             alt="Territory Image"
                                             className="w-full h-full object-cover"
                                         />
@@ -124,14 +126,6 @@ function OverviewTab({
                                     <span className="text-white font-medium">{isVip ? `(${continentName})` : continentName}</span>
                                 </div>
                             </div>
-                            {/*<div className="flex justify-between items-center">*/}
-                            {/*    <span className="text-gray-300">위치</span>*/}
-                            {/*    <span className="text-white">({userInvestmentInfo.tilePosition?.x}, {userInvestmentInfo.tilePosition?.y})</span>*/}
-                            {/*</div>*/}
-                            {/*<div className="flex justify-between items-center">*/}
-                            {/*    <span className="text-gray-300">크기</span>*/}
-                            {/*    <span className="text-white">{userInvestmentInfo.tilePosition?.size}×{userInvestmentInfo.tilePosition?.size}</span>*/}
-                            {/*</div>*/}
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-300">Image Status</span>
                                 <span className={imageStatusColor}>

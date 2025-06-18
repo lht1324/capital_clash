@@ -357,7 +357,7 @@ for (let y = 0; y <= currentBoundaryH - square.size && !foundPosition; y++) {
 **완료 일시**: 2025년 1월 현재 세션
 
 **구현 완료 사항**:
-1. **TerritoryInfoModal 컴포넌트 생성** (`src/components/TerritoryInfoModal.tsx`)
+1. **TerritoryInfoViewModal 컴포넌트 생성** (`src/components/TerritoryInfoViewModal.tsx`)
    - 투자자 프로필 정보 표시 전용 모달
    - 이미지, 투자정보, 프로필정보, 승인상태 표시
    - 외부 링크 클릭 기능 (새 탭으로 열기)
@@ -455,7 +455,7 @@ for (let y = 0; y <= currentBoundaryH - square.size && !foundPosition; y++) {
   - `src/components/Header.tsx`
   - `src/app/profile/page.tsx`
   - `src/components/TileSettingsPanel.tsx`
-  - `src/components/TerritoryInfoModal.tsx`
+  - `src/components/TerritoryInfoViewModal.tsx`
   - `src/components/ContinentMap.tsx` (주석)
 - 기술적 주석 1개만 남음 (변경 불필요)
 
@@ -864,7 +864,7 @@ src/
 ├── components/
 │   ├── ContinentMap.tsx              # ✅ 성능최적화 + 프로필보기 완료 (11-12단계)
 │   ├── TileSettingsPanel.tsx         # ✅ 신규 생성 완료 (2단계)
-│   ├── TerritoryInfoModal.tsx          # ✅ 신규 생성 완료 (12단계)
+│   ├── TerritoryInfoViewModal.tsx          # ✅ 신규 생성 완료 (12단계)
 │   ├── Header.tsx                    # ✅ 완전 재설계 완료 (13단계-1)
 │   ├── Sidebar.tsx                   # ✅ 신규 생성 완료 (13단계-2)
 │   └── InvestmentPanel.tsx           # ✅ 최적화 버튼 추가 완료 (11단계)

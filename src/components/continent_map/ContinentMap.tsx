@@ -3,12 +3,12 @@
 import {Canvas, useThree} from '@react-three/fiber'
 import CameraController from "@/components/continent_map/CameraController";
 import WorldScene from "@/components/continent_map/WorldScene";
-import TerritoryInfoModal from "@/components/TerritoryInfoModal";
+import TerritoryInfoViewModal from "@/components/TerritoryInfoViewModal";
 import {memo, useEffect, useMemo, useState} from "react";
 
 function ContinentMap() {
     const [isTerritoryInfoModalOpen, setIsTerritoryInfoModalOpen] = useState(false);
-    const [investorId, setInvestorId] = useState<string | null>(null);
+    const [investorId, setinvestorId] = useState<string | null>(null);
 
     return (
         <main className="w-full h-screen" style={{ backgroundColor: '#37aff7' }}>
@@ -25,15 +25,15 @@ function ContinentMap() {
                 <CameraController />
                 <WorldScene
                     onTileClick={(investorId) => {
-                        setInvestorId(investorId);
+                        setinvestorId(investorId);
                         setIsTerritoryInfoModalOpen(true);
                     }}
                 />
             </Canvas>
-            {investorId && <TerritoryInfoModal
+            {investorId && <TerritoryInfoViewModal
                 isOpen={isTerritoryInfoModalOpen}
                 onClose={() => {
-                    setInvestorId(null);
+                    setinvestorId(null);
                     setIsTerritoryInfoModalOpen(false);
                 }}
                 investorId={investorId}
