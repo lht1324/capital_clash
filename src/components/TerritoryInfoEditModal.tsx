@@ -193,14 +193,14 @@ function TerritoryInfoEditModal({
                     area_color: profileData.areaColor,
                 }
                 await updateInvestor(newInvestorInfo);
-                alert('프로필 정보가 성공적으로 저장되었습니다.');
+                alert('Profile information has been successfully saved.');
                 onClose();
             } catch (error) {
-                console.error('프로필 정보 저장 실패:', error);
-                alert('프로필 정보 저장에 실패했습니다. 다시 시도해주세요.');
+                console.error('Failed to save profile information:', error);
+                alert('Failed to save profile information. Please try again.');
             }
         } else {
-            alert('변경된 내용이 없습니다.');
+            alert('No changes have been made.');
         }
     }, [isProfileInfoChanged, profileData, isXUrlValid, isInstagramUrlValid, isContactEmailValid, userInvestorInfo, updateInvestor, onClose]);
 

@@ -60,8 +60,13 @@ function WorldScene({
 
     // 대륙 위치 계산
     const continentPositions = useMemo(() => {
-        return getContinentPositions(placementResults);
-    }, [placementResults]);
+        const continentsKeyCount = Object.keys(continents).length;
+        const placementResultsKeyCount = Object.keys(placementResults).length;
+
+        return continentsKeyCount === placementResultsKeyCount
+            ? getContinentPositions(placementResults)
+            : null;
+    }, [continents, placementResults]);
 
     // 전체 화면을 커버하는 격자 무늬 생성
     const gridLines = useMemo(() => {
@@ -105,7 +110,7 @@ function WorldScene({
             ))}
 
             {/* 모든 대륙 렌더링 */}
-            {continentList.map(continent => {
+            {continentPositions && continentList.map(continent => {
                 const placementResult = placementResults[continent.id] || null;
                 const position = continentPositions[continent.id];
                 // cellLength 계산 방식을 treemapAlgorithm.ts의 getContinentSizes 함수와 통일

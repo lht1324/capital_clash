@@ -13,9 +13,10 @@ import TerritoryTab from "@/components/ui/sidebar/TerritoryTab";
 import StatsTab from "@/components/ui/sidebar/StatsTab";
 import { storageAPI } from '@/lib/supabase/supabase-storage-api';
 import {calculateInvestorCoordinates} from "@/lib/treemapAlgorithm";
+import {investorsAPI} from "@/lib/supabase/supabase-investors-api";
 
 export default function Sidebar() {
-    const [activeTab, setActiveTab] = useState<'overview' | 'tile' | 'stats'>('overview')
+    const [activeTab, setActiveTab] = useState<'overview' | 'territory' | 'stats'>('overview')
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
     const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false)
     const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false)
@@ -208,6 +209,25 @@ export default function Sidebar() {
         }
     }, [vipInvestorRecord, filteredInvestorListByContinent, isVip, user?.id, setCameraTarget]);
 
+    const onClickSwitchContinent = useCallback(async (selectedContinentId: string) => {
+        if (!userInvestmentInfo) {
+            console.error('User or investment info not found');
+            return;
+        }
+
+        const isConfirmed = confirm(`Are you sure you wanna move from ${continents[userInvestmentInfo.continent_id].name} to ${continents[selectedContinentId].name}?`);
+
+        if (isConfirmed) {
+            try {
+                // Update the investor's continent_id
+                const result = await investorsAPI.updateContinentId(userInvestmentInfo.id, selectedContinentId);
+                console.log(`Continent switched to: ${selectedContinentId}`, result);
+            } catch (error) {
+                console.error('Failed to switch continent:', error);
+            }
+        }
+    }, [userInvestmentInfo]);
+
     // Handle image upload
     const handleImageUpload = useCallback(async (file: File) => {
         console.log(`🖼️ Image uploaded: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`)
@@ -283,9 +303,9 @@ export default function Sidebar() {
                             📊 Overview
                         </button>
                         <button
-                            onClick={() => setActiveTab('tile')}
+                            onClick={() => setActiveTab('territory')}
                             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                                activeTab === 'tile'
+                                activeTab === 'territory'
                                     ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
                                     : 'text-gray-400 hover:text-white hover:bg-gray-800'
                             }`}
@@ -324,7 +344,7 @@ export default function Sidebar() {
                             />
                         )}
 
-                        {activeTab === 'tile' && (
+                        {activeTab === 'territory' && (
                             <TerritoryTab
                                 isUserInvestmentInfoExist={isUserInvestmentInfoExist}
                                 investorList={investorList}
@@ -336,6 +356,7 @@ export default function Sidebar() {
                                 continentName={continentName}
                                 continentList={continentList}
                                 onClickMoveToTerritory={onClickMoveToTerritory}
+                                onClickSwitchContinent={onClickSwitchContinent}
                                 onClickOpenImageUploadModal={() => setIsImageUploadModalOpen(true)}
                                 onClickOpenPurchaseModal={() => { setIsPurchaseModalOpen(true) }}
                                 onClickOpenProfileEditModal={() => { setIsProfileEditModalOpen(true) }}

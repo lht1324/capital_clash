@@ -1,7 +1,6 @@
 import {memo} from "react";
-import {Continent, useContinentStore} from "@/store/continentStore";
-import {Investor, useInvestorStore} from "@/store/investorsStore";
-import {useUserStore} from "@/store/userStore";
+import {Continent} from "@/store/continentStore";
+import {Investor} from "@/store/investorsStore";
 
 function TerritoryTab({
     isUserInvestmentInfoExist,
@@ -14,6 +13,7 @@ function TerritoryTab({
     continentName,
     continentList,
     onClickMoveToTerritory,
+    onClickSwitchContinent,
     onClickOpenImageUploadModal,
     onClickOpenPurchaseModal,
     onClickOpenProfileEditModal,
@@ -28,6 +28,7 @@ function TerritoryTab({
     continentName: string,
     continentList: Continent[],
     onClickMoveToTerritory: () => void,
+    onClickSwitchContinent: (selectedContinentId: string) => void,
     onClickOpenImageUploadModal: () => void,
     onClickOpenPurchaseModal: () => void,
     onClickOpenProfileEditModal: () => void,
@@ -115,6 +116,7 @@ function TerritoryTab({
                                     <button
                                         key={continent.id}
                                         disabled={isFull || isCurrentContinent}
+                                        onClick={() => { onClickSwitchContinent(continent.id); }}
                                         className={`w-full ${
                                             isFull || isCurrentContinent
                                                 ? 'opacity-50 cursor-not-allowed'
