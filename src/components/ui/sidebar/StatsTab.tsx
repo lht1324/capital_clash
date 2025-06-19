@@ -69,12 +69,12 @@ function StatsTab({
                                 const isToday = dayOfWeek === currentDayOfWeek
                                 const isPast = dayOfWeek < currentDayOfWeek
                                 const isFuture = dayOfWeek > currentDayOfWeek
-                                const changeColor = change !== 0
+                                const changeColor = change !== 0 && dayOfWeek <= currentDayOfWeek
                                     ? change > 0
                                         ? 'text-green-400'
                                         : 'text-red-400'
                                     : 'text-gray-400';
-                                const changeIcon = change !== 0
+                                const changeIcon = change !== 0 && dayOfWeek <= currentDayOfWeek
                                     ? change > 0
                                         ? '↗'
                                         : '↘'
@@ -121,7 +121,7 @@ function StatsTab({
                                                 <span className={`text-sm font-medium ${changeColor}`}>
                                                     {change > 0 ? '+' : ''}
                                                     {
-                                                        change !== 0
+                                                        change !== 0 && dayOfWeek <= currentDayOfWeek
                                                             ? change
                                                             : "-"
                                                     }

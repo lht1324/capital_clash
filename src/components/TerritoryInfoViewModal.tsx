@@ -121,13 +121,6 @@ ${targetUrl}
         window.open(intent.toString(), "_blank", "noopener,noreferrer");
     }, [investorId, investorInfo, continents, userOverallRank, userContinentRank]);
 
-    // 👁️ 프로필 열릴 때 조회수 증가
-    useEffect(() => {
-        if (isOpen && investorId) {
-            // updateInvestorDailyViews()
-        }
-    }, [isOpen, investorId, updateInvestorDailyViews])
-
     if (!isOpen) return null
 
     if (!investorInfo) {

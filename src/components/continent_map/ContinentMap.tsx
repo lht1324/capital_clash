@@ -4,11 +4,38 @@ import {Canvas, useThree} from '@react-three/fiber'
 import CameraController from "@/components/continent_map/CameraController";
 import WorldScene from "@/components/continent_map/WorldScene";
 import TerritoryInfoViewModal from "@/components/TerritoryInfoViewModal";
-import {memo, useEffect, useMemo, useState} from "react";
+import {memo, useCallback, useEffect, useMemo, useState} from "react";
+import { useInvestorStore } from '@/store/investorsStore';
 
 function ContinentMap() {
+    const { updateInvestorDailyViews } = useInvestorStore();
+
     const [isTerritoryInfoModalOpen, setIsTerritoryInfoModalOpen] = useState(false);
-    const [investorId, setinvestorId] = useState<string | null>(null);
+    const [investorId, setInvestorId] = useState<string | null>(null);
+
+    // 1. weekly로 수정.
+    /*
+    {
+        "previous_week_daily_views": number[]
+        "current_week_daily_views": number[]
+    }
+     */
+    // 2. admin 제작, 이미지 컨펌과 수동 업데이트 기능만 일단 파 둠.
+    // 👁️ 프로필 열릴 때 조회수 증가
+    const updateDailyViews = useCallback((investorId: string, dailyViews: number[]) => {
+        // Get the current day of the week (0 = Monday, 1 = Tuesday, ..., 6 = Sunday)
+        const dayOfWeek = (new Date().getDay() + 6) % 7;
+
+        // Create a copy of the daily views array
+        const updatedDailyViews = [...dailyViews];
+
+        // Increment the view count for the current day
+        updatedDailyViews[dayOfWeek]++;
+
+        // Update the daily views in the database
+        updateInvestorDailyViews(investorId, updatedDailyViews)
+            .catch(error => console.error('Failed to update daily views:', error));
+    }, [updateInvestorDailyViews]);
 
     return (
         <main className="w-full h-screen" style={{ backgroundColor: '#37aff7' }}>
@@ -24,8 +51,9 @@ function ContinentMap() {
                 <CameraInitialSetup/>
                 <CameraController />
                 <WorldScene
-                    onTileClick={(investorId) => {
-                        setinvestorId(investorId);
+                    onTileClick={(investorId: string, dailyViews: number[]) => {
+                        setInvestorId(investorId);
+                        updateDailyViews(investorId, dailyViews);
                         setIsTerritoryInfoModalOpen(true);
                     }}
                 />
@@ -33,7 +61,7 @@ function ContinentMap() {
             {investorId && <TerritoryInfoViewModal
                 isOpen={isTerritoryInfoModalOpen}
                 onClose={() => {
-                    setinvestorId(null);
+                    setInvestorId(null);
                     setIsTerritoryInfoModalOpen(false);
                 }}
                 investorId={investorId}

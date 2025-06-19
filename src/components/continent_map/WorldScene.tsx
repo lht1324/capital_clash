@@ -17,10 +17,10 @@ import {
 function WorldScene({
     onTileClick,
 }: {
-    onTileClick: (investorId: string) => void;
+    onTileClick: (investorId: string, dailyViews: number[]) => void;
 }) {
     const { continents } = useContinentStore();
-    const { getFilteredInvestorListByContinent, investors } = useInvestorStore();
+    const { investors } = useInvestorStore();
 
     const continentList = useMemo(() => {
         return Object.values(continents);
@@ -104,9 +104,17 @@ function WorldScene({
 
             {/* 전체 화면 격자 무늬 */}
             {gridLines.map((geometry, index) => (
-                <line key={`grid-line-${index}`} geometry={geometry}>
-                    <lineBasicMaterial attach="material" color="#2a5298" linewidth={1} opacity={0.3} transparent />
-                </line>
+                <primitive
+                    key={`grid-line-${index}`}
+                    object={new THREE.Line(
+                        geometry,
+                        new THREE.LineBasicMaterial({
+                            color: "#2a5298",
+                            opacity: 0.3,
+                            transparent: true
+                        })
+                    )}
+                />
             ))}
 
             {/* 모든 대륙 렌더링 */}

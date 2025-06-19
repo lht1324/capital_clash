@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import type { Database } from '@/types/database'
 import { supabase } from '@/lib/supabase/supabase'
 import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
 
@@ -34,7 +33,7 @@ interface InvestorStore {
     insertInvestor: (userId: string, selectedContinentId: string, investmentAmount: number, name: string) => Promise<void>
     updateInvestor: (investor: Partial<Investor>) => Promise<void>
     updateInvestorInvestmentAmount: (investor: Partial<Investor>, investmentAmount: number) => Promise<void>
-    updateInvestorDailyViews: (investor: Partial<Investor>) => Promise<void>
+    updateInvestorDailyViews: (id: string, dailyViews: number[]) => Promise<Investor>
     subscribeToInvestors: () => Promise<void>
     unsubscribeFromInvestors: () => void
 
@@ -179,8 +178,25 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
             }
         },
 
-        updateInvestorDailyViews: async () => {
+        updateInvestorDailyViews: async (id: string, dailyViews: number[]) => {
+            console.log('🔄 투자자 조회수 업데이트 시작:', id)
+            try {
+                const updatedInvestor = await investorsAPI.updateDailyViews(id, dailyViews)
 
+                if (!updatedInvestor) throw new Error('투자자 조회수 업데이트 후 데이터를 받지 못했습니다.')
+
+                set(state => ({
+                    investors: {
+                        ...state.investors,
+                        [updatedInvestor.id]: { ...state.investors[updatedInvestor.id], ...updatedInvestor }
+                    }
+                }))
+                console.log('✅ 투자자 조회수 업데이트 완료:', updatedInvestor.id)
+                return updatedInvestor
+            } catch (error) {
+                console.error('❌ 투자자 조회수 업데이트 실패:', error)
+                throw error
+            }
         },
 
         // 실시간 구독 설정

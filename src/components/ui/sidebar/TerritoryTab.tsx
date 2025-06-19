@@ -112,6 +112,7 @@ function TerritoryTab({
                                 const isFull = currentCount >= continent.max_users;
                                 const isCurrentContinent = continentName === continent.name
 
+                                // 대륙 이동 판매 -> $5
                                 return (
                                     <button
                                         key={continent.id}

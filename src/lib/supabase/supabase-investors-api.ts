@@ -89,6 +89,22 @@ export const investorsAPI = {
         return data
     },
 
+    async updateDailyViews(id: string, dailyViews: number[]) {
+        const { data, error } = await supabase
+            .from('investors')
+            .update({
+                daily_views: dailyViews,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) throw error
+        console.log('✅ 투자금 및 지분율 업데이트 완료:', data)
+        return data
+    },
+
     // 특정 사용자의 투자 내역 조회
     async getInvestmentsByUserId(userId: string) {
         const { data, error } = await supabase

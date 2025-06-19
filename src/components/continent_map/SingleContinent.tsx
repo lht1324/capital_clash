@@ -1,9 +1,8 @@
 // src/components/continent_map/SingleContinent.tsx
-import { Continent, useContinentStore } from "@/store/continentStore";
-import { memo, useEffect, useMemo } from "react";
+import { Continent } from "@/store/continentStore";
+import { memo } from "react";
 import TerritoryArea from "@/components/continent_map/TerritoryArea";
-import {Boundary, Placement, PlacementResult, Position} from "@/lib/treemapAlgorithm";
-import * as THREE from "three";
+import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
 
 function SingleContinent({
     continent,
@@ -16,17 +15,8 @@ function SingleContinent({
     placementResult: PlacementResult;
     position: Position;
     cellLength: number;
-    onTileClick: (investorId: string) => void;
+    onTileClick: (investorId: string, dailyViews: number[]) => void;
 }) {
-    const { updateContinentUsers } = useContinentStore();
-
-    // 투자자 수 업데이트
-    useEffect(() => {
-        if (updateContinentUsers) {
-            // updateContinentUsers(continent.id, placementResult?.placements.length || 0);
-        }
-    }, [continent.id, placementResult, updateContinentUsers]);
-
     return (
         <group position={[position.x, position.y, position.z]}>
             {/* 대륙 기본 모양 */}

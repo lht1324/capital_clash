@@ -100,7 +100,7 @@ function TerritoryArea(
     }: {
         placement: Placement,
         cellLength: number,
-        onTileClick: (investorId: string) => void
+        onTileClick: (investorId: string, dailyViews: number[]) => void
     }
 ) {
     const meshRef = useRef<THREE.Mesh>(null)
@@ -165,7 +165,7 @@ function TerritoryArea(
                 onClick={() => {
                     if (!imageTexture) {
                         console.log(`(Calc) name = ${placement.investor.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
-                        onTileClick(placement.investor.id)
+                        onTileClick(placement.investor.id, placement.investor.daily_views)
                     }
                 }}
             >
@@ -189,7 +189,7 @@ function TerritoryArea(
                     onPointerOut={() => setHovered(false)}
                     onClick={() => {
                         console.log(`(Calc) name = ${placement.investor.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
-                        onTileClick(placement.investor.id)
+                        onTileClick(placement.investor.id, placement.investor.daily_views)
                     }}
                 >
                     <planeGeometry args={[width, height]} />
