@@ -58,8 +58,7 @@ function ContinentMap() {
                     }}
                 />
             </Canvas>
-            {investorId && <TerritoryInfoViewModal
-                isOpen={isTerritoryInfoModalOpen}
+            {isTerritoryInfoModalOpen && investorId && <TerritoryInfoViewModal
                 onClose={() => {
                     setInvestorId(null);
                     setIsTerritoryInfoModalOpen(false);

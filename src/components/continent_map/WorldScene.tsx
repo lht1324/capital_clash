@@ -1,18 +1,24 @@
 // src/components/continent_map/WorldScene.tsx
 import { useContinentStore } from "@/store/continentStore";
-import { memo, useEffect, useMemo, useState } from "react";
+import {memo, useEffect, useMemo, useRef, useState} from "react";
 import SingleContinent from "@/components/continent_map/SingleContinent";
 import {Investor, useInvestorStore} from "@/store/investorsStore";
 import {
     calculateSquareLayout,
     PlacementResult,
-    getContinentPositions
+    getContinentPositions, Position, getContinentPosition
 } from "@/lib/treemapAlgorithm";
 import * as THREE from "three";
 import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
 } from "@/components/continent_map/continent_map_public_variables";
+import {areContributorListsEqualById} from "@/utils/contributorUtils";
+
+type SharePercentageInfo = {
+    id: string;
+    sharePercentage: number;
+}
 
 function WorldScene({
     onTileClick,
@@ -20,53 +26,22 @@ function WorldScene({
     onTileClick: (investorId: string, dailyViews: number[]) => void;
 }) {
     const { continents } = useContinentStore();
-    const { investors } = useInvestorStore();
+    const { investors, getFilteredInvestorListByContinent, getIsSharePercentageChangedByContinent } = useInvestorStore();
 
     const continentList = useMemo(() => {
         return Object.values(continents);
     }, [continents]);
-    const investorList = useMemo(() => {
-        return Object.values(investors);
-    }, [investors]);
+    const [investorList, setInvestorList] = useState<Investor[]>([]);
+    const [isSharePercentageChangedByContinent, setIsSharePercentageChangedByContinent] = useState<Record<string, boolean>>({ });
+    const [placementResults, setPlacementResults] = useState<Record<string, PlacementResult>>({});
+    const [continentPositions, setContinentPositions] = useState<Record<string, Position>>({});
 
-    // 모든 대륙의 placementResult 계산
-    const placementResults = useMemo(() => {
-        const results: Record<string, PlacementResult> = {};
-
-        continentList.forEach(continent => {
-            console.log(`continent[${continent.name}]`, continent)
-            const filteredInvestorListByContinent = continent.id !== "central"
-                ? investorList.filter((investor) => { return investor.continent_id === continent.id })
-                : Object.values(
-                    investorList.reduce((acc, investor) => {
-                        const id = investor.continent_id;
-                        if (!acc[id] || investor.investment_amount > acc[id].investment_amount) {
-                            acc[id] = investor; // 최고 투자금액 기준
-                        }
-                        return acc;
-                    }, {} as Record<string, Investor>)
-                );
-
-            if (filteredInvestorListByContinent.length > 0) {
-                results[continent.id] = calculateSquareLayout(
-                    filteredInvestorListByContinent,
-                    continent.id
-                );
-            }
-        });
-
-        return results;
-    }, [continentList, investorList]);
-
-    // 대륙 위치 계산
-    const continentPositions = useMemo(() => {
-        const continentsKeyCount = Object.keys(continents).length;
-        const placementResultsKeyCount = Object.keys(placementResults).length;
-
-        return continentsKeyCount === placementResultsKeyCount
-            ? getContinentPositions(placementResults)
-            : null;
-    }, [continents, placementResults]);
+    const isPlacementResultsInitialized = useMemo(() => {
+        return continentList.length === Object.keys(placementResults).length;
+    }, [continentList, placementResults]);
+    const isContinentPositionsInitialized = useMemo(() => {
+        return Object.keys(continentPositions).length > 0;
+    }, [continentPositions]);
 
     // 전체 화면을 커버하는 격자 무늬 생성
     const gridLines = useMemo(() => {
@@ -95,6 +70,71 @@ function WorldScene({
         return geometries;
     }, []);
 
+    useEffect(() => {
+        setInvestorList((prevInvestorList) => {
+            const isChangedRecord: Record<string, boolean> = { };
+
+            continentList.forEach((continent) => {
+                isChangedRecord[continent.id] = getIsSharePercentageChangedByContinent(prevInvestorList, continent.id);
+            })
+
+            setIsSharePercentageChangedByContinent(isChangedRecord);
+
+            return Object.values(investors);
+        })
+    }, [continentList, investors]);
+
+    // 모든 대륙의 placementResult 계산
+    useEffect(() => {
+        const isChanged = !(Object.values(isSharePercentageChangedByContinent).every((isChanged) => {
+            return !isChanged;
+        }))
+
+        if (isChanged) {
+            const isChangedRecord: Record<string, boolean> = { };
+
+            setPlacementResults(prevPlacementResults => {
+                const continentIdList = Object.keys(isSharePercentageChangedByContinent);
+                const placementResultRecord: Record<string, PlacementResult> = {};
+
+                if (continentIdList.length !== 0) {
+                    continentIdList.forEach((continentId) => {
+                        const filteredInvestorListByContinent = getFilteredInvestorListByContinent(continentId);
+
+                        if (filteredInvestorListByContinent.length > 0) {
+                            placementResultRecord[continentId] = isSharePercentageChangedByContinent[continentId]
+                                ? calculateSquareLayout(
+                                    filteredInvestorListByContinent,
+                                    continentId
+                                )
+                                : prevPlacementResults[continentId];
+
+                            isChangedRecord[continentId] = false;
+                        }
+                    });
+                }
+
+                setContinentPositions((prevContinentPositions) => {
+                    const continentPositionRecord: Record<string, Position> = { };
+
+                    continentIdList.forEach((continentId) => {
+                        continentPositionRecord[continentId]  = isSharePercentageChangedByContinent[continentId]
+                            ? getContinentPosition(
+                                placementResultRecord[continentId],
+                                placementResultRecord["central"]
+                            )
+                            : prevContinentPositions[continentId]
+                    });
+
+                    return continentPositionRecord;
+                });
+                return placementResultRecord;
+            })
+
+            setIsSharePercentageChangedByContinent(isChangedRecord);
+        }
+    }, [isSharePercentageChangedByContinent]);
+
     return (
         <>
             {/* 전역 조명 */}
@@ -118,8 +158,8 @@ function WorldScene({
             ))}
 
             {/* 모든 대륙 렌더링 */}
-            {continentPositions && continentList.map(continent => {
-                const placementResult = placementResults[continent.id] || null;
+            {isPlacementResultsInitialized && isContinentPositionsInitialized && continentList.map((continent) => {
+                const placementResult = placementResults[continent.id];
                 const position = continentPositions[continent.id];
                 // cellLength 계산 방식을 treemapAlgorithm.ts의 getContinentSizes 함수와 통일
                 const cellLength = continent.id !== "central"

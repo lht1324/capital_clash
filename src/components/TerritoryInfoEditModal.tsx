@@ -5,15 +5,11 @@ import { useUserStore } from "@/store/userStore"
 import { useInvestorStore } from "@/store/investorsStore"
 import Image from 'next/image'
 
-interface TerritoryDisplayEditModalProps {
-    isOpen: boolean
-    onClose: () => void
-}
-
 function TerritoryInfoEditModal({
-    isOpen,
     onClose,
-}: TerritoryDisplayEditModalProps) {
+}: {
+    onClose: () => void
+}) {
     const { user } = useUserStore();
     const { investors, updateInvestor } = useInvestorStore();
 
@@ -206,8 +202,7 @@ function TerritoryInfoEditModal({
 
     // 모달이 열릴 때 기존 데이터 로드
     useEffect(() => {
-        console.log(`isOpen = ${isOpen}, isInitialized = ${isInitialized}`)
-        if (isOpen && userInvestorInfo && !isInitialized) {
+        if (userInvestorInfo && !isInitialized) {
             const defaultColor = userInvestorInfo.area_color || '#FF0000';
             const { h, l } = hexToHsl(defaultColor);
 
@@ -225,7 +220,7 @@ function TerritoryInfoEditModal({
             setIsInitialized(true);
         }
 
-        if (!isOpen && isInitialized) {
+        if (isInitialized) {
             setProfileData({
                 name: "",
                 description: "",
@@ -236,9 +231,7 @@ function TerritoryInfoEditModal({
             });
             setIsInitialized(false);
         }
-    }, [isOpen, userInvestorInfo, isInitialized, hexToHsl]);
-
-    if (!isOpen) return null;
+    }, [userInvestorInfo, isInitialized, hexToHsl]);
 
     if (!userInvestorInfo) {
         return (

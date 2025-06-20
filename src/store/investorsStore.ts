@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase/supabase'
 import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
+import { areContributorListsEqualById } from "@/utils/contributorUtils";
 
 export type Investor = {
     id: string
@@ -40,6 +41,7 @@ interface InvestorStore {
     // 헬퍼 함수
     getFilteredInvestorListByContinent: (continentId: string) => Investor[]
     getTotalInvestmentByContinent: (continentId: string) => number
+    getIsSharePercentageChangedByContinent: (prevInvestorList: Investor[], continentId: string) => boolean
 }
 
 export const useInvestorStore = create<InvestorStore>((set, get) => {
@@ -75,29 +77,6 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
             }
         },
 
-
-        /*
-        const handlePurchase = async (continentId: ContinentId, amount: number) => {
-            console.log(`🛒 프로필에서 영역 구매: ${continentId}, $${amount.toLocaleString()}`)
-
-            // 새로운 투자자 생성
-            const newInvestor = {
-                user_id: user?.id,
-                continent_id: continentId,
-                investment_amount: amount,
-                area_color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
-            }
-
-            try {
-                // 🔥 Supabase에 투자자 추가
-                await addInvestor(continentId, newInvestor)
-                alert(`🎉 ${continentId} 대륙에 $${amount.toLocaleString()} 투자가 완료되었습니다!`)
-            } catch (error) {
-                console.error('투자 실패:', error)
-                alert('❌ 투자에 실패했습니다. 다시 시도해주세요.')
-            }
-        }
-         */
         // 새 투자자 추가
         insertInvestor: async (userId: string, continentId: string, investmentAmount: number, name: string) => {
             try {
@@ -305,6 +284,63 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
             return filteredInvestorList
                 .reduce((total, investor) => total + investor.investment_amount, 0)
+        },
+
+        getIsSharePercentageChangedByContinent: (prevInvestorList, continentId) => {
+            const state = get();
+            const newInvestorList = Object.values(state.investors);
+
+            const getFilteredInvestorList = (investorList: Investor[], continentId: string) => {
+                const filteredList = continentId !== "central"
+                    ? investorList.filter((investor) => {
+                        return investor.continent_id === continentId;
+                    })
+                    : Object.values(
+                        investorList.reduce((vipList, investor) => {
+                            const investorContinentId = investor.continent_id;
+
+                            if (!vipList[investorContinentId] || investor.investment_amount > vipList[investorContinentId].investment_amount) {
+                                vipList[investorContinentId] = investor
+                            }
+
+                            return vipList
+                        }, { } as Record<string, Investor>)
+                    )
+
+                return [...filteredList].sort((a, b) => a.id.localeCompare(b.id));
+            }
+            const filteredPrevInvestorListByContinent = getFilteredInvestorList(prevInvestorList, continentId);
+            const filteredNewInvestorListByContinent = getFilteredInvestorList(newInvestorList, continentId);
+
+            if (!areContributorListsEqualById(filteredPrevInvestorListByContinent, filteredNewInvestorListByContinent)) {
+                return true;
+            }
+
+            const prevTotalInvestAmount = filteredPrevInvestorListByContinent.reduce((acc, investor) => {
+                return acc + investor.investment_amount;
+            }, 0);
+            const newTotalInvestAmount = filteredNewInvestorListByContinent.reduce((acc, investor) => {
+                return acc + investor.investment_amount;
+            }, 0);
+
+            let isChanged = false;
+
+            filteredPrevInvestorListByContinent.forEach((prevInvestor, index) => {
+                const newInvestor = filteredNewInvestorListByContinent[index];
+                const prevInvestorAmount = prevInvestor.investment_amount;
+                const newInvestorAmount = newInvestor.investment_amount;
+
+                const prevSharePercentage = prevInvestorAmount / prevTotalInvestAmount;
+                const newSharePercentage = newInvestorAmount / newTotalInvestAmount;
+
+                isChanged = prevSharePercentage !== newSharePercentage;
+
+                if (isChanged) {
+                    return;
+                }
+            })
+
+            return isChanged;
         }
     }
 })

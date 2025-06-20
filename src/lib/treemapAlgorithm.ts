@@ -283,8 +283,8 @@ function getPositionByUserPlacementInfo(userPlacementInfo: Placement, cellLength
 }
 
 // 대륙 위치 계산
-export function getContinentPositions(placementResultByContinent: Record<string, PlacementResult>) {
-    const continentSizes = getContinentSizes(placementResultByContinent);
+export function getContinentPositions(placementResultsByContinent: Record<string, PlacementResult>) {
+    const continentSizes = getContinentSizes(placementResultsByContinent);
     const centralCornerCoordinatesRecord = getCentralCornerCoordinatesRecord(continentSizes["central"]);
 
     if (!centralCornerCoordinatesRecord) return {};
@@ -341,6 +341,100 @@ export function getContinentPositions(placementResultByContinent: Record<string,
     });
 
     return positions;
+}
+
+export function getContinentPosition(
+    placementResult: PlacementResult,
+    centralPlacementResult: PlacementResult,
+) {
+    const continentSize = getContinentSize(placementResult);
+    const centralContinentSize = getContinentSize(centralPlacementResult);
+    const cornerCoordinate = getContinentCornerCoordinate(placementResult.continentId, centralContinentSize);
+
+    // 대륙 배치 방식 수정: 각 대륙이 중앙 대륙의 꼭짓점에 닿도록 조정
+    // 대륙 ID에 따라 위치 조정 방식을 다르게 적용
+    let x = 0, y = 0;
+
+    switch(placementResult.continentId) {
+        case "northwest":
+            // 북서쪽 대륙: 오른쪽 아래 모서리가 중앙 대륙의 북서쪽 꼭짓점에 닿도록
+            x = cornerCoordinate.x - (continentSize.width / 2) - (continentSize.width * 0.2);
+            y = cornerCoordinate.y + (continentSize.height / 2) - (continentSize.height * 0.4);
+            break;
+        case "northeast":
+            // 북동쪽 대륙: 왼쪽 아래 모서리가 중앙 대륙의 북동쪽 꼭짓점에 닿도록
+            x = cornerCoordinate.x + (continentSize.width / 2) + (continentSize.width * 0.2);
+            y = cornerCoordinate.y + (continentSize.height / 2) - (continentSize.height * 0.4);
+            break;
+        case "southwest":
+            // 남서쪽 대륙: 오른쪽 위 모서리가 중앙 대륙의 남서쪽 꼭짓점에 닿도록
+            x = cornerCoordinate.x - (continentSize.width / 2) - (continentSize.width * 0.2);
+            y = cornerCoordinate.y - (continentSize.height / 2) + (continentSize.height * 0.4);
+            break;
+        case "southeast":
+            // 남동쪽 대륙: 왼쪽 위 모서리가 중앙 대륙의 남동쪽 꼭짓점에 닿도록
+            x = cornerCoordinate.x + (continentSize.width / 2) + (continentSize.width * 0.2);
+            y = cornerCoordinate.y - (continentSize.height / 2) + (continentSize.height * 0.4);
+            break;
+        case "central":
+            // 남동쪽 대륙: 왼쪽 위 모서리가 중앙 대륙의 남동쪽 꼭짓점에 닿도록
+            x = 0;
+            y = 0;
+            break;
+        default:
+            // 기본 계산 방식 (기존 코드와 동일)
+            x = cornerCoordinate.x - continentSize.width / 2;
+            y = cornerCoordinate.y - continentSize.height / 2;
+    }
+
+    return {
+        x: x,
+        y: y,
+        z: 0
+    }
+}
+
+function getContinentSize(placementResult: PlacementResult) {
+    const cellLength = placementResult.continentId !== "central"
+        ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT  // 일반 대륙은 max_users 대신 100 사용
+        : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
+
+    return {
+        width: placementResult.boundary.width * cellLength,
+        height: placementResult.boundary.height * cellLength
+    }
+}
+
+function getContinentCornerCoordinate(
+    continentId: string,
+    centralContinentSize: { width: number, height: number }
+) {
+    const { width, height } = centralContinentSize;
+    let coordinate = { x: 0, y: 0, z: 0 };
+
+    switch(continentId) {
+        case "northwest": {
+            coordinate = { x: -(width / 2), y: height / 2, z: 0 };
+            break;
+        }
+        case "northeast": {
+            coordinate = { x: width / 2, y: height / 2, z: 0 };
+            break;
+        }
+        case "southwest": {
+            coordinate = { x: -(width / 2), y: -(height / 2), z: 0 };
+            break;
+        }
+        case "southeast": {
+            coordinate = { x: width / 2, y: -(height / 2), z: 0 };
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
+    return coordinate;
 }
 
 // 중앙 대륙 꼭짓점 계산

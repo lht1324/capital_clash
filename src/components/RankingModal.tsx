@@ -1,11 +1,6 @@
-import {useCallback, useMemo, useState} from 'react'
-import {useContinentStore, type ContinentId, Continent} from '@/store/continentStore'
+import { useMemo, useState, memo } from 'react'
+import { useContinentStore, type ContinentId } from '@/store/continentStore'
 import { useInvestorStore, type Investor } from "@/store/investorsStore";
-
-interface RankingModalProps {
-    isOpen: boolean
-    onClose: () => void
-}
 
 interface RankingData {
     id: string
@@ -17,7 +12,11 @@ interface RankingData {
     dailyViews: number[]
 }
 
-export default function RankingModal({ isOpen, onClose }: RankingModalProps) {
+function RankingModal({
+    onClose
+}: {
+    onClose: () => void
+}) {
     const [activeTab, setActiveTab] = useState<'investment' | 'views'>('investment')
     const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null)
     const { continents } = useContinentStore()
@@ -51,12 +50,8 @@ export default function RankingModal({ isOpen, onClose }: RankingModalProps) {
         return investorList.map((investor: Investor) => {
             const continentInfo = continentInfoMap.get(investor.continent_id);
 
-            const continentName = continentInfo?.name
-                ? continentInfo?.name
-                : "-"
-            const totalInvestment = continentInfo?.totalInvestment
-                ? continentInfo.totalInvestment
-                : 0;
+            const continentName = continentInfo?.name ?? "-"
+            const totalInvestment = continentInfo?.totalInvestment ?? 0;
 
             return {
                 id: investor.id,
@@ -71,7 +66,6 @@ export default function RankingModal({ isOpen, onClose }: RankingModalProps) {
     }, [investorList, continentInfoMap]);
 
     const filteredRankingDataList = useMemo(() => {
-        console.log(`continentId: ${selectedContinentId}`)
         return selectedContinentId
             ? rankingDataList.filter((rankingItem) => rankingItem.continentId === selectedContinentId)
             : rankingDataList;
@@ -257,3 +251,5 @@ export default function RankingModal({ isOpen, onClose }: RankingModalProps) {
         </>
     )
 }
+
+export default memo(RankingModal);

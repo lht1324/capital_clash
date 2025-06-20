@@ -4,6 +4,7 @@ const nextConfig = {
     images: {
         domains: ['https://azfjxkiykdztdarmenst.supabase.co', 'lh3.googleusercontent.com'], // Supabase Storage 도메인 및 Google 이미지 호스트
     },
+    reactStrictMode: false,
 }
 
 module.exports = nextConfig 

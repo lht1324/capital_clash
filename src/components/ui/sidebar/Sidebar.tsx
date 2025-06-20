@@ -1,19 +1,18 @@
 'use client'
 
-import {useCallback, useEffect, useMemo, useState} from 'react'
-import PurchaseTileModal from '../../PurchaseTileModal'
-import TerritoryInfoEditModal from "@/components/TerritoryInfoEditModal";
-import ImageUploadModal from '../../ImageUploadModal'
-import { getCurrentUserTileInfo } from '@/utils/userUtils'
-import { useUserStore } from '@/store/userStore'
+import { useCallback, useMemo, useState } from 'react'
+import { calculateInvestorCoordinates } from "@/lib/treemapAlgorithm";
 import { useContinentStore } from '@/store/continentStore'
-import {Investor, useInvestorStore} from "@/store/investorsStore";
+import { useInvestorStore, Investor } from "@/store/investorsStore";
+import { useUserStore } from '@/store/userStore'
+import { storageAPI } from '@/lib/supabase/supabase-storage-api';
+import { investorsAPI } from "@/lib/supabase/supabase-investors-api";
+import TerritoryInfoEditModal from "@/components/TerritoryInfoEditModal";
 import OverviewTab from "@/components/ui/sidebar/OverviewTab";
 import TerritoryTab from "@/components/ui/sidebar/TerritoryTab";
 import StatsTab from "@/components/ui/sidebar/StatsTab";
-import { storageAPI } from '@/lib/supabase/supabase-storage-api';
-import {calculateInvestorCoordinates} from "@/lib/treemapAlgorithm";
-import {investorsAPI} from "@/lib/supabase/supabase-investors-api";
+import PurchaseTerritoryModal from '../../PurchaseTerritoryModal'
+import ImageUploadModal from '../../ImageUploadModal'
 
 export default function Sidebar() {
     const [activeTab, setActiveTab] = useState<'overview' | 'territory' | 'stats'>('overview')
@@ -244,8 +243,8 @@ export default function Sidebar() {
 
             // Supabase Storage에 이미지 업로드
             const { imageData, error } = await storageAPI.uploadImage(
-                file, 
-                user.id, 
+                file,
+                user.id,
                 userInvestmentInfo.id
             )
 
@@ -376,24 +375,21 @@ export default function Sidebar() {
             </div>
 
             {/* 영역 구매 모달 */}
-            <PurchaseTileModal
-                isOpen={isPurchaseModalOpen}
+            {isPurchaseModalOpen && <PurchaseTerritoryModal
                 onClose={() => setIsPurchaseModalOpen(false)}
-            />
+            />}
 
             {/* 프로필 수정 모달 */}
-            <TerritoryInfoEditModal
-                isOpen={isProfileEditModalOpen}
+            {isProfileEditModalOpen && <TerritoryInfoEditModal
                 onClose={() => setIsProfileEditModalOpen(false)}
-            />
+            />}
 
             {/* 이미지 업로드 모달 */}
-            <ImageUploadModal
-                isOpen={isImageUploadModalOpen}
+            {isImageUploadModalOpen && <ImageUploadModal
                 onClose={() => setIsImageUploadModalOpen(false)}
                 onUpload={handleImageUpload}
                 currentImageStatus={imageStatus}
-            />
+            />}
         </>)
     )
 }

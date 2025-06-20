@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/supabase'
 import RankingModal from './RankingModal'
-import PurchaseTileModal from './PurchaseTileModal'
+import PurchaseTerritoryModal from './PurchaseTerritoryModal'
 import { useUserStore } from '@/store/userStore'
 import { UserCircleIcon } from '@heroicons/react/24/outline'
 import { useContinentStore } from '@/store/continentStore'
@@ -146,22 +146,19 @@ export default function Header() {
             </div>
 
             {/* 랭킹 모달 */}
-            <RankingModal
-                isOpen={isRankingModalOpen}
+            {isRankingModalOpen && <RankingModal
                 onClose={() => setIsRankingModalOpen(false)}
-            />
+            />}
 
             {/* 구매 모달 */}
-            <PurchaseTileModal
-                isOpen={isPurchaseModalOpen}
+            {isPurchaseModalOpen && <PurchaseTerritoryModal
                 onClose={() => setIsPurchaseModalOpen(false)}
-            />
+            />}
 
             {/* 프로필 설정 모달 */}
-            <ProfileInfoModal
-                isOpen={isProfileInfoModalOpen}
+            {isProfileInfoModalOpen && <ProfileInfoModal
                 onClose={() => setIsProfileInfoModalOpen(false)}
-            />
+            />}
         </header>
     )
 }

@@ -4,15 +4,11 @@ import {memo, useMemo} from 'react'
 import { useUserStore } from "@/store/userStore"
 import Image from 'next/image'
 
-interface ProfileInfoModalProps {
-    isOpen: boolean
-    onClose: () => void
-}
-
 function ProfileInfoModal({
-    isOpen,
     onClose,
-}: ProfileInfoModalProps) {
+}: {
+    onClose: () => void
+}) {
     const { user } = useUserStore();
 
     const authProvider = useMemo(() => {
@@ -22,8 +18,6 @@ function ProfileInfoModal({
 
         return provider[0].toUpperCase() + provider.slice(1);
     }, [user?.app_metadata.provider])
-
-    if (!isOpen) return null;
 
     return (
         <>

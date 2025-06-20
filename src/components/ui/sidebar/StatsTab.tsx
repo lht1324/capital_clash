@@ -29,10 +29,6 @@ function StatsTab({
             : day - 1
     }, []);
 
-    const calculateStreakDays = useCallback(() => {
-
-    }, []);
-
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-bold text-white mb-4">View Statistics</h3>

@@ -3,19 +3,15 @@
 import {useState, useRef, useCallback, DragEvent, ChangeEvent} from 'react'
 import { X, Upload, Image as ImageIcon, AlertCircle, Check } from 'lucide-react'
 
-interface ImageUploadModalProps {
-    isOpen: boolean
-    onClose: () => void
-    onUpload: (file: File) => void
-    currentImageStatus?: 'none' | 'pending' | 'approved' | 'rejected'
-}
-
 export default function ImageUploadModal({
-    isOpen,
     onClose,
     onUpload,
     currentImageStatus = 'none'
-}: ImageUploadModalProps) {
+}: {
+    onClose: () => void
+    onUpload: (file: File) => void
+    currentImageStatus?: 'none' | 'pending' | 'approved' | 'rejected'
+}) {
     const [dragActive, setDragActive] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
@@ -161,8 +157,6 @@ export default function ImageUploadModal({
             fileInputRef.current.value = ''
         }
     }, []);
-
-    if (!isOpen) return null
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-20">

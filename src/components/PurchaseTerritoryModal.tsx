@@ -6,12 +6,11 @@ import { getCurrentUserTileInfo, type UserTileInfo } from '@/utils/userUtils'
 import {Investor, useInvestorStore} from "@/store/investorsStore";
 import {useUserStore} from "@/store/userStore";
 
-interface PurchaseTileModalProps {
-    isOpen: boolean
+export default function PurchaseTerritoryModal({
+    onClose
+}: {
     onClose: () => void
-}
-
-export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModalProps) {
+}) {
     const { continents } = useContinentStore();
     const { investors, insertInvestor, updateInvestorInvestmentAmount } = useInvestorStore();
     const { user } = useUserStore();
@@ -37,38 +36,30 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
         return investorList.filter((investor) => { return investor.continent_id === selectedContinentId; });
     }, [investorList, selectedContinentId]);
     const userInvestorInfo: Investor | null = useMemo(() => {
-        const searchResult = investorList.find((investor) => {
+        return investorList.find((investor) => {
             return investor.user_id === user?.id;
-        })
-
-        return searchResult
-            ? searchResult
-            : null;
+        }) ?? null;
     }, [investorList, user]);
 
     const continentalTotalInvestmentAmount = useMemo(() => {
-        return filteredInvestorListByContinent.reduce((acc, investor) => { return acc + investor.investment_amount }, 0);
+        return filteredInvestorListByContinent.reduce((acc, investor) => {
+            return acc + investor.investment_amount
+        }, 0);
     }, [filteredInvestorListByContinent]);
-    const userTileInfo: UserTileInfo = useMemo(() => {
-        return getCurrentUserTileInfo(Object.values(investors), user?.id)
-        // return getCurrentUserTileInfo(Object.values(investors), null)
-    }, [investors, user]);
     const isAdditionalInvestment = useMemo(() => {
-        return userTileInfo.hasExistingTile;
-    }, [userTileInfo]);
+        return !(!userInvestorInfo);
+    }, [userInvestorInfo]);
 
     // isAdditionalInvestment (Current Territory)
     const userContinentId = useMemo(() => {
-        return userTileInfo.continentId
-    }, [userTileInfo]);
+        return userInvestorInfo?.continent_id;
+    }, [userInvestorInfo]);
     const userContinentName = useMemo(() => {
         return continentItemList.find(c => c.id === userContinentId)?.name
-    }, [userTileInfo])
+    }, [continentItemList, userContinentId]);
     const userInvestmentAmount = useMemo(() => {
-        return userTileInfo.investmentAmount
-            ? userTileInfo.investmentAmount
-            : 0;
-    }, [userTileInfo]);
+        return userInvestorInfo?.investment_amount ?? 0
+    }, [userInvestorInfo]);
     const userSharePercentage = useMemo(() => {
         return userInvestmentAmount
             ? Number(userInvestmentAmount / continentalTotalInvestmentAmount) * 100
@@ -210,29 +201,24 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
 
     // 모달 열림/닫힘 시 초기화
     useEffect(() => {
-        if (isOpen) {
-            if (isAdditionalInvestment && userContinentId) {
-                setSelectedContinentId(userContinentId)
-            } else {
-                setSelectedContinentId(null)
-            }
-            setInvestorName('')
-            setValidationError('')
-            setShowPreview(false)
-        }
-    }, [isOpen, isAdditionalInvestment, userContinentId])
+        setSelectedContinentId(
+            isAdditionalInvestment && userContinentId
+                ? userContinentId
+                : null
+        )
+    }, [isAdditionalInvestment, userContinentId])
 
     // ESC 키로 닫기
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && isOpen) {
+            if (e.key === 'Escape') {
                 onClose()
             }
         }
 
         document.addEventListener('keydown', handleEscape)
         return () => document.removeEventListener('keydown', handleEscape)
-    }, [isOpen, onClose])
+    }, [onClose])
 
     // 마우스 드래그 상태 추적
     useEffect(() => {
@@ -251,20 +237,16 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
             }, 10);
         };
 
-        if (isOpen) {
-            window.addEventListener('mousedown', handleMouseDown);
-            window.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('mouseup', handleMouseUp);
-        }
+        window.addEventListener('mousedown', handleMouseDown);
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
 
         return () => {
             window.removeEventListener('mousedown', handleMouseDown);
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [isOpen]);
-
-    if (!isOpen) return null
+    }, []);
 
     return (
         <>
@@ -429,7 +411,7 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
                                 </div>
 
                                 {/* 투자자 이름 입력 */}
-                                <div>
+                                {!isAdditionalInvestment && <div>
                                     <div className="relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-semibold text-gray-400">👑</div>
                                         <input
@@ -440,7 +422,7 @@ export default function PurchaseTileModal({ isOpen, onClose }: PurchaseTileModal
                                             className="w-full pl-12 pr-4 py-3 bg-gray-800/50 border-2 border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-lg"
                                         />
                                     </div>
-                                </div>
+                                </div>}
 
                                 {/* 실시간 미리보기 */}
                                 {showPreview && selectedContinentId && (

@@ -6,17 +6,13 @@ import {useCallback, useEffect, useMemo, KeyboardEvent, memo} from 'react'
 import {encodeBase64} from "@/utils/base64Utils";
 import {useUserStore} from "@/store/userStore";
 
-interface TerritoryInfoModalProps {
-    isOpen: boolean
-    onClose: () => void
-    investorId: string
-}
-
 function TerritoryInfoViewModal({
-    isOpen,
     onClose,
     investorId,
-}: TerritoryInfoModalProps) {
+}: {
+    onClose: () => void
+    investorId: string
+}) {
     const { continents } = useContinentStore();
     const { investors, updateInvestorDailyViews, getTotalInvestmentByContinent } = useInvestorStore();
     const { user } = useUserStore();
@@ -120,8 +116,6 @@ ${targetUrl}
 
         window.open(intent.toString(), "_blank", "noopener,noreferrer");
     }, [investorId, investorInfo, continents, userOverallRank, userContinentRank]);
-
-    if (!isOpen) return null
 
     if (!investorInfo) {
         return (

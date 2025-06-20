@@ -2,95 +2,6 @@ import * as THREE from "three";
 import {memo, useEffect, useMemo, useRef, useState} from "react";
 import {Placement} from "@/lib/treemapAlgorithm";
 
-// 텍스트를 Canvas에 그리고, 이를 텍스처로 변환하는 함수
-function createTextCanvas(text: string, width: number, height: number): HTMLCanvasElement {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext('2d');
-
-    if (context) {
-        // 캔버스 초기화
-        context.fillStyle = 'transparent';
-        context.fillRect(0, 0, width, height);
-
-        // 텍스트 스타일 설정
-        context.fillStyle = 'white';
-        context.font = `bold ${Math.floor(height / 3)}px Arial`;
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-
-        // 텍스트가 너무 길면 두 줄로 나누기
-        const maxWidth = width * 0.9;
-        if (context.measureText(text).width > maxWidth) {
-            // 텍스트를 단어 단위로 분할
-            const words = text.split(' ');
-            let line1 = '';
-            let line2 = '';
-            let currentLine = '';
-
-            // 첫 번째 줄에 최대한 많은 단어를 넣기
-            for (let i = 0; i < words.length; i++) {
-                const testLine = currentLine + words[i] + ' ';
-                if (context.measureText(testLine).width <= maxWidth) {
-                    currentLine = testLine;
-                } else {
-                    // 첫 번째 줄이 채워졌으면, 나머지는 두 번째 줄로
-                    line1 = currentLine.trim();
-                    line2 = words.slice(i).join(' ');
-                    break;
-                }
-
-                // 모든 단어가 첫 번째 줄에 들어가면
-                if (i === words.length - 1) {
-                    line1 = currentLine.trim();
-                }
-            }
-
-            // 두 줄 텍스트 그리기
-            context.fillText(line1, width / 2, height / 2 - height / 6);
-            if (line2) {
-                context.fillText(line2, width / 2, height / 2 + height / 6);
-            }
-        } else {
-            // 한 줄로 충분한 경우
-            context.fillText(text, width / 2, height / 2);
-        }
-    }
-
-    return canvas;
-}
-
-// 텍스트를 렌더링하는 컴포넌트
-function TextPlane({ text, width, height, position }: { text: string, width: number, height: number, position: [number, number, number] }) {
-    const [textTexture, setTextTexture] = useState<THREE.Texture | null>(null);
-
-    useEffect(() => {
-        // 텍스트 캔버스 생성
-        const canvas = createTextCanvas(text, width * 100, height * 100);
-
-        // 캔버스를 텍스처로 변환
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.needsUpdate = true;
-
-        setTextTexture(texture);
-
-        // 컴포넌트 언마운트 시 텍스처 해제
-        return () => {
-            texture.dispose();
-        };
-    }, [text, width, height]);
-
-    if (!textTexture) return null;
-
-    return (
-        <mesh position={position}>
-            <planeGeometry args={[width, height]} />
-            <meshBasicMaterial map={textTexture} transparent opacity={1} />
-        </mesh>
-    );
-}
-
 // 🌳 NEW: 개별 영역 컴포넌트 (직사각형) - 최적화된 버전
 function TerritoryArea(
     {
@@ -219,6 +130,95 @@ function TerritoryArea(
             )}
         </group>
     )
+}
+
+// 텍스트를 Canvas에 그리고, 이를 텍스처로 변환하는 함수
+function createTextCanvas(text: string, width: number, height: number): HTMLCanvasElement {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+
+    if (context) {
+        // 캔버스 초기화
+        context.fillStyle = 'transparent';
+        context.fillRect(0, 0, width, height);
+
+        // 텍스트 스타일 설정
+        context.fillStyle = 'white';
+        context.font = `bold ${Math.floor(height / 3)}px Arial`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+
+        // 텍스트가 너무 길면 두 줄로 나누기
+        const maxWidth = width * 0.9;
+        if (context.measureText(text).width > maxWidth) {
+            // 텍스트를 단어 단위로 분할
+            const words = text.split(' ');
+            let line1 = '';
+            let line2 = '';
+            let currentLine = '';
+
+            // 첫 번째 줄에 최대한 많은 단어를 넣기
+            for (let i = 0; i < words.length; i++) {
+                const testLine = currentLine + words[i] + ' ';
+                if (context.measureText(testLine).width <= maxWidth) {
+                    currentLine = testLine;
+                } else {
+                    // 첫 번째 줄이 채워졌으면, 나머지는 두 번째 줄로
+                    line1 = currentLine.trim();
+                    line2 = words.slice(i).join(' ');
+                    break;
+                }
+
+                // 모든 단어가 첫 번째 줄에 들어가면
+                if (i === words.length - 1) {
+                    line1 = currentLine.trim();
+                }
+            }
+
+            // 두 줄 텍스트 그리기
+            context.fillText(line1, width / 2, height / 2 - height / 6);
+            if (line2) {
+                context.fillText(line2, width / 2, height / 2 + height / 6);
+            }
+        } else {
+            // 한 줄로 충분한 경우
+            context.fillText(text, width / 2, height / 2);
+        }
+    }
+
+    return canvas;
+}
+
+// 텍스트를 렌더링하는 컴포넌트
+function TextPlane({ text, width, height, position }: { text: string, width: number, height: number, position: [number, number, number] }) {
+    const [textTexture, setTextTexture] = useState<THREE.Texture | null>(null);
+
+    useEffect(() => {
+        // 텍스트 캔버스 생성
+        const canvas = createTextCanvas(text, width * 100, height * 100);
+
+        // 캔버스를 텍스처로 변환
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+
+        setTextTexture(texture);
+
+        // 컴포넌트 언마운트 시 텍스처 해제
+        return () => {
+            texture.dispose();
+        };
+    }, [text, width, height]);
+
+    if (!textTexture) return null;
+
+    return (
+        <mesh position={position}>
+            <planeGeometry args={[width, height]} />
+            <meshBasicMaterial map={textTexture} transparent opacity={1} />
+        </mesh>
+    );
 }
 
 export default memo(TerritoryArea);
