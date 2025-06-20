@@ -1,0 +1,3 @@
+export const CONTINENT_DEFAULT_LENGTH = 25;
+export const CENTRAL_INCREASE_RATIO = 1.4;
+export const CONTINENT_MAX_USER_COUNT = 100;

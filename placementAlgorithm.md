@@ -93,7 +93,7 @@ const boundary = {
 #### 1단계: 투자자별 정사각형 크기 계산
 ```typescript
 const squareAreas = investors.map(investor => {
-  const calculatedSide = Math.floor(Math.sqrt(Math.round(investor.share * TOTAL_CELLS)))
+  const calculatedSide = Math.floor(Math.sqrt(Math.round(investor.share_percentage * TOTAL_CELLS)))
   const actualSide = Math.max(MIN_SQUARE_SIZE, calculatedSide)
   return { investor, side: actualSide, area: actualSide * actualSide }
 })
