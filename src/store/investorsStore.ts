@@ -1,13 +1,13 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase/supabase'
 import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
-import { areContributorListsEqualById } from "@/utils/contributorUtils";
+import { arePlayerListsEqualById } from "@/utils/playerUtils";
 
 export type Investor = {
     id: string
     user_id: string
     continent_id: string
-    name?: string
+    name: string
     description?: string
     x_url?: string
     instagram_url?: string
@@ -42,6 +42,7 @@ interface InvestorStore {
     getFilteredInvestorListByContinent: (continentId: string) => Investor[]
     getTotalInvestmentByContinent: (continentId: string) => number
     getIsSharePercentageChangedByContinent: (prevInvestorList: Investor[], continentId: string) => boolean
+    getUpdatedPlayerList: (prevPlayerList: Investor[]) => { player: Investor, isNewUser: boolean }[]
 }
 
 export const useInvestorStore = create<InvestorStore>((set, get) => {
@@ -84,7 +85,7 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
                     user_id: userId,
                     continent_id: continentId,
                     investment_amount: investmentAmount,
-                    area_color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+                    area_color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
                     name: name
                 }
                 console.log('➕ 새 투자자 추가 시작:', newInvestorInfo)
@@ -92,12 +93,6 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 if (!result) throw new Error('투자자 추가 후 데이터를 받지 못했습니다.')
 
-                set(state => ({
-                    investors: {
-                        ...state.investors,
-                        [result.id]: result
-                    }
-                }))
                 console.log('✅ 새 투자자 추가 완료:', result.id)
             } catch (error) {
                 console.error('❌ 투자자 추가 실패:', error)
@@ -113,12 +108,6 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 if (!updatedInvestor) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
 
-                set(state => ({
-                    investors: {
-                        ...state.investors,
-                        [updatedInvestor.id]: { ...state.investors[updatedInvestor.id], ...updatedInvestor }
-                    }
-                }))
                 console.log('✅ 투자자 정보 업데이트 완료:', updatedInvestor.id)
             } catch (error) {
                 console.error('❌ 투자자 정보 업데이트 실패:', error)
@@ -142,13 +131,6 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 if (!updatedInvestor) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
 
-                // 상태 업데이트
-                set(state => ({
-                    investors: {
-                        ...state.investors,
-                        [updatedInvestor.id]: { ...state.investors[updatedInvestor.id], ...updatedInvestor }
-                    }
-                }))
                 console.log('✅ 투자자 투자금액 업데이트 완료:', updatedInvestor.id)
                 return updatedInvestor
             } catch (error) {
@@ -164,12 +146,6 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 if (!updatedInvestor) throw new Error('투자자 조회수 업데이트 후 데이터를 받지 못했습니다.')
 
-                set(state => ({
-                    investors: {
-                        ...state.investors,
-                        [updatedInvestor.id]: { ...state.investors[updatedInvestor.id], ...updatedInvestor }
-                    }
-                }))
                 console.log('✅ 투자자 조회수 업데이트 완료:', updatedInvestor.id)
                 return updatedInvestor
             } catch (error) {
@@ -188,7 +164,8 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
             investorsSubscription = supabase
                 .channel('investors_changes')
-                .on('postgres_changes',
+                .on(
+                    'postgres_changes',
                     {
                         event: '*',
                         schema: 'public',
@@ -290,6 +267,10 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
             const state = get();
             const newInvestorList = Object.values(state.investors);
 
+            if (prevInvestorList.length === 0) {
+                return true;
+            }
+
             const getFilteredInvestorList = (investorList: Investor[], continentId: string) => {
                 const filteredList = continentId !== "central"
                     ? investorList.filter((investor) => {
@@ -312,7 +293,7 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
             const filteredPrevInvestorListByContinent = getFilteredInvestorList(prevInvestorList, continentId);
             const filteredNewInvestorListByContinent = getFilteredInvestorList(newInvestorList, continentId);
 
-            if (!areContributorListsEqualById(filteredPrevInvestorListByContinent, filteredNewInvestorListByContinent)) {
+            if (!arePlayerListsEqualById(filteredPrevInvestorListByContinent, filteredNewInvestorListByContinent)) {
                 return true;
             }
 
@@ -330,8 +311,12 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
                 const prevInvestorAmount = prevInvestor.investment_amount;
                 const newInvestorAmount = newInvestor.investment_amount;
 
-                const prevSharePercentage = prevInvestorAmount / prevTotalInvestAmount;
-                const newSharePercentage = newInvestorAmount / newTotalInvestAmount;
+                const prevSharePercentage = (prevInvestorAmount / prevTotalInvestAmount) > 0.01
+                    ? prevInvestorAmount / prevTotalInvestAmount
+                    : 0.01;
+                const newSharePercentage = (newInvestorAmount / newTotalInvestAmount) > 0.01
+                    ? newInvestorAmount / newTotalInvestAmount
+                    : 0.01;
 
                 isChanged = prevSharePercentage !== newSharePercentage;
 
@@ -341,6 +326,69 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
             })
 
             return isChanged;
+        },
+
+        getUpdatedPlayerList(prevPlayerList: Investor[]) {
+            const state = get();
+            const newPlayerList = Object.values(state.investors);
+            const updatedPlayerList: { player: Investor, isNewUser: boolean }[] = [];
+
+            const sortedPrevPlayerList = [...prevPlayerList].sort((a, b) => {
+                return a.id.localeCompare(b.id);
+            });
+            const sortedNewPlayerList = [...newPlayerList].sort((a, b) => {
+                return a.id.localeCompare(b.id);
+            });
+
+            const isSameList = arePlayerListsEqualById(sortedPrevPlayerList, sortedNewPlayerList);
+
+            if ((sortedPrevPlayerList.length === sortedNewPlayerList.length) && isSameList) {
+                const isNotChanged = sortedPrevPlayerList.every((prevPlayer, index) => {
+                    const newPlayer = sortedNewPlayerList[index];
+
+                    return prevPlayer.investment_amount === newPlayer.investment_amount;
+                })
+
+                if (isNotChanged) {
+                    return [];
+                }
+            }
+
+            // 1. prevPlayerList와 newPlayerList를 비교해 동일한 id를 가진 player의
+            // investment_amount가 다르다면 updatedPlayerList에 push
+            sortedPrevPlayerList.forEach((prevPlayer) => {
+                // 동일한 ID를 가진 새 contributor 찾기
+                const newPlayer = sortedNewPlayerList.find((contributor) => {
+                    return contributor.id === prevPlayer.id;
+                });
+
+                // 새 player가 존재하고 investment_amount가 다르다면 updatedPlayerList에 추가
+                if (newPlayer && prevPlayer.investment_amount !== newPlayer.investment_amount) {
+                    updatedPlayerList.push({
+                        player: newPlayer,
+                        isNewUser: false
+                    });
+                }
+            });
+
+            // 2. prevPlayerList에는 없지만 newPlayerList에는 존재하는 contributor를
+            // 신규 가입 유저로 가정하고 updatedPlayerList에 push
+            const prevPlayerIds = new Set(sortedPrevPlayerList.map((prevPlayer) => {
+                return prevPlayer.id;
+            }));
+
+            sortedNewPlayerList.forEach((newPlayer) => {
+                // prevContributorList에 없는 ID를 가진 contributor는 신규 가입 유저
+                if (!prevPlayerIds.has(newPlayer.id)) {
+                    updatedPlayerList.push({
+                        player: newPlayer,
+                        isNewUser: true
+                    });
+                }
+            });
+
+            // 3. updatedContributorList 반환
+            return updatedPlayerList;
         }
     }
 })

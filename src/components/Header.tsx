@@ -1,6 +1,6 @@
 'use client'
 
-import {useState, useEffect, useCallback} from 'react'
+import {useState, useEffect, useCallback, useMemo} from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -12,6 +12,7 @@ import { UserCircleIcon } from '@heroicons/react/24/outline'
 import { useContinentStore } from '@/store/continentStore'
 import ProfileInfoModal from "@/components/ProfileInfoModal";
 import DropDownMenu from "@/components/ui/DropDownMenu";
+import {useInvestorStore} from "@/store/investorsStore";
 
 export default function Header() {
     const router = useRouter()
@@ -20,6 +21,15 @@ export default function Header() {
     const [isProfileInfoModalOpen, setIsProfileInfoModalOpen] = useState(false)
     const { user, setUser } = useUserStore()
     const { setSidebarOpen } = useContinentStore()
+    const { investors } = useInvestorStore();
+
+    const isAdditionalContribution = useMemo(() => {
+        const contributor = Object.values(investors).find((investor) => {
+            return investor.user_id === user?.id
+        })
+
+        return !!contributor
+    }, [investors, user?.id])
 
     const handleGoogleLogin = useCallback(async () => {
         try {
@@ -94,7 +104,7 @@ export default function Header() {
                         className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors"
                     >
                         <span>💎</span>
-                        <span>Purchase Territory</span>
+                        <span>{isAdditionalContribution ? "Additional Purchase" : "Purchase Territory"}</span>
                     </button>
                 </div>
 
@@ -126,17 +136,17 @@ export default function Header() {
                         trigger={
                             <div className="flex items-center space-x-2">
                                 <UserCircleIcon className="h-6 w-6" />
-                                <span>{user.user_metadata?.name || '사용자'}</span>
+                                <span>{user.user_metadata?.name || 'User'}</span>
                             </div>
                         }
                         items={[
                             {
-                                label: '프로필',
+                                label: 'Profile',
                                 onClick: handleOpenProfileSettingModal,
                                 icon: '👤'
                             },
                             {
-                                label: '로그아웃',
+                                label: 'Sign out',
                                 onClick: handleSignOut,
                                 icon: '👋'
                             }

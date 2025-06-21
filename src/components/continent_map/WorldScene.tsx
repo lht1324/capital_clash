@@ -13,7 +13,7 @@ import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
 } from "@/components/continent_map/continent_map_public_variables";
-import {areContributorListsEqualById} from "@/utils/contributorUtils";
+import {arePlayerListsEqualById, getFilteredPlayerList} from "@/utils/playerUtils";
 
 type SharePercentageInfo = {
     id: string;
@@ -37,11 +37,11 @@ function WorldScene({
     const [continentPositions, setContinentPositions] = useState<Record<string, Position>>({});
 
     const isPlacementResultsInitialized = useMemo(() => {
-        return continentList.length === Object.keys(placementResults).length;
-    }, [continentList, placementResults]);
+        return Object.keys(continents).length === Object.keys(placementResults).length;
+    }, [continents, placementResults]);
     const isContinentPositionsInitialized = useMemo(() => {
-        return Object.keys(continentPositions).length > 0;
-    }, [continentPositions]);
+        return Object.keys(continentPositions).length === Object.keys(continentList).length;
+    }, [continents, continentPositions]);
 
     // 전체 화면을 커버하는 격자 무늬 생성
     const gridLines = useMemo(() => {
@@ -90,16 +90,17 @@ function WorldScene({
             return !isChanged;
         }))
 
-        if (isChanged) {
-            const isChangedRecord: Record<string, boolean> = { };
+        console.log(`isChanged = ${isChanged}`)
+        console.log("isSharePercentageChangedByContinent", isSharePercentageChangedByContinent);
 
+        if (isChanged && investorList.length > 0) {
             setPlacementResults(prevPlacementResults => {
                 const continentIdList = Object.keys(isSharePercentageChangedByContinent);
                 const placementResultRecord: Record<string, PlacementResult> = {};
 
                 if (continentIdList.length !== 0) {
                     continentIdList.forEach((continentId) => {
-                        const filteredInvestorListByContinent = getFilteredInvestorListByContinent(continentId);
+                        const filteredInvestorListByContinent = getFilteredPlayerList(investorList, continentId);
 
                         if (filteredInvestorListByContinent.length > 0) {
                             placementResultRecord[continentId] = isSharePercentageChangedByContinent[continentId]
@@ -108,8 +109,6 @@ function WorldScene({
                                     continentId
                                 )
                                 : prevPlacementResults[continentId];
-
-                            isChangedRecord[continentId] = false;
                         }
                     });
                 }
@@ -117,8 +116,10 @@ function WorldScene({
                 setContinentPositions((prevContinentPositions) => {
                     const continentPositionRecord: Record<string, Position> = { };
 
+                    console.log("placementResultRecord", placementResultRecord);
                     continentIdList.forEach((continentId) => {
-                        continentPositionRecord[continentId]  = isSharePercentageChangedByContinent[continentId]
+                        console.log(`[${continentId}]`, placementResultRecord[continentId]);
+                        continentPositionRecord[continentId] = isSharePercentageChangedByContinent[continentId]
                             ? getContinentPosition(
                                 placementResultRecord[continentId],
                                 placementResultRecord["central"]
@@ -128,12 +129,11 @@ function WorldScene({
 
                     return continentPositionRecord;
                 });
-                return placementResultRecord;
-            })
 
-            setIsSharePercentageChangedByContinent(isChangedRecord);
+                return placementResultRecord;
+            });
         }
-    }, [isSharePercentageChangedByContinent]);
+    }, [investorList, isSharePercentageChangedByContinent]);
 
     return (
         <>
