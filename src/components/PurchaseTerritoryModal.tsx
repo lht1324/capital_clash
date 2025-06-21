@@ -47,7 +47,7 @@ export default function PurchaseTerritoryModal({
         }, 0);
     }, [filteredInvestorListByContinent]);
     const isAdditionalInvestment = useMemo(() => {
-        return !(!userInvestorInfo);
+        return !!userInvestorInfo;
     }, [userInvestorInfo]);
 
     // isAdditionalInvestment (Current Territory)

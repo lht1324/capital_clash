@@ -32,7 +32,7 @@ type ContributionNotificationProps = {
 
 function InvestmentNotificationManager({ isEnabled }: ContributionNotificationManagerProps) {
     const { continents, isSidebarOpen } = useContinentStore()
-    const { investors, getUpdatedPlayerList } = useInvestorStore();
+    const { investors, getStakeUpdatedPlayerList } = useInvestorStore();
 
     const [notifications, setNotifications] = useState<ContributionNotificationData[]>([])
     const [playerList, setPlayerList] = useState<Investor[]>([]);
@@ -83,9 +83,8 @@ function InvestmentNotificationManager({ isEnabled }: ContributionNotificationMa
 
     useEffect(() => {
         setPlayerList((prevPlayerList) => {
-            console.log(`prevList: ${prevPlayerList.length}, ${new Date().toLocaleTimeString()}`)
             if (prevPlayerList.length !== 0) {
-                const updatedPlayerList = getUpdatedPlayerList(prevPlayerList);
+                const updatedPlayerList = getStakeUpdatedPlayerList(prevPlayerList);
                 const notificationList = updatedPlayerList.map((updatedPlayerInfo) => {
                     const { player: updatedPlayer, isNewUser } = updatedPlayerInfo;
                     const prevPlayer = prevPlayerList.find((player) => {
