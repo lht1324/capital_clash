@@ -5,7 +5,6 @@ import { continentsAPI } from '@/lib/supabase/supabase-continents-api'
 import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
 import { useContinentStore } from '@/store/continentStore'
 import { useInvestorStore } from '@/store/investorsStore'
-import { showSuccess, showError, showInfo } from '@/components/admin/NotificationSystem'
 
 /**
  * Supabase 데이터 초기화 및 실시간 구독을 관리하는 훅
