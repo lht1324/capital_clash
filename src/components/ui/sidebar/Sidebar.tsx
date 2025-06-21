@@ -69,13 +69,13 @@ export default function Sidebar() {
 
     const isVip = useMemo(() => {
         const vipInvestor = vipInvestorRecord[userInvestmentInfo?.continent_id ?? ""];
-        const isUserIdValid = !(!userInvestmentInfo?.user_id);
+        const isUserIdValid = !!(userInvestmentInfo?.user_id);
 
         return isUserIdValid && vipInvestor?.user_id === userInvestmentInfo?.user_id;
     }, [vipInvestorRecord, userInvestmentInfo]);
 
     const isUserInvestmentInfoExist = useMemo(() => {
-        return !(!userInvestmentInfo);
+        return !!userInvestmentInfo;
     }, [userInvestmentInfo])
 
     const investmentAmount = useMemo(() => {

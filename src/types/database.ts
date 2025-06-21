@@ -102,7 +102,7 @@ export interface Database {
                     id: string
                     user_id: string
                     continent_id: string
-                    name?: string
+                    name: string
                     description?: string
                     x_url?: string
                     instagram_url?: string
@@ -122,7 +122,7 @@ export interface Database {
                     id?: string
                     user_id: string
                     continent_id: string
-                    name?: string
+                    name: string
                     description?: string
                     x_url?: string
                     instagram_url?: string
@@ -142,7 +142,7 @@ export interface Database {
                     id?: string
                     user_id?: string
                     continent_id?: string
-                    name?: string
+                    name: string
                     description?: string
                     x_url?: string
                     instagram_url?: string

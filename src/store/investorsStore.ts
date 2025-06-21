@@ -1,13 +1,13 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase/supabase'
 import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
-import { areContributorListsEqualById } from "@/utils/contributorUtils";
+import { arePlayerListsEqualById } from "@/utils/playerUtils";
 
 export type Investor = {
     id: string
     user_id: string
     continent_id: string
-    name?: string
+    name: string
     description?: string
     x_url?: string
     instagram_url?: string
@@ -28,6 +28,7 @@ interface InvestorStore {
     isLoading: boolean
     error: Error | null
     investors: Record<string, Investor>
+    abortController?: AbortController
 
     // 액션
     fetchInvestors: () => Promise<void>
@@ -41,7 +42,8 @@ interface InvestorStore {
     // 헬퍼 함수
     getFilteredInvestorListByContinent: (continentId: string) => Investor[]
     getTotalInvestmentByContinent: (continentId: string) => number
-    getIsSharePercentageChangedByContinent: (prevInvestorList: Investor[], continentId: string) => boolean
+    getPlayerInfoChangedByContinent: (prevPlayerList: Investor[], continentId: string) => boolean
+    getStakeUpdatedPlayerList: (prevPlayerList: Investor[]) => { player: Investor, isNewUser: boolean }[]
 }
 
 export const useInvestorStore = create<InvestorStore>((set, get) => {
@@ -84,7 +86,7 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
                     user_id: userId,
                     continent_id: continentId,
                     investment_amount: investmentAmount,
-                    area_color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+                    area_color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
                     name: name
                 }
                 console.log('➕ 새 투자자 추가 시작:', newInvestorInfo)
@@ -92,12 +94,6 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 if (!result) throw new Error('투자자 추가 후 데이터를 받지 못했습니다.')
 
-                set(state => ({
-                    investors: {
-                        ...state.investors,
-                        [result.id]: result
-                    }
-                }))
                 console.log('✅ 새 투자자 추가 완료:', result.id)
             } catch (error) {
                 console.error('❌ 투자자 추가 실패:', error)
@@ -113,12 +109,6 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 if (!updatedInvestor) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
 
-                set(state => ({
-                    investors: {
-                        ...state.investors,
-                        [updatedInvestor.id]: { ...state.investors[updatedInvestor.id], ...updatedInvestor }
-                    }
-                }))
                 console.log('✅ 투자자 정보 업데이트 완료:', updatedInvestor.id)
             } catch (error) {
                 console.error('❌ 투자자 정보 업데이트 실패:', error)
@@ -142,13 +132,6 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 if (!updatedInvestor) throw new Error('투자자 업데이트 후 데이터를 받지 못했습니다.')
 
-                // 상태 업데이트
-                set(state => ({
-                    investors: {
-                        ...state.investors,
-                        [updatedInvestor.id]: { ...state.investors[updatedInvestor.id], ...updatedInvestor }
-                    }
-                }))
                 console.log('✅ 투자자 투자금액 업데이트 완료:', updatedInvestor.id)
                 return updatedInvestor
             } catch (error) {
@@ -164,12 +147,6 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 if (!updatedInvestor) throw new Error('투자자 조회수 업데이트 후 데이터를 받지 못했습니다.')
 
-                set(state => ({
-                    investors: {
-                        ...state.investors,
-                        [updatedInvestor.id]: { ...state.investors[updatedInvestor.id], ...updatedInvestor }
-                    }
-                }))
                 console.log('✅ 투자자 조회수 업데이트 완료:', updatedInvestor.id)
                 return updatedInvestor
             } catch (error) {
@@ -186,47 +163,70 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
                 return
             }
 
+            // 비동기 작업 취소를 위한 AbortController 사용
+            const abortController = new AbortController();
+            const signal = abortController.signal;
+
             investorsSubscription = supabase
                 .channel('investors_changes')
-                .on('postgres_changes',
+                .on(
+                    'postgres_changes',
                     {
                         event: '*',
                         schema: 'public',
                         table: 'investors'
                     },
-                    async (payload) => {
-                        console.log('📡 실시간 투자자 데이터 변경:', payload)
+                    (payload) => {
+                        // 비동기 함수를 즉시 실행하지만 결과를 기다리지 않음
+                        (async () => {
+                            // 취소 신호 확인
+                            if (signal.aborted) return;
 
-                        // 변경 유형에 따른 처리
-                        if (payload.eventType === 'INSERT') {
-                            const newInvestor = payload.new as Investor
-                            set(state => ({
-                                investors: {
-                                    ...state.investors,
-                                    [newInvestor.id]: newInvestor
+                            try {
+                                console.log('📡 실시간 투자자 데이터 변경:', payload)
+
+                                // 변경 유형에 따른 처리
+                                if (payload.eventType === 'INSERT') {
+                                    const newInvestor = payload.new as Investor
+                                    set(state => ({
+                                        investors: {
+                                            ...state.investors,
+                                            [newInvestor.id]: newInvestor
+                                        }
+                                    }))
+                                } else if (payload.eventType === 'UPDATE') {
+                                    const updatedInvestor = payload.new as Investor
+                                    set(state => ({
+                                        investors: {
+                                            ...state.investors,
+                                            [updatedInvestor.id]: {
+                                                ...state.investors[updatedInvestor.id],
+                                                ...updatedInvestor
+                                            }
+                                        }
+                                    }))
+                                } else if (payload.eventType === 'DELETE') {
+                                    const deletedId = payload.old.id
+                                    set(state => {
+                                        const { [deletedId]: _, ...rest } = state.investors
+                                        return { investors: rest }
+                                    })
                                 }
-                            }))
-                        } else if (payload.eventType === 'UPDATE') {
-                            const updatedInvestor = payload.new as Investor
-                            set(state => ({
-                                investors: {
-                                    ...state.investors,
-                                    [updatedInvestor.id]: {
-                                        ...state.investors[updatedInvestor.id],
-                                        ...updatedInvestor
-                                    }
+                            } catch (error) {
+                                if (!signal.aborted) {
+                                    console.error('실시간 데이터 처리 오류:', error)
                                 }
-                            }))
-                        } else if (payload.eventType === 'DELETE') {
-                            const deletedId = payload.old.id
-                            set(state => {
-                                const { [deletedId]: _, ...rest } = state.investors
-                                return { investors: rest }
-                            })
-                        }
+                            }
+                        })();
+
+                        // 동기적으로 false 반환 (비동기 응답을 기다리지 않음)
+                        return false;
                     }
                 )
                 .subscribe()
+
+            // AbortController를 저장하여 나중에 사용
+            set(state => ({ ...state, abortController }))
 
             console.log('✅ 실시간 구독 설정 완료')
         },
@@ -234,9 +234,18 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
         // 구독 해제
         unsubscribeFromInvestors: () => {
             if (investorsSubscription) {
-                investorsSubscription.unsubscribe()
-                investorsSubscription = null
-                console.log('🔄 투자자 실시간 구독 해제')
+                // 먼저 진행 중인 비동기 작업 취소
+                const state = get();
+                if (state.abortController) {
+                    state.abortController.abort();
+                }
+
+                // 약간의 지연 후 구독 해제 (진행 중인 작업이 정리될 시간 제공)
+                setTimeout(() => {
+                    investorsSubscription.unsubscribe()
+                    investorsSubscription = null
+                    console.log('🔄 투자자 실시간 구독 해제')
+                }, 100);
             }
         },
 
@@ -286,17 +295,21 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
                 .reduce((total, investor) => total + investor.investment_amount, 0)
         },
 
-        getIsSharePercentageChangedByContinent: (prevInvestorList, continentId) => {
+        getPlayerInfoChangedByContinent: (prevPlayerList, continentId) => {
             const state = get();
             const newInvestorList = Object.values(state.investors);
 
-            const getFilteredInvestorList = (investorList: Investor[], continentId: string) => {
+            if (prevPlayerList.length === 0) {
+                return true;
+            }
+
+            const getFilteredPlayerList = (playerList: Investor[], continentId: string) => {
                 const filteredList = continentId !== "central"
-                    ? investorList.filter((investor) => {
-                        return investor.continent_id === continentId;
+                    ? playerList.filter((player) => {
+                        return player.continent_id === continentId;
                     })
                     : Object.values(
-                        investorList.reduce((vipList, investor) => {
+                        playerList.reduce((vipList, investor) => {
                             const investorContinentId = investor.continent_id;
 
                             if (!vipList[investorContinentId] || investor.investment_amount > vipList[investorContinentId].investment_amount) {
@@ -309,38 +322,112 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 return [...filteredList].sort((a, b) => a.id.localeCompare(b.id));
             }
-            const filteredPrevInvestorListByContinent = getFilteredInvestorList(prevInvestorList, continentId);
-            const filteredNewInvestorListByContinent = getFilteredInvestorList(newInvestorList, continentId);
+            const filteredPrevPlayerListByContinent = getFilteredPlayerList(prevPlayerList, continentId);
+            const filteredNewPlayerListByContinent = getFilteredPlayerList(newInvestorList, continentId);
 
-            if (!areContributorListsEqualById(filteredPrevInvestorListByContinent, filteredNewInvestorListByContinent)) {
+            if (!arePlayerListsEqualById(filteredPrevPlayerListByContinent, filteredNewPlayerListByContinent)) {
                 return true;
             }
 
-            const prevTotalInvestAmount = filteredPrevInvestorListByContinent.reduce((acc, investor) => {
+            const prevTotalStakeAmount = filteredPrevPlayerListByContinent.reduce((acc, investor) => {
                 return acc + investor.investment_amount;
             }, 0);
-            const newTotalInvestAmount = filteredNewInvestorListByContinent.reduce((acc, investor) => {
+            const newTotalStakeAmount = filteredNewPlayerListByContinent.reduce((acc, investor) => {
                 return acc + investor.investment_amount;
             }, 0);
 
-            let isChanged = false;
+            return filteredPrevPlayerListByContinent.some((prevPlayer, index) => {
+                const newPlayer = filteredNewPlayerListByContinent[index];
+                const prevStakeAmount = prevPlayer.investment_amount;
+                const newStakeAmount = newPlayer.investment_amount;
 
-            filteredPrevInvestorListByContinent.forEach((prevInvestor, index) => {
-                const newInvestor = filteredNewInvestorListByContinent[index];
-                const prevInvestorAmount = prevInvestor.investment_amount;
-                const newInvestorAmount = newInvestor.investment_amount;
+                const prevSharePercentage = (prevStakeAmount / prevTotalStakeAmount) > 0.01
+                    ? prevStakeAmount / prevTotalStakeAmount
+                    : 0.01;
+                const newSharePercentage = (newStakeAmount / newTotalStakeAmount) > 0.01
+                    ? newStakeAmount / newTotalStakeAmount
+                    : 0.01;
 
-                const prevSharePercentage = prevInvestorAmount / prevTotalInvestAmount;
-                const newSharePercentage = newInvestorAmount / newTotalInvestAmount;
+                const prevImageStatus = prevPlayer.image_status;
+                const newImageStatus = newPlayer.image_status;
 
-                isChanged = prevSharePercentage !== newSharePercentage;
+                const isImageApproved = prevImageStatus !== "approved" && newImageStatus === "approved";
+                const isImageRemoved = prevImageStatus === "approved" && newImageStatus !== "approved";
 
-                if (isChanged) {
-                    return;
+                if (isImageApproved) {
+                    console.log(`isApproved, ${prevImageStatus}, ${newImageStatus}`)
                 }
-            })
 
-            return isChanged;
+                if (isImageRemoved) {
+                    console.log(`isRemoved, ${prevImageStatus}, ${newImageStatus}`)
+                }
+
+                return (prevSharePercentage !== newSharePercentage)
+                    || isImageApproved || isImageRemoved;
+            })
+        },
+
+        getStakeUpdatedPlayerList(prevPlayerList: Investor[]) {
+            const state = get();
+            const newPlayerList = Object.values(state.investors);
+            const updatedPlayerList: { player: Investor, isNewUser: boolean }[] = [];
+
+            const sortedPrevPlayerList = [...prevPlayerList].sort((a, b) => {
+                return a.id.localeCompare(b.id);
+            });
+            const sortedNewPlayerList = [...newPlayerList].sort((a, b) => {
+                return a.id.localeCompare(b.id);
+            });
+
+            const isSameList = arePlayerListsEqualById(sortedPrevPlayerList, sortedNewPlayerList);
+
+            if ((sortedPrevPlayerList.length === sortedNewPlayerList.length) && isSameList) {
+                const isNotChanged = sortedPrevPlayerList.every((prevPlayer, index) => {
+                    const newPlayer = sortedNewPlayerList[index];
+
+                    return prevPlayer.investment_amount === newPlayer.investment_amount;
+                })
+
+                if (isNotChanged) {
+                    return [];
+                }
+            }
+
+            // 1. prevPlayerList와 newPlayerList를 비교해 동일한 id를 가진 player의
+            // investment_amount가 다르다면 updatedPlayerList에 push
+            sortedPrevPlayerList.forEach((prevPlayer) => {
+                // 동일한 ID를 가진 새 contributor 찾기
+                const newPlayer = sortedNewPlayerList.find((contributor) => {
+                    return contributor.id === prevPlayer.id;
+                });
+
+                // 새 player가 존재하고 investment_amount가 다르다면 updatedPlayerList에 추가
+                if (newPlayer && prevPlayer.investment_amount !== newPlayer.investment_amount) {
+                    updatedPlayerList.push({
+                        player: newPlayer,
+                        isNewUser: false
+                    });
+                }
+            });
+
+            // 2. prevPlayerList에는 없지만 newPlayerList에는 존재하는 contributor를
+            // 신규 가입 유저로 가정하고 updatedPlayerList에 push
+            const prevPlayerIds = new Set(sortedPrevPlayerList.map((prevPlayer) => {
+                return prevPlayer.id;
+            }));
+
+            sortedNewPlayerList.forEach((newPlayer) => {
+                // prevContributorList에 없는 ID를 가진 contributor는 신규 가입 유저
+                if (!prevPlayerIds.has(newPlayer.id)) {
+                    updatedPlayerList.push({
+                        player: newPlayer,
+                        isNewUser: true
+                    });
+                }
+            });
+
+            // 3. updatedContributorList 반환
+            return updatedPlayerList;
         }
     }
 })

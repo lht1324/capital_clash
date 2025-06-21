@@ -44,25 +44,24 @@ function TerritoryArea(
     }, [hovered]);
 
     useEffect(() => {
-        if (placement.investor.image_url) {
+        console.log(`[${placement.investor.image_status}] (${placement.investor.image_url})`)
+        if (placement.investor.image_url && placement.investor.image_status === "approved") {
             const loader = new THREE.TextureLoader()
-            const randomId: number = Math.floor(Math.random() * 30);
             loader.load(
-                // `https://picsum.photos/id/${randomId}/800/800`,
                 placement.investor.image_url,
                 (loadedTexture) => {
                     loadedTexture.flipY = true
                     setImageTexture(loadedTexture)
-                    console.log(`🚀 공통 텍스처 로드 완료: test.jpg`)
                 },
                 undefined,
                 (error) => {
-                    console.log(`randomId = ${randomId}`)
-                    console.error(`❌ 공통 텍스처 로드 실패:`, error)
+                    console.error(`❌ 텍스처 로드 실패:`, error)
                 }
             )
+        } else {
+            setImageTexture(null);
         }
-    }, [])
+    }, [placement.investor.image_url, placement.investor.image_status]);
 
     return (
         <group position={[x, y, 1.1]}>
