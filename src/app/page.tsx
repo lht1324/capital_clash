@@ -2,11 +2,11 @@
 
 import { useSupabaseData } from '@/hooks/useSupabaseData'
 import { useState, memo } from "react";
-import Header from '@/components/Header'
-import Sidebar from '@/components/ui/sidebar/Sidebar'
-import ContinentDropdown from '@/components/ContinentDropdown'
-import ContinentMap from '@/components/continent_map/ContinentMap'
-import InvestmentNotificationManager from '@/components/InvestmentNotification'
+import Header from '@/components/main/header/Header'
+import Sidebar from '@/components/main/sidebar/Sidebar'
+import ContinentDropdown from '@/components/main/continent_map/ContinentDropdown'
+import ContinentMap from '@/components/main/continent_map/ContinentMap'
+import InvestmentNotificationManager from '@/components/main/InvestmentNotification'
 
 function Home() {
     const [isLoading, setIsLoading] = useState(true);

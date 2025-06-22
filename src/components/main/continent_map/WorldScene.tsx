@@ -1,7 +1,7 @@
 // src/components/continent_map/WorldScene.tsx
 import { useContinentStore } from "@/store/continentStore";
 import {memo, useEffect, useMemo, useRef, useState} from "react";
-import SingleContinent from "@/components/continent_map/SingleContinent";
+import SingleContinent from "@/components/main/continent_map/SingleContinent";
 import {Investor, useInvestorStore} from "@/store/investorsStore";
 import {
     calculateSquareLayout,
@@ -13,7 +13,7 @@ import * as THREE from "three";
 import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
-} from "@/components/continent_map/continent_map_public_variables";
+} from "@/components/main/continent_map/continent_map_public_variables";
 import {getFilteredPlayerList} from "@/utils/playerUtils";
 
 function WorldScene({

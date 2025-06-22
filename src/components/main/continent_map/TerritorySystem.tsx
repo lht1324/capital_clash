@@ -1,6 +1,6 @@
 import {memo, useMemo} from "react";
 import {calculateSquareLayout} from "@/lib/treemapAlgorithm";
-import TerritoryArea from "@/components/continent_map/TerritoryArea";
+import TerritoryArea from "@/components/main/continent_map/TerritoryArea";
 import {Investor} from "@/store/investorsStore";
 
 // 🌳 NEW: Billboard 배치 시스템 (정사방형 & 행 우선 순회)

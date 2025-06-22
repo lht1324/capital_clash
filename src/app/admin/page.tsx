@@ -4,7 +4,7 @@ import {memo, useEffect, useCallback, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 import {useUserStore} from "@/store/userStore";
 import {useSupabaseData} from "@/hooks/useSupabaseData";
-import Header from "@/components/Header";
+import Header from "@/components/main/header/Header";
 import ImageReviewModal from "@/components/admin/image_review_modal/ImageReviewModal";
 
 function AdminPage() {

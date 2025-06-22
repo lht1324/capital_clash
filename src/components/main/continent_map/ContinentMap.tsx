@@ -1,9 +1,9 @@
 'use client'
 
 import {Canvas, useThree} from '@react-three/fiber'
-import CameraController from "@/components/continent_map/CameraController";
-import WorldScene from "@/components/continent_map/WorldScene";
-import TerritoryInfoViewModal from "@/components/TerritoryInfoViewModal";
+import CameraController from "@/components/main/continent_map/CameraController";
+import WorldScene from "@/components/main/continent_map/WorldScene";
+import TerritoryInfoViewModal from "@/components/main/TerritoryInfoViewModal";
 import {memo, useCallback, useEffect, useMemo, useState} from "react";
 import { useInvestorStore } from '@/store/investorsStore';
 

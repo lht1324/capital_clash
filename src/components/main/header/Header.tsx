@@ -5,12 +5,12 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase/supabase'
 import RankingModal from './RankingModal'
-import PurchaseTerritoryModal from './PurchaseTerritoryModal'
+import PurchaseTerritoryModal from '../PurchaseTerritoryModal'
 import { useUserStore } from '@/store/userStore'
 import { UserCircleIcon } from '@heroicons/react/24/outline'
 import { useContinentStore } from '@/store/continentStore'
-import ProfileInfoModal from "@/components/ProfileInfoModal";
-import DropDownMenu from "@/components/ui/DropDownMenu";
+import ProfileInfoModal from "@/components/main/header/ProfileInfoModal";
+import DropDownMenu from "@/components/main/header/DropDownMenu";
 import {useInvestorStore} from "@/store/investorsStore";
 import {useOnSizeChanged} from "@/hooks/useOnSizeChanged";
 
@@ -91,7 +91,7 @@ function Header({
         >
             <div className="container h-full mx-auto px-4 flex items-center justify-between">
                 {/* 로고 */}
-                <Link href="/" className="flex items-center space-x-2">
+                <Link href="/public" className="flex items-center space-x-2">
                     <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
                         CC
                     </span>

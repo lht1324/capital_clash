@@ -7,12 +7,12 @@ import { useInvestorStore, Investor } from "@/store/investorsStore";
 import { useUserStore } from '@/store/userStore'
 import { storageAPI } from '@/lib/supabase/supabase-storage-api';
 import { investorsAPI } from "@/lib/supabase/supabase-investors-api";
-import TerritoryInfoEditModal from "@/components/TerritoryInfoEditModal";
-import OverviewTab from "@/components/ui/sidebar/OverviewTab";
-import TerritoryTab from "@/components/ui/sidebar/TerritoryTab";
-import StatsTab from "@/components/ui/sidebar/StatsTab";
-import PurchaseTerritoryModal from '../../PurchaseTerritoryModal'
-import ImageUploadModal from '../../ImageUploadModal'
+import TerritoryInfoEditModal from "@/components/main/sidebar/TerritoryInfoEditModal";
+import OverviewTab from "@/components/main/sidebar/OverviewTab";
+import TerritoryTab from "@/components/main/sidebar/TerritoryTab";
+import StatsTab from "@/components/main/sidebar/StatsTab";
+import PurchaseTerritoryModal from '../PurchaseTerritoryModal'
+import ImageUploadModal from './ImageUploadModal'
 
 export default function Sidebar() {
     const [activeTab, setActiveTab] = useState<'overview' | 'territory' | 'stats'>('overview')

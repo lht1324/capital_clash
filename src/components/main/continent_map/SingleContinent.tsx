@@ -1,7 +1,7 @@
 // src/components/continent_map/SingleContinent.tsx
 import { Continent } from "@/store/continentStore";
 import { memo } from "react";
-import TerritoryArea from "@/components/continent_map/TerritoryArea";
+import TerritoryArea from "@/components/main/continent_map/TerritoryArea";
 import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
 
 function SingleContinent({
