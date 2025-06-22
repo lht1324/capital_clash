@@ -1,10 +1,7 @@
-import { useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase/supabase'
-import { continentsAPI } from '@/lib/supabase/supabase-continents-api'
-import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
+import { useEffect } from 'react'
 import { useContinentStore } from '@/store/continentStore'
 import { useInvestorStore } from '@/store/investorsStore'
+import {useUserStore} from "@/store/userStore";
 
 /**
  * Supabase 데이터 초기화 및 실시간 구독을 관리하는 훅
@@ -16,6 +13,7 @@ export function useSupabaseData(onSuccess: () => void) {
         subscribeToInvestors,
         unsubscribeFromInvestors
     } = useInvestorStore()
+    const { fetchUser } = useUserStore();
 
     useEffect(() => {
         // 초기 데이터 로드
@@ -25,7 +23,8 @@ export function useSupabaseData(onSuccess: () => void) {
             try {
                 await Promise.all([
                     fetchContinents(),
-                    fetchInvestors()
+                    fetchInvestors(),
+                    fetchUser(),
                 ])
 
                 // 실시간 구독 설정
@@ -35,10 +34,8 @@ export function useSupabaseData(onSuccess: () => void) {
             } catch (error: unknown) {
                 if (error instanceof Error) {
                     console.error('❌ 초기 데이터 로드 실패:', error.message)
-                    showError('데이터 로드 실패', error.message)
                 } else {
                     console.error('❌ 초기 데이터 로드 실패: 알 수 없는 에러')
-                    showError('데이터 로드 실패', '알 수 없는 에러가 발생했습니다.')
                 }
             }
         }

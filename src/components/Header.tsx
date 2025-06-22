@@ -1,9 +1,8 @@
 'use client'
 
-import {useState, useEffect, useCallback, useMemo} from 'react'
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase/supabase'
 import RankingModal from './RankingModal'
 import PurchaseTerritoryModal from './PurchaseTerritoryModal'
@@ -13,9 +12,15 @@ import { useContinentStore } from '@/store/continentStore'
 import ProfileInfoModal from "@/components/ProfileInfoModal";
 import DropDownMenu from "@/components/ui/DropDownMenu";
 import {useInvestorStore} from "@/store/investorsStore";
+import {useOnSizeChanged} from "@/hooks/useOnSizeChanged";
 
-export default function Header() {
-    const router = useRouter()
+function Header({
+    onChangeHeight
+} : {
+    onChangeHeight?: (height: number) => void
+}) {
+    const headerRef = useRef(null);
+
     const [isRankingModalOpen, setIsRankingModalOpen] = useState(false)
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
     const [isProfileInfoModalOpen, setIsProfileInfoModalOpen] = useState(false)
@@ -63,10 +68,7 @@ export default function Header() {
     useEffect(() => {
         // 초기 로그인 상태 체크
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (session?.user) {
-                setUser(session.user)
-            } else {
-                setUser(null)
+            if (!session?.user) {
                 setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
             }
         })
@@ -76,17 +78,26 @@ export default function Header() {
         }
     }, [setUser, setSidebarOpen])
 
+    if (onChangeHeight) {
+        useOnSizeChanged(headerRef, (rect) => {
+            onChangeHeight(rect.height)
+        })
+    }
+
     return (
-        <header className="fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white z-50">
+        <header
+            className="fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white z-50"
+            ref={headerRef}
+        >
             <div className="container h-full mx-auto px-4 flex items-center justify-between">
                 {/* 로고 */}
                 <Link href="/" className="flex items-center space-x-2">
-          <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-            CC
-          </span>
+                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+                        CC
+                    </span>
                     <span className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Capital Clash
-          </span>
+                        Capital Clash
+                    </span>
                 </Link>
 
                 {/* 중앙 네비게이션 버튼들 */}
@@ -136,7 +147,7 @@ export default function Header() {
                         trigger={
                             <div className="flex items-center space-x-2">
                                 <UserCircleIcon className="h-6 w-6" />
-                                <span>{user.user_metadata?.name || 'User'}</span>
+                                <span>{user?.name || 'User'}</span>
                             </div>
                         }
                         items={[
@@ -172,3 +183,5 @@ export default function Header() {
         </header>
     )
 }
+
+export default memo(Header);

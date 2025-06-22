@@ -13,19 +13,21 @@ export interface Database {
             users: {
                 Row: {
                     id: string
-                    email: string
                     name: string
+                    email: string
                     avatar_url?: string
                     external_url?: string
+                    role: string
                     created_at: string
                     updated_at: string
                 }
                 Insert: {
                     id?: string
-                    email: string
                     name: string
+                    email: string
                     avatar_url?: string
                     external_url?: string
+                    role: string
                     created_at?: string
                     updated_at?: string
                 }
@@ -34,6 +36,7 @@ export interface Database {
                     email?: string
                     name?: string
                     avatar_url?: string
+                    role: string
                     external_url?: string
                     updated_at?: string
                 }

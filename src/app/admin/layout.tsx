@@ -1,16 +1,15 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { ReactNode } from "react";
-import './globals.css'
+import { ReactNode } from 'react'
+import {Inter} from "next/font/google";
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-    title: 'Capital Clash',
-    description: 'Real money war game',
+    title: 'Capital Clash - Admin',
+    description: 'Admin page for Capital Clash.',
 }
 
-export default function RootLayout({
+export default function AdminLayout({
     children,
 }: {
     children: ReactNode
