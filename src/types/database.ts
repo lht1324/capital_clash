@@ -114,8 +114,8 @@ export interface Database {
                     share_percentage: number
                     image_url?: string
                     image_status?: 'none' | 'pending' | 'approved' | 'rejected'
-                    created_at?: string
-                    updated_at?: string
+                    created_at: string
+                    updated_at: string
                     daily_views: number[]
                     previous_sunday_view: number
                     last_viewed_at?: string
@@ -134,8 +134,8 @@ export interface Database {
                     share_percentage: number
                     image_url?: string
                     image_status?: 'none' | 'pending' | 'approved' | 'rejected'
-                    created_at?: string
-                    updated_at?: string
+                    created_at: string
+                    updated_at: string
                     daily_views: number[]
                     previous_sunday_view: number
                     last_viewed_at?: string
@@ -154,7 +154,8 @@ export interface Database {
                     share_percentage?: number
                     image_url?: string
                     image_status?: 'none' | 'pending' | 'approved' | 'rejected'
-                    updated_at?: string
+                    created_at: string
+                    updated_at: string
                     daily_views: number[]
                     previous_sunday_view: number
                     last_viewed_at?: string

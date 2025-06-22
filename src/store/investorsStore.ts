@@ -15,12 +15,19 @@ export type Investor = {
     investment_amount: number
     image_url?: string
     image_status?: 'none' | 'pending' | 'approved' | 'rejected'
-    created_at?: string
-    updated_at?: string
+    created_at: string
+    updated_at: string
     daily_views: number[]
     previous_sunday_view: number
     last_viewed_at?: string
     area_color?: string
+}
+
+export enum ImageStatus {
+    NONE = "none",
+    PENDING = "pending",
+    APPROVED = "approved",
+    REJECTED = "rejected"
 }
 
 interface InvestorStore {

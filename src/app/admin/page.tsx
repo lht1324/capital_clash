@@ -5,6 +5,7 @@ import {useRouter} from "next/navigation";
 import {useUserStore} from "@/store/userStore";
 import {useSupabaseData} from "@/hooks/useSupabaseData";
 import Header from "@/components/Header";
+import ImageReviewModal from "@/components/admin/image_review_modal/ImageReviewModal";
 
 function AdminPage() {
     const router = useRouter()
@@ -13,6 +14,7 @@ function AdminPage() {
     const [isInitialized, setIsInitialized] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [headerHeight, setHeaderHeight] = useState(0);
+    const [isImageReviewModalOpen, setIsImageReviewModalOpen] = useState(false);
 
     const isUserAdmin = useMemo(() => {
         console.log(`role = ${user?.role}`)
@@ -68,7 +70,10 @@ function AdminPage() {
                             <span className="text-2xl">🖼️</span>
                         </div>
                         <p className="text-gray-600 mb-4">투자자가 업로드한 이미지를 검토하고 승인 또는 거부합니다.</p>
-                        <button className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <button 
+                            onClick={() => setIsImageReviewModalOpen(true)}
+                            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
                             관리하기
                         </button>
                     </div>
@@ -80,6 +85,11 @@ function AdminPage() {
                     </div>
                 </div>
             </div>
+
+            {/* 이미지 승인 관리 모달 */}
+            {isImageReviewModalOpen && (<ImageReviewModal
+                onClose={() => setIsImageReviewModalOpen(false)}
+            />)}
         </div>) : (<div className="min-h-screen bg-gray-100 flex items-center justify-center">
             <div className="text-xl font-semibold">로딩 중...</div>
         </div>)
