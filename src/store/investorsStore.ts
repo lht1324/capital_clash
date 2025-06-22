@@ -42,6 +42,7 @@ interface InvestorStore {
     insertInvestor: (userId: string, selectedContinentId: string, investmentAmount: number, name: string) => Promise<void>
     updateInvestor: (investor: Partial<Investor>) => Promise<void>
     updateInvestorInvestmentAmount: (investor: Partial<Investor>, investmentAmount: number) => Promise<void>
+    updatePlayerImageStatus: (playerId: string, imageStatus: ImageStatus) => Promise<void>
     updateInvestorDailyViews: (id: string, dailyViews: number[]) => Promise<Investor>
     subscribeToInvestors: () => Promise<void>
     unsubscribeFromInvestors: () => void
@@ -143,6 +144,21 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
                 return updatedInvestor
             } catch (error) {
                 console.error('❌ 투자자 투자금액 업데이트 실패:', error)
+                throw error
+            }
+        },
+
+        updatePlayerImageStatus: async (playerId: string, imageStatus: ImageStatus) => {
+            console.log('🔄 투자자 이미지 상태 업데이트 시작:', playerId)
+            try {
+                const updatedPlayer = await investorsAPI.updateImageStatus(playerId, imageStatus)
+
+                if (!updatedPlayer) throw new Error('투자자 이미지 상태 업데이트 후 데이터를 받지 못했습니다.')
+
+                console.log('✅ 투자자 이미지 상태 업데이트 완료:', updatedPlayer.id)
+                return updatedPlayer
+            } catch (error) {
+                console.error('❌ 투자자 이미지 상태 업데이트 실패:', error)
                 throw error
             }
         },

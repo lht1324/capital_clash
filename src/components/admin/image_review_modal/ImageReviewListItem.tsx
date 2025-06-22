@@ -3,9 +3,11 @@ import {ImageStatus, Investor} from "@/store/investorsStore";
 import {getLocaleDateString} from "@/utils/dateUtils";
 
 function ImageReviewListItem({
-    player
+    player,
+    onClickImageStatusChangeButton,
 } : {
-    player: Investor
+    player: Investor,
+    onClickImageStatusChangeButton: (id: string, imageStatus: ImageStatus) => void;
 }) {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -60,13 +62,31 @@ function ImageReviewListItem({
             {isExpanded && (
                 <div className="p-4 border-t border-gray-200">
                     <div className="text-center p-8 text-gray-500">
-                        이미지 및 상세 정보가 여기에 표시됩니다.
+                        <img
+                            className="w-full rounded-lg"
+                            src={player.image_url}
+                            alt="image"
+                        />
                     </div>
                     <div className="flex justify-end space-x-3 mt-4">
-                        <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <button
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            onClick={() => {
+                                if (confirm("이미지를 승인하시겠습니까?")) {
+                                    onClickImageStatusChangeButton(player.id, ImageStatus.APPROVED);
+                                }
+                            }}
+                        >
                             승인
                         </button>
-                        <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        <button
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            onClick={() => {
+                                if (confirm("이미지를 반려하시겠습니까?")) {
+                                    onClickImageStatusChangeButton(player.id, ImageStatus.REJECTED);
+                                }
+                            }}
+                        >
                             거부
                         </button>
                     </div>

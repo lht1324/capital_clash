@@ -1,13 +1,17 @@
-import {memo, useMemo, useState} from "react";
-import {useInvestorStore} from "@/store/investorsStore";
+import {memo, useCallback, useMemo, useState} from "react";
+import {ImageStatus, useInvestorStore} from "@/store/investorsStore";
 import ImageReviewListItem from "@/components/admin/image_review_modal/ImageReviewListItem";
 
 interface ImageReviewModalProps {
     onClose: () => void;
 }
 
-function ImageReviewModal({onClose}: ImageReviewModalProps) {
-    const { investors } = useInvestorStore();
+function ImageReviewModal({
+    onClose
+} : {
+    onClose: () => void;
+}) {
+    const { investors, updatePlayerImageStatus } = useInvestorStore();
 
     const playerList = useMemo(() => {
         return Object.values(investors).filter((player) => {
@@ -16,6 +20,10 @@ function ImageReviewModal({onClose}: ImageReviewModalProps) {
             return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
         });
     }, [investors]);
+
+    const onClickImageStatusChangeButton = useCallback(async (id: string, imageStatus: ImageStatus) => {
+        await updatePlayerImageStatus(id, imageStatus);
+    }, [updatePlayerImageStatus]);
 
     return (
         <>
@@ -48,6 +56,7 @@ function ImageReviewModal({onClose}: ImageReviewModalProps) {
                                     <ImageReviewListItem
                                         key={player.id}
                                         player={player}
+                                        onClickImageStatusChangeButton={onClickImageStatusChangeButton}
                                     />
                                 ))
                             ) : (
