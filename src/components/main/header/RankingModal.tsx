@@ -83,8 +83,6 @@ function RankingModal({
         })
     }, [activeTab, filteredRankingDataList]);
 
-    if (!isOpen) return null
-
     return (
         <>
             {/* 배경 오버레이 */}
