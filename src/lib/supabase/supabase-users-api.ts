@@ -6,7 +6,7 @@ type UserRow = Tables['users']['Row']
 
 
 export const usersAPI = {
-    async getAll(): UserRow[] {
+    async getAll(): Promise<UserRow[]> {
         const { data, error } = await supabase
             .from('users')
             .select('*')

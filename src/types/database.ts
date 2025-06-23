@@ -113,7 +113,7 @@ export interface Database {
                     investment_amount: number
                     share_percentage: number
                     image_url?: string
-                    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
+                    image_status?: 'pending' | 'approved' | 'rejected'
                     created_at: string
                     updated_at: string
                     daily_views: number[]
@@ -133,7 +133,7 @@ export interface Database {
                     investment_amount: number
                     share_percentage: number
                     image_url?: string
-                    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
+                    image_status?: 'pending' | 'approved' | 'rejected'
                     created_at: string
                     updated_at: string
                     daily_views: number[]
@@ -153,7 +153,7 @@ export interface Database {
                     investment_amount?: number
                     share_percentage?: number
                     image_url?: string
-                    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
+                    image_status?: 'pending' | 'approved' | 'rejected'
                     created_at: string
                     updated_at: string
                     daily_views: number[]

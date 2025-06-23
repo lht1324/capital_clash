@@ -91,7 +91,8 @@ export const storageAPI = {
                 .storage
                 .from(BUCKET_NAME)
                 .remove([filePath])
-                
+
+            console.log("storageError", storageError)
             if (storageError) throw storageError
             
             // 2. 데이터베이스에서 이미지 레코드 삭제
@@ -99,7 +100,8 @@ export const storageAPI = {
                 .from('images')
                 .delete()
                 .eq('id', imageId)
-                
+
+            console.log("dbError", dbError)
             if (dbError) throw dbError
             
             return true

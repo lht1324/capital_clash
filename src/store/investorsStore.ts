@@ -14,7 +14,7 @@ export type Investor = {
     contact_email?: string
     investment_amount: number
     image_url?: string
-    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
+    image_status?: 'pending' | 'approved' | 'rejected'
     created_at: string
     updated_at: string
     daily_views: number[]
@@ -24,7 +24,6 @@ export type Investor = {
 }
 
 export enum ImageStatus {
-    NONE = "none",
     PENDING = "pending",
     APPROVED = "approved",
     REJECTED = "rejected"
@@ -265,7 +264,7 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 // 약간의 지연 후 구독 해제 (진행 중인 작업이 정리될 시간 제공)
                 setTimeout(() => {
-                    investorsSubscription.unsubscribe()
+                    investorsSubscription!!.unsubscribe().then();
                     investorsSubscription = null
                     console.log('🔄 투자자 실시간 구독 해제')
                 }, 100);
@@ -373,20 +372,17 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 const prevImageStatus = prevPlayer.image_status;
                 const newImageStatus = newPlayer.image_status;
+                const prevImageUrl = prevPlayer.image_url;
+                const newImageUrl = newPlayer.image_url;
 
-                const isImageApproved = prevImageStatus !== "approved" && newImageStatus === "approved";
-                const isImageRemoved = prevImageStatus === "approved" && newImageStatus !== "approved";
-
-                if (isImageApproved) {
-                    console.log(`isApproved, ${prevImageStatus}, ${newImageStatus}`)
-                }
-
-                if (isImageRemoved) {
-                    console.log(`isRemoved, ${prevImageStatus}, ${newImageStatus}`)
-                }
+                const isImageApproved = prevImageStatus === ImageStatus.PENDING && newImageStatus === ImageStatus.APPROVED;
+                const isImageRejected = prevImageStatus === ImageStatus.PENDING && newImageStatus === ImageStatus.REJECTED;
+                const isImageForceApproved = prevImageStatus === ImageStatus.REJECTED && newImageStatus === ImageStatus.APPROVED;
+                const isImageReplaced = (prevImageStatus === ImageStatus.APPROVED && newImageStatus === ImageStatus.PENDING)
+                    && (prevImageUrl !== newImageUrl);
 
                 return (prevSharePercentage !== newSharePercentage)
-                    || isImageApproved || isImageRemoved;
+                    || isImageApproved || isImageRejected || isImageForceApproved || isImageReplaced;
             })
         },
 
