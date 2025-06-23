@@ -1,148 +1,132 @@
 import { create } from 'zustand'
+import { continentsAPI } from '@/lib/supabase/supabase-continents-api'
+import type { Database } from '@/types/database'
+import { useInvestorStore } from './investorsStore'
 
-// 대륙 타입 정의
-export type ContinentId = 'north' | 'east' | 'south' | 'west' | 'center'
+type ContinentRow = Database['public']['Tables']['continents']['Row']
 
-export interface Continent {
-  id: ContinentId
-  name: string
-  color: string
-  themeColor: string
-  description: string
-  maxUsers: number
-  currentUsers: number
-  position: [number, number, number] // [x, y, z]
-  cameraTarget: [number, number, number] // 카메라 타겟 위치
+export type Continent = ContinentRow & {
+    id: string,
+    name: string,
+    color: string,
+    theme_color: string,
+    description: string,
+    current_users: number,
+    max_users: string,
+    position_x: number,
+    position_y: number,
+    position_z: number,
+    camera_target_x: number,
+    camera_target_y: number,
+    camera_target_z: number,
+    is_active: boolean,
+    created_at: string,
+    updated_at: string,
 }
 
-// 5개 대륙 정의 - 세계 지도 배치
-export const CONTINENTS: Record<ContinentId, Continent> = {
-  north: {
-    id: 'north',
-    name: '북방 대륙',
-    color: '#3B82F6', // 파란색
-    themeColor: '#EFF6FF',
-    description: '차가운 북방의 전략가들',
-    maxUsers: 50,
-    currentUsers: 0,
-    position: [0, 15, 0], // 북쪽 상단
-    cameraTarget: [0, 15, 15]
-  },
-  east: {
-    id: 'east',
-    name: '동방 대륙',
-    color: '#EF4444', // 빨간색
-    themeColor: '#FEF2F2',
-    description: '떠오르는 태양의 용사들',
-    maxUsers: 50,
-    currentUsers: 0,
-    position: [15, 0, 0], // 동쪽 우측
-    cameraTarget: [15, 0, 15]
-  },
-  south: {
-    id: 'south',
-    name: '남방 대륙',
-    color: '#10B981', // 초록색
-    themeColor: '#F0FDF4',
-    description: '무성한 남방의 정복자들',
-    maxUsers: 50,
-    currentUsers: 0,
-    position: [0, -15, 0], // 남쪽 하단
-    cameraTarget: [0, -15, 15]
-  },
-  west: {
-    id: 'west',
-    name: '서방 대륙',
-    color: '#F59E0B', // 주황색
-    themeColor: '#FFFBEB',
-    description: '석양의 제국 건설자들',
-    maxUsers: 50,
-    currentUsers: 0,
-    position: [-15, 0, 0], // 서쪽 좌측
-    cameraTarget: [-15, 0, 15]
-  },
-  center: {
-    id: 'center',
-    name: '중앙 대륙',
-    color: '#8B5CF6', // 보라색
-    themeColor: '#FAF5FF',
-    description: '황제들의 VIP 영역',
-    maxUsers: 20,
-    currentUsers: 0,
-    position: [0, 0, 0], // 정중앙
-    cameraTarget: [0, 0, 17]
-  }
+export type ContinentId = string
+
+interface ContinentStore {
+    // 상태
+    isLoading: boolean
+    error: Error | null
+    continents: Record<ContinentId, Continent>
+    selectedContinentId: ContinentId | null
+    isWorldView: boolean
+    cameraTarget: [number, number, number] | null
+    isSidebarOpen: boolean
+
+    // 액션
+    fetchContinents: () => Promise<void>
+    updateContinent: (id: ContinentId, updates: Partial<ContinentRow>) => Promise<void>
+    setSelectedContinentId: (id: ContinentId | null) => void
+    setWorldView: (isWorld: boolean) => void
+    setCameraTarget: (target: [number, number, number] | null) => void
+    resetSelection: () => void
+
+    updateContinentUsers: (id: ContinentId, count: number) => void
+    setSidebarOpen: (isOpen: boolean) => void
 }
 
-// Store 상태 정의
-export interface ContinentState {
-  selectedContinent: ContinentId | null
-  continents: Record<ContinentId, Continent>
-  isLoading: boolean
-  isWorldView: boolean
-  cameraTarget: [number, number, number] | null // 카메라 이동 타겟
-}
+export const useContinentStore = create<ContinentStore>((set) => ({
+    // 초기 상태
+    isLoading: false,
+    error: null,
+    continents: {},
+    selectedContinentId: null,
+    isWorldView: true,
+    cameraTarget: null,
+    isSidebarOpen: false,
 
-// Store 액션 정의
-export interface ContinentActions {
-  selectContinent: (continentId: ContinentId) => void
-  setSelectedContinent: (continentId: ContinentId | null) => void
-  updateContinentUsers: (continentId: ContinentId, userCount: number) => void
-  setLoading: (loading: boolean) => void
-  resetSelection: () => void
-  setWorldView: (isWorldView: boolean) => void
-  setCameraTarget: (target: [number, number, number] | null) => void
-}
+    // 대륙 정보 불러오기
+    fetchContinents: async () => {
+        set({ isLoading: true, error: null })
+        console.log('🌍 대륙 정보 불러오기 시작')
 
-// Store 타입
-export type ContinentStore = ContinentState & ContinentActions
+        try {
+            const data = await continentsAPI.getAll()
+            console.log('📥 받은 대륙 데이터:', data)
 
-// Store 생성
-export const useContinentStore = create<ContinentStore>()((set) => ({
-  // 초기 상태 - 세계 지도 뷰로 시작
-  selectedContinent: null,
-  continents: CONTINENTS,
-  isLoading: false,
-  isWorldView: true,
-  cameraTarget: null,
+            const continentsMap = data.reduce((acc, continent) => ({
+                ...acc,
+                [continent.id]: {
+                    ...continent,
+                    investors: {}  // 초기에는 빈 투자자 목록으로 시작
+                }
+            }), {} as Record<ContinentId, Continent>)
 
-  // 액션들
-  selectContinent: (continentId: ContinentId) => {
-    const continent = CONTINENTS[continentId]
-    set({ 
-      selectedContinent: continentId, 
-      isWorldView: false,
-      cameraTarget: continent.cameraTarget
-    })
-  },
-
-  setSelectedContinent: (continentId: ContinentId | null) => 
-    set({ selectedContinent: continentId }),
-
-  updateContinentUsers: (continentId: ContinentId, userCount: number) =>
-    set((state) => ({
-      continents: {
-        ...state.continents,
-        [continentId]: {
-          ...state.continents[continentId],
-          currentUsers: userCount
+            set({ continents: continentsMap })
+            console.log('✅ 대륙 정보 저장 완료:', continentsMap)
+        } catch (error) {
+            console.error('❌ 대륙 정보 불러오기 실패:', error)
+            set({ error: error as Error })
+        } finally {
+            set({ isLoading: false })
         }
-      }
-    })),
+    },
 
-  setLoading: (loading: boolean) => 
-    set({ isLoading: loading }),
+    // 대륙 정보 업데이트
+    updateContinent: async (id, updates) => {
+        try {
+            const updatedContinent = await continentsAPI.update(id, updates)
+            set(state => ({
+                continents: {
+                    ...state.continents,
+                    [id]: {
+                        ...state.continents[id],
+                        ...updatedContinent
+                    }
+                }
+            }))
+        } catch (error) {
+            console.error('❌ 대륙 정보 업데이트 실패:', error)
+            throw error
+        }
+    },
 
-  resetSelection: () => 
-    set({ 
-      selectedContinent: null, 
-      isWorldView: true,
-      cameraTarget: [0, 0, 30]
-    }),
+    setSelectedContinentId: (id) => {
+        console.log('🎯 setSelectedContinentId 호출됨:', id)
+        set({ selectedContinentId: id })
+    },
+    setWorldView: (isWorld) => {
+        console.log('🌍 setWorldView 호출됨:', isWorld)
+        set({ isWorldView: isWorld })
+    },
+    setCameraTarget: (target) => set({ cameraTarget: target }),
+    resetSelection: () => set({ selectedContinentId: null, isWorldView: true, cameraTarget: null }),
 
-  setWorldView: (isWorldView: boolean) => 
-    set({ isWorldView }),
+    updateContinentUsers: (id, count) => {
+        set(state => ({
+            continents: {
+                ...state.continents,
+                [id]: {
+                    ...state.continents[id],
+                    current_users: count
+                }
+            }
+        }))
+    },
 
-  setCameraTarget: (target: [number, number, number] | null) => 
-    set({ cameraTarget: target })
-})) 
+    // 사이드바 상태 관리
+    setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+}))
