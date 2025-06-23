@@ -13,9 +13,6 @@ function ImageReviewListItem({
 
     const imageStatusText = useMemo(() => {
         switch (player.image_status) {
-            case ImageStatus.NONE: {
-                return "업로드 안 됨"
-            }
             case ImageStatus.PENDING: {
                 return "리뷰 진행 중"
             }
