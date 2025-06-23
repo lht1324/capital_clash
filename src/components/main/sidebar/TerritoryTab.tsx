@@ -69,8 +69,8 @@ function TerritoryTab({
                         </div>
 
                         <div className="border-t border-gray-700 pt-3 mt-3">
-                            <div className="flex justify-between items-center mb-3">
-                                <span className={`text-sm ${imageStatusColor}`}>
+                            <div className="flex flex-col items-start mb-3">
+                                <span className={`text-sm ${imageStatusColor} mb-1`}>
                                     {imageStatusText}
                                 </span>
                                 <span className="text-xs text-gray-400">생성일: {createdDate}</span>

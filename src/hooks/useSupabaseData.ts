@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import {useCallback, useEffect} from 'react'
 import { useContinentStore } from '@/store/continentStore'
 import { useInvestorStore } from '@/store/investorsStore'
 import {useUserStore} from "@/store/userStore";
@@ -45,27 +45,31 @@ export function useSupabaseData(onSuccess: () => void) {
         });
 
         // 페이지 가시성 변화 감지 및 대응
-        const handleVisibilityChange = () => {
+        const handleVisibilityChange = async () => {
             if (document.visibilityState === 'visible') {
                 console.log('🔄 페이지 포커스 감지, 실시간 연결 확인 중...')
                 // 페이지 포커스 시 항상 재연결 시도
                 // 최신 Supabase 버전에서는 isConnected() 대신 다른 방법 사용
-                unsubscribeFromInvestors() // 기존 구독 정리
-                subscribeToInvestors() // 새로운 구독 설정
+
+                await unsubscribeFromInvestors();
+                await subscribeToInvestors()
+
                 console.log('🔄 실시간 연결 재설정 완료')
             }
-        }
+        };
 
         // 네트워크 상태 변화 감지 및 대응
-        const handleNetworkChange = () => {
+        const handleNetworkChange = async () => {
             if (navigator.onLine) {
                 console.log('🌐 네트워크 연결 감지, 실시간 연결 재설정 중...')
-                unsubscribeFromInvestors()
-                subscribeToInvestors()
+
+                await unsubscribeFromInvestors();
+                await subscribeToInvestors()
+
             } else {
                 console.log('🔌 네트워크 연결 끊김')
             }
-        }
+        };
 
         // 이벤트 리스너 등록
         document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -74,7 +78,7 @@ export function useSupabaseData(onSuccess: () => void) {
 
         // 컴포넌트 언마운트 시 구독 해제 및 이벤트 리스너 제거
         return () => {
-            unsubscribeFromInvestors()
+            unsubscribeFromInvestors().then();
             document.removeEventListener('visibilitychange', handleVisibilityChange)
             window.removeEventListener('online', handleNetworkChange)
             window.removeEventListener('offline', handleNetworkChange)

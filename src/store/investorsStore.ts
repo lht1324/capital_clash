@@ -44,7 +44,7 @@ interface InvestorStore {
     updatePlayerImageStatus: (playerId: string, imageStatus: ImageStatus) => Promise<void>
     updateInvestorDailyViews: (id: string, dailyViews: number[]) => Promise<Investor>
     subscribeToInvestors: () => Promise<void>
-    unsubscribeFromInvestors: () => void
+    unsubscribeFromInvestors: () => Promise<void>
 
     // 헬퍼 함수
     getFilteredInvestorListByContinent: (continentId: string) => Investor[]
@@ -254,20 +254,25 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
         },
 
         // 구독 해제
-        unsubscribeFromInvestors: () => {
+        unsubscribeFromInvestors: async () => {
+            console.log('🔄 투자자 실시간 구독 해제 시작')
             if (investorsSubscription) {
                 // 먼저 진행 중인 비동기 작업 취소
                 const state = get();
-                if (state.abortController) {
-                    state.abortController.abort();
+
+                const abort = async () => {
+                    if (state.abortController) {
+                        state.abortController.abort();
+                    }
                 }
 
+                await abort();
+
+                await investorsSubscription!!.unsubscribe();
+                investorsSubscription = null
+                console.log('✅ 실시간 구독 해제 완료')
+
                 // 약간의 지연 후 구독 해제 (진행 중인 작업이 정리될 시간 제공)
-                setTimeout(() => {
-                    investorsSubscription!!.unsubscribe().then();
-                    investorsSubscription = null
-                    console.log('🔄 투자자 실시간 구독 해제')
-                }, 100);
             }
         },
 
