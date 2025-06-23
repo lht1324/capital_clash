@@ -11,13 +11,17 @@ function ProfileInfoModal({
 }) {
     const { user } = useUserStore();
 
-    const authProvider = useMemo(() => {
-        const provider = user?.app_metadata?.provider;
+    const avatarUrl = useMemo(() => {
+        return user?.avatar_url;
+    }, [user?.avatar_url]);
 
-        if (!provider) return 'Google';
+    const userName = useMemo(() => {
+        return user?.name;
+    }, [user?.name]);
 
-        return provider[0].toUpperCase() + provider.slice(1);
-    }, [user?.app_metadata.provider])
+    const userEmail = useMemo(() => {
+        return user?.email;
+    }, [user?.email]);
 
     return (
         <>
@@ -48,10 +52,10 @@ function ProfileInfoModal({
                             <div className="space-y-6">
                                 {/* 프로필 이미지 */}
                                 <div className="flex justify-center">
-                                    {user.user_metadata?.avatar_url ? (
+                                    {avatarUrl ? (
                                         <div className="relative w-24 h-24 rounded-full overflow-hidden">
                                             <Image
-                                                src={user.user_metadata.avatar_url}
+                                                src={avatarUrl}
                                                 alt="Profile"
                                                 fill
                                                 className="object-cover"
@@ -59,7 +63,7 @@ function ProfileInfoModal({
                                         </div>
                                     ) : (
                                         <div className="w-24 h-24 rounded-full bg-blue-600 flex items-center justify-center text-white text-4xl">
-                                            {user.user_metadata?.name?.charAt(0) || user.email?.charAt(0) || '?'}
+                                            {userName?.charAt(0) || userEmail?.charAt(0) || '?'}
                                         </div>
                                     )}
                                 </div>
@@ -68,29 +72,20 @@ function ProfileInfoModal({
                                 <div className="space-y-4">
                                     <div>
                                         <h3 className="text-sm font-medium text-gray-400">Name</h3>
-                                        <p className="text-white text-lg">{user.user_metadata?.name || '이름 없음'}</p>
+                                        <p className="text-white text-lg">{userName}</p>
                                     </div>
 
                                     <div>
                                         <h3 className="text-sm font-medium text-gray-400">Email</h3>
-                                        <p className="text-white text-lg">{user.email || '이메일 없음'}</p>
-                                    </div>
-
-                                    <div>
-                                        <h3 className="text-sm font-medium text-gray-400">Login Method</h3>
-                                        <div className="flex items-center space-x-2 mt-1">
-                                            <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
-                                                {authProvider}
-                                            </div>
-                                        </div>
+                                        <p className="text-white text-lg">{userEmail}</p>
                                     </div>
                                 </div>
                             </div>
                         ) : (
                             <div className="text-center py-8">
                                 <div className="text-4xl mb-3">👤</div>
-                                <h3 className="text-lg font-medium text-white mb-2">로그인 정보 없음</h3>
-                                <p className="text-gray-400">로그인 후 프로필 정보를 확인할 수 있습니다.</p>
+                                <h3 className="text-lg font-medium text-white mb-2">No login information</h3>
+                                <p className="text-gray-400">You can check profile information after login</p>
                             </div>
                         )}
                     </div>
