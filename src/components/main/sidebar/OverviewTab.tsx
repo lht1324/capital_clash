@@ -1,4 +1,5 @@
-import {memo} from "react";
+import {memo, useMemo} from "react";
+import {ImageStatus} from "@/store/investorsStore";
 
 function OverviewTab({
     isUserInvestmentInfoExist,
@@ -9,8 +10,6 @@ function OverviewTab({
     userOverallRank,
     imageUrl,
     imageStatus,
-    imageStatusColor,
-    imageStatusText,
     continentName,
     onClickOpenImageUploadModal,
     onClickOpenPurchaseModal
@@ -22,13 +21,29 @@ function OverviewTab({
     userContinentRank: number,
     userOverallRank: number,
     imageUrl?: string,
-    imageStatus: string,
-    imageStatusColor: string,
-    imageStatusText: string,
+    imageStatus: ImageStatus,
     continentName: string,
     onClickOpenImageUploadModal: () => void,
     onClickOpenPurchaseModal: () => void
 }) {
+    const imageStatusColor = useMemo(() => {
+        switch (imageStatus) {
+            case ImageStatus.APPROVED: return 'text-green-400'
+            case ImageStatus.PENDING: return 'text-yellow-400'
+            case ImageStatus.REJECTED: return 'text-red-400'
+            default: return 'text-gray-400'
+        }
+    }, [imageStatus]);
+
+    const imageStatusText = useMemo(() => {
+        switch (imageStatus) {
+            case ImageStatus.APPROVED: return '✅ Approved'
+            case ImageStatus.PENDING: return '⏳ Under Review'
+            case ImageStatus.REJECTED: return '❌ Rejected'
+            default: return '📷 Not uploaded'
+        }
+    }, [imageStatus]);
+
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-bold text-white mb-4">Investment Status</h3>
@@ -65,40 +80,33 @@ function OverviewTab({
                         <h4 className="text-md font-semibold text-white mb-3">Current Territory</h4>
 
                         {/* Current Image Preview */}
-                        {imageStatus && imageStatus !== 'none' && (
+                        {imageStatus && (
                             <div className="mb-4 p-3 rounded-lg bg-gray-700">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-sm font-medium text-white">Territory Image</span>
                                     <span className={`text-xs px-2 py-1 rounded-full ${imageStatusColor}`}>
                                         {
                                             imageStatus === 'pending'
-                                                ? '🔄 Review'
+                                                ? '🔄 Under Review'
                                                 : imageStatus === 'approved'
-                                                    ? '✅ Live'
+                                                    ? '✅ Approved'
                                                     : '❌ Rejected'
                                         }
                                     </span>
                                 </div>
 
                                 <div className="aspect-square bg-gray-600 rounded-lg overflow-hidden mb-2">
-                                    {imageUrl && imageStatus === 'approved' ? (
+                                    {imageUrl ? (
                                         <img
                                             src={imageUrl}
                                             alt="Territory Image"
                                             className="w-full h-full object-cover"
                                         />
-                                    ) : imageStatus === 'pending' ? (
+                                    ) :  (
                                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                                             <div className="text-center">
-                                                <div className="text-2xl mb-2">🔄</div>
-                                                <div className="text-xs">Under Review</div>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                            <div className="text-center">
-                                                <div className="text-2xl mb-2">❌</div>
-                                                <div className="text-xs">Rejected</div>
+                                                <div className="text-2xl mb-2">⚠</div>
+                                                <div className="text-xs">Image is not exist.</div>
                                             </div>
                                         </div>
                                     )}
@@ -108,13 +116,7 @@ function OverviewTab({
                                     onClick={() => onClickOpenImageUploadModal()}
                                     className="w-full text-xs bg-gray-600 hover:bg-gray-500 text-white py-1 px-2 rounded transition-colors"
                                 >
-                                    {
-                                        imageStatus === 'approved'
-                                            ? 'Replace'
-                                            : imageStatus === 'pending'
-                                                ? 'Upload New'
-                                                : 'Upload New'
-                                    }
+                                    {imageUrl ? "Replace" : "Upload New"}
                                 </button>
                             </div>
                         )}

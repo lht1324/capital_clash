@@ -1,14 +1,14 @@
 'use client'
 
-import Header from '@/components/Header'
-import Sidebar from '@/components/ui/sidebar/Sidebar'
-import ContinentDropdown from '@/components/ContinentDropdown'
-import ContinentMap from '@/components/continent_map/ContinentMap'
-import InvestmentNotificationManager from '@/components/InvestmentNotification'
 import { useSupabaseData } from '@/hooks/useSupabaseData'
-import {useState} from "react";
+import { useState, memo } from "react";
+import Header from '@/components/main/header/Header'
+import Sidebar from '@/components/main/sidebar/Sidebar'
+import ContinentDropdown from '@/components/main/continent_map/ContinentDropdown'
+import ContinentMap from '@/components/main/continent_map/ContinentMap'
+import InvestmentNotificationManager from '@/components/main/InvestmentNotification'
 
-export default function Home() {
+function Home() {
     const [isLoading, setIsLoading] = useState(true);
 
     // Supabase 데이터 초기화 및 실시간 구독
@@ -41,3 +41,5 @@ export default function Home() {
         </div>)
     )
 }
+
+export default memo(Home);

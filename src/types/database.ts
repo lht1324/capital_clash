@@ -13,19 +13,21 @@ export interface Database {
             users: {
                 Row: {
                     id: string
-                    email: string
                     name: string
+                    email: string
                     avatar_url?: string
                     external_url?: string
+                    role: string
                     created_at: string
                     updated_at: string
                 }
                 Insert: {
                     id?: string
-                    email: string
                     name: string
+                    email: string
                     avatar_url?: string
                     external_url?: string
+                    role: string
                     created_at?: string
                     updated_at?: string
                 }
@@ -34,6 +36,7 @@ export interface Database {
                     email?: string
                     name?: string
                     avatar_url?: string
+                    role: string
                     external_url?: string
                     updated_at?: string
                 }
@@ -110,9 +113,9 @@ export interface Database {
                     investment_amount: number
                     share_percentage: number
                     image_url?: string
-                    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
-                    created_at?: string
-                    updated_at?: string
+                    image_status?: 'pending' | 'approved' | 'rejected'
+                    created_at: string
+                    updated_at: string
                     daily_views: number[]
                     previous_sunday_view: number
                     last_viewed_at?: string
@@ -130,9 +133,9 @@ export interface Database {
                     investment_amount: number
                     share_percentage: number
                     image_url?: string
-                    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
-                    created_at?: string
-                    updated_at?: string
+                    image_status?: 'pending' | 'approved' | 'rejected'
+                    created_at: string
+                    updated_at: string
                     daily_views: number[]
                     previous_sunday_view: number
                     last_viewed_at?: string
@@ -150,8 +153,9 @@ export interface Database {
                     investment_amount?: number
                     share_percentage?: number
                     image_url?: string
-                    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
-                    updated_at?: string
+                    image_status?: 'pending' | 'approved' | 'rejected'
+                    created_at: string
+                    updated_at: string
                     daily_views: number[]
                     previous_sunday_view: number
                     last_viewed_at?: string

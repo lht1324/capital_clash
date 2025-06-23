@@ -5,21 +5,6 @@ import { useInvestorStore } from './investorsStore'
 
 type ContinentRow = Database['public']['Tables']['continents']['Row']
 
-export type Investor = {
-    id: string
-    userId: string
-    continentId: string
-    name?: string
-    title?: string
-    investment_amount: number
-    share_percentage: number
-    image_url?: string
-    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
-    ratio?: number
-
-    area_color?: string
-}
-
 export type Continent = ContinentRow & {
     id: string,
     name: string,
@@ -37,9 +22,6 @@ export type Continent = ContinentRow & {
     is_active: boolean,
     created_at: string,
     updated_at: string,
-
-    // admin에만 남음
-    investors: Record<string, Investor>
 }
 
 export type ContinentId = string

@@ -1,16 +1,17 @@
 'use client'
 
-import {useState, useRef, useCallback, DragEvent, ChangeEvent} from 'react'
-import { X, Upload, Image as ImageIcon, AlertCircle, Check } from 'lucide-react'
+import {ChangeEvent, DragEvent, useCallback, useRef, useState} from 'react'
+import {AlertCircle, Check, Image as ImageIcon, Upload, X} from 'lucide-react'
+import {ImageStatus} from "@/store/investorsStore";
 
 export default function ImageUploadModal({
     onClose,
     onUpload,
-    currentImageStatus = 'none'
+    currentImageStatus = ImageStatus.PENDING
 }: {
     onClose: () => void
     onUpload: (file: File) => void
-    currentImageStatus?: 'none' | 'pending' | 'approved' | 'rejected'
+    currentImageStatus?: ImageStatus
 }) {
     const [dragActive, setDragActive] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -133,6 +134,7 @@ export default function ImageUploadModal({
         };
 
         const isValid = await validateImage();
+
         if (!isValid) {
             setUploading(false);
             return;
@@ -163,7 +165,7 @@ export default function ImageUploadModal({
             <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md mx-4 max-h-[calc(100vh-6rem)] overflow-y-auto">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-white">Upload Territory Image</h3>
+                    <h3 className="text-xl font-bold text-white">{currentImageStatus === ImageStatus.APPROVED ? "Replace" : "Upload"} Territory Image</h3>
                     <button
                         onClick={onClose}
                         className="text-gray-400 hover:text-white transition-colors"
@@ -189,84 +191,8 @@ export default function ImageUploadModal({
                     </div>
                 </div>
 
-
-
-                {/* Current Image Status Display */}
-                {currentImageStatus !== 'none' && !selectedFile && (
-                    <div className="mb-6">
-                        <div className={`border rounded-lg p-4 ${
-                            currentImageStatus === 'pending' ? 'border-yellow-500 bg-yellow-500/10' :
-                                currentImageStatus === 'approved' ? 'border-green-500 bg-green-500/10' :
-                                    'border-red-500 bg-red-500/10'
-                        }`}>
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center space-x-3">
-                                    <span className={`text-2xl`}>
-                                        {
-                                            currentImageStatus === 'pending'
-                                                ? '🔄'
-                                                : currentImageStatus === 'approved'
-                                                    ? '✅'
-                                                    : '❌'
-                                        }
-                                    </span>
-                                    <div>
-                                        <p className={`font-medium ${
-                                            currentImageStatus === 'pending'
-                                                ? 'text-yellow-400'
-                                                : currentImageStatus === 'approved'
-                                                    ? 'text-green-400'
-                                                    : 'text-red-400'
-                                        }`}>
-                                            {
-                                                currentImageStatus === 'pending'
-                                                    ? 'Under Review'
-                                                    : currentImageStatus === 'approved'
-                                                        ? 'Approved'
-                                                        : 'Rejected'
-                                            }
-                                        </p>
-                                        <p className="text-sm text-gray-400">
-                                            {currentImageStatus === 'pending' ? 'Your image is being reviewed by our team' :
-                                                currentImageStatus === 'approved' ? 'Your image has been approved and is live' :
-                                                    'Your image was rejected. Please upload a new one.'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className={`flex-1 px-4 py-2 rounded-lg transition-colors ${
-                                        currentImageStatus === 'approved'
-                                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                            : 'bg-purple-600 hover:bg-purple-700 text-white'
-                                    }`}
-                                >
-                                    {
-                                        currentImageStatus === 'approved'
-                                            ? 'Replace Image'
-                                            : currentImageStatus === 'pending'
-                                                ? 'Upload New Image'
-                                                : 'Upload New Image'
-                                    }
-                                </button>
-                                {currentImageStatus === 'pending' && (
-                                    <button
-                                        onClick={onClose}
-                                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                                    >
-                                        Wait for Review
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Upload Area */}
-                {currentImageStatus === 'none' && !selectedFile ? (
+                {!selectedFile ? (
                     <div
                         className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
                             dragActive
@@ -279,7 +205,7 @@ export default function ImageUploadModal({
                         onDrop={handleDrop}
                     >
                         <Upload className="mx-auto mb-4 text-gray-400" size={48} />
-                        <p className="text-white mb-2">Drag & drop your image here</p>
+                        <p className="text-white mb-2">Drag & drop your image here{currentImageStatus === ImageStatus.APPROVED ? " to replace" : ""}</p>
                         <p className="text-gray-400 text-sm mb-4">or</p>
                         <button
                             onClick={() => fileInputRef.current?.click()}

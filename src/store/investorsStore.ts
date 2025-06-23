@@ -14,13 +14,19 @@ export type Investor = {
     contact_email?: string
     investment_amount: number
     image_url?: string
-    image_status?: 'none' | 'pending' | 'approved' | 'rejected'
-    created_at?: string
-    updated_at?: string
+    image_status?: 'pending' | 'approved' | 'rejected'
+    created_at: string
+    updated_at: string
     daily_views: number[]
     previous_sunday_view: number
     last_viewed_at?: string
     area_color?: string
+}
+
+export enum ImageStatus {
+    PENDING = "pending",
+    APPROVED = "approved",
+    REJECTED = "rejected"
 }
 
 interface InvestorStore {
@@ -35,9 +41,10 @@ interface InvestorStore {
     insertInvestor: (userId: string, selectedContinentId: string, investmentAmount: number, name: string) => Promise<void>
     updateInvestor: (investor: Partial<Investor>) => Promise<void>
     updateInvestorInvestmentAmount: (investor: Partial<Investor>, investmentAmount: number) => Promise<void>
+    updatePlayerImageStatus: (playerId: string, imageStatus: ImageStatus) => Promise<void>
     updateInvestorDailyViews: (id: string, dailyViews: number[]) => Promise<Investor>
     subscribeToInvestors: () => Promise<void>
-    unsubscribeFromInvestors: () => void
+    unsubscribeFromInvestors: () => Promise<void>
 
     // 헬퍼 함수
     getFilteredInvestorListByContinent: (continentId: string) => Investor[]
@@ -140,6 +147,21 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
             }
         },
 
+        updatePlayerImageStatus: async (playerId: string, imageStatus: ImageStatus) => {
+            console.log('🔄 투자자 이미지 상태 업데이트 시작:', playerId)
+            try {
+                const updatedPlayer = await investorsAPI.updateImageStatus(playerId, imageStatus)
+
+                if (!updatedPlayer) throw new Error('투자자 이미지 상태 업데이트 후 데이터를 받지 못했습니다.')
+
+                console.log('✅ 투자자 이미지 상태 업데이트 완료:', updatedPlayer.id)
+                return updatedPlayer
+            } catch (error) {
+                console.error('❌ 투자자 이미지 상태 업데이트 실패:', error)
+                throw error
+            }
+        },
+
         updateInvestorDailyViews: async (id: string, dailyViews: number[]) => {
             console.log('🔄 투자자 조회수 업데이트 시작:', id)
             try {
@@ -232,20 +254,25 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
         },
 
         // 구독 해제
-        unsubscribeFromInvestors: () => {
+        unsubscribeFromInvestors: async () => {
+            console.log('🔄 투자자 실시간 구독 해제 시작')
             if (investorsSubscription) {
                 // 먼저 진행 중인 비동기 작업 취소
                 const state = get();
-                if (state.abortController) {
-                    state.abortController.abort();
+
+                const abort = async () => {
+                    if (state.abortController) {
+                        state.abortController.abort();
+                    }
                 }
 
+                await abort();
+
+                await investorsSubscription!!.unsubscribe();
+                investorsSubscription = null
+                console.log('✅ 실시간 구독 해제 완료')
+
                 // 약간의 지연 후 구독 해제 (진행 중인 작업이 정리될 시간 제공)
-                setTimeout(() => {
-                    investorsSubscription.unsubscribe()
-                    investorsSubscription = null
-                    console.log('🔄 투자자 실시간 구독 해제')
-                }, 100);
             }
         },
 
@@ -350,20 +377,17 @@ export const useInvestorStore = create<InvestorStore>((set, get) => {
 
                 const prevImageStatus = prevPlayer.image_status;
                 const newImageStatus = newPlayer.image_status;
+                const prevImageUrl = prevPlayer.image_url;
+                const newImageUrl = newPlayer.image_url;
 
-                const isImageApproved = prevImageStatus !== "approved" && newImageStatus === "approved";
-                const isImageRemoved = prevImageStatus === "approved" && newImageStatus !== "approved";
-
-                if (isImageApproved) {
-                    console.log(`isApproved, ${prevImageStatus}, ${newImageStatus}`)
-                }
-
-                if (isImageRemoved) {
-                    console.log(`isRemoved, ${prevImageStatus}, ${newImageStatus}`)
-                }
+                const isImageApproved = prevImageStatus === ImageStatus.PENDING && newImageStatus === ImageStatus.APPROVED;
+                const isImageRejected = prevImageStatus === ImageStatus.PENDING && newImageStatus === ImageStatus.REJECTED;
+                const isImageForceApproved = prevImageStatus === ImageStatus.REJECTED && newImageStatus === ImageStatus.APPROVED;
+                const isImageReplaced = (prevImageStatus === ImageStatus.APPROVED && newImageStatus === ImageStatus.PENDING)
+                    && (prevImageUrl !== newImageUrl);
 
                 return (prevSharePercentage !== newSharePercentage)
-                    || isImageApproved || isImageRemoved;
+                    || isImageApproved || isImageRejected || isImageForceApproved || isImageReplaced;
             })
         },
 

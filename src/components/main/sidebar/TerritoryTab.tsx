@@ -1,14 +1,14 @@
-import {memo} from "react";
+import {memo, useMemo} from "react";
 import {Continent} from "@/store/continentStore";
-import {Investor} from "@/store/investorsStore";
+import {ImageStatus, Investor} from "@/store/investorsStore";
 
 function TerritoryTab({
     isUserInvestmentInfoExist,
     investorList,
     investmentAmount,
     sharePercentage,
-    imageStatusColor,
-    imageStatusText,
+    imageUrl,
+    imageStatus,
     createdDate,
     continentName,
     continentList,
@@ -22,8 +22,8 @@ function TerritoryTab({
     investorList: Investor[],
     investmentAmount: number,
     sharePercentage: number,
-    imageStatusColor: string,
-    imageStatusText: string,
+    imageUrl?: string,
+    imageStatus: ImageStatus,
     createdDate: string,
     continentName: string,
     continentList: Continent[],
@@ -33,6 +33,24 @@ function TerritoryTab({
     onClickOpenPurchaseModal: () => void,
     onClickOpenProfileEditModal: () => void,
 }) {
+    const imageStatusColor = useMemo(() => {
+        switch (imageStatus) {
+            case ImageStatus.APPROVED: return 'text-green-400'
+            case ImageStatus.PENDING: return 'text-yellow-400'
+            case ImageStatus.REJECTED: return 'text-red-400'
+            default: return 'text-gray-400'
+        }
+    }, [imageStatus]);
+
+    const imageStatusText = useMemo(() => {
+        switch (imageStatus) {
+            case ImageStatus.APPROVED: return '✅ Approved'
+            case ImageStatus.PENDING: return '⏳ Under Review'
+            case ImageStatus.REJECTED: return '❌ Rejected'
+            default: return '📷 Not uploaded'
+        }
+    }, [imageStatus]);
+
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-bold text-white mb-4">Territory Management</h3>
@@ -51,8 +69,8 @@ function TerritoryTab({
                         </div>
 
                         <div className="border-t border-gray-700 pt-3 mt-3">
-                            <div className="flex justify-between items-center mb-3">
-                                <span className={`text-sm ${imageStatusColor}`}>
+                            <div className="flex flex-col items-start mb-3">
+                                <span className={`text-sm ${imageStatusColor} mb-1`}>
                                     {imageStatusText}
                                 </span>
                                 <span className="text-xs text-gray-400">생성일: {createdDate}</span>
@@ -70,7 +88,7 @@ function TerritoryTab({
                                     className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 rounded text-sm transition-colors flex items-center justify-center space-x-2"
                                 >
                                     <span>📷</span>
-                                    <span>Upload Image</span>
+                                    <span>{imageUrl ? "Replace" : "Upload"} Image</span>
                                 </button>
                                 <button
                                     onClick={() => onClickOpenProfileEditModal()}

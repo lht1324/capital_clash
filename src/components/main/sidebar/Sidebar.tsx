@@ -3,23 +3,22 @@
 import { useCallback, useMemo, useState } from 'react'
 import { calculateInvestorCoordinates } from "@/lib/treemapAlgorithm";
 import { useContinentStore } from '@/store/continentStore'
-import { useInvestorStore, Investor } from "@/store/investorsStore";
+import {useInvestorStore, Investor, ImageStatus} from "@/store/investorsStore";
 import { useUserStore } from '@/store/userStore'
 import { storageAPI } from '@/lib/supabase/supabase-storage-api';
 import { investorsAPI } from "@/lib/supabase/supabase-investors-api";
-import TerritoryInfoEditModal from "@/components/TerritoryInfoEditModal";
-import OverviewTab from "@/components/ui/sidebar/OverviewTab";
-import TerritoryTab from "@/components/ui/sidebar/TerritoryTab";
-import StatsTab from "@/components/ui/sidebar/StatsTab";
-import PurchaseTerritoryModal from '../../PurchaseTerritoryModal'
-import ImageUploadModal from '../../ImageUploadModal'
+import TerritoryInfoEditModal from "@/components/main/sidebar/TerritoryInfoEditModal";
+import OverviewTab from "@/components/main/sidebar/OverviewTab";
+import TerritoryTab from "@/components/main/sidebar/TerritoryTab";
+import StatsTab from "@/components/main/sidebar/StatsTab";
+import PurchaseTerritoryModal from '../PurchaseTerritoryModal'
+import ImageUploadModal from './ImageUploadModal'
 
 export default function Sidebar() {
     const [activeTab, setActiveTab] = useState<'overview' | 'territory' | 'stats'>('overview')
-    const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
-    const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false)
-    const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false)
-    // const [imageStatus, setImageStatus] = useState<'none' | 'pending' | 'approved' | 'rejected'>('pending')
+    const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+    const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false);
+    const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false);
 
     // 각 대륙별 현재 유저 수 계산
     const { continents, isSidebarOpen, setSidebarOpen, setCameraTarget } = useContinentStore();
@@ -149,8 +148,12 @@ export default function Sidebar() {
         return userInvestmentInfo?.image_url
     }, [userInvestmentInfo]);
 
-    const imageStatus = useMemo(() => {
-        return userInvestmentInfo?.image_status ?? "none"
+    const imageStatus: ImageStatus = useMemo(() => {
+        switch (userInvestmentInfo?.image_status) {
+            case "approved": return ImageStatus.APPROVED
+            case "rejected": return ImageStatus.REJECTED
+            default: return ImageStatus.PENDING;
+        };
     }, [userInvestmentInfo]);
 
     const continentName = useMemo(() => {
@@ -158,24 +161,6 @@ export default function Sidebar() {
             ? continents[userInvestmentInfo.continent_id].name
             : "-";
     }, [continents, userInvestmentInfo]);
-
-    const imageStatusColor = useMemo(() => {
-        switch (imageStatus) {
-            case 'approved': return 'text-green-400'
-            case 'pending': return 'text-yellow-400'
-            case 'rejected': return 'text-red-400'
-            default: return 'text-gray-400'
-        }
-    }, [imageStatus]);
-
-    const imageStatusText = useMemo(() => {
-        switch (imageStatus) {
-            case 'approved': return '✅ Approved'
-            case 'pending': return '⏳ Under Review'
-            case 'rejected': return '❌ Rejected'
-            default: return '📷 Not uploaded'
-        }
-    }, [imageStatus]);
 
     const userCreatedDate = useMemo(() => {
         return userInvestmentInfo?.created_at
@@ -237,6 +222,39 @@ export default function Sidebar() {
         }
 
         try {
+            // Approved 상태이고 기존 이미지가 있는 경우 삭제
+            if (imageUrl) {
+                try {
+                    console.log('🗑️ 기존 이미지 삭제 시작...')
+
+                    // 1. 기존 이미지의 images 테이블 레코드 찾기
+                    const imageList = await storageAPI.getImagesByInvestorId(userInvestmentInfo.id);
+                    const existingImage = imageList.find((imageInfo) => {
+                        return imageInfo.original_url === imageUrl;
+                    });
+
+                    if (existingImage) {
+                        // 2. 파일 경로 추출
+                        const filePath = storageAPI.getFilePathFromUrl(existingImage.original_url);
+
+                        if (filePath) {
+                            // 3. 기존 이미지 삭제
+                            const deleteSuccess = await storageAPI.deleteImage(existingImage.id, filePath);
+                            if (deleteSuccess) {
+                                console.log('✅ 기존 이미지 삭제 완료');
+                            } else {
+                                console.warn('⚠️ 기존 이미지 삭제에 실패했지만 새 이미지 업로드를 계속 진행합니다.');
+                            }
+                        } else {
+                            console.log('✅ 기존 이미지 경로가 존재하지 않습니다.');
+                        }
+                    }
+                } catch (deleteError) {
+                    console.error('❌ 기존 이미지 삭제 실패:', deleteError);
+                    // 삭제 실패해도 새 이미지 업로드는 계속 진행
+                }
+            }
+
             // 로딩 상태 표시 (실제 구현에서는 상태 변수를 사용할 수 있음)
             const loadingMessage = `이미지를 업로드 중입니다...`
             console.log(loadingMessage)
@@ -248,18 +266,23 @@ export default function Sidebar() {
                 userInvestmentInfo.id
             )
 
+            console.log("imageData", imageData);
+            console.log("error", error);
             if (error) {
                 throw error
             }
 
             // 성공 메시지 표시
-            alert(`✅ 이미지 "${file.name}"가 성공적으로 업로드되었습니다! 이미지는 현재 검토 중입니다.`)
+            const successMessage = imageStatus === ImageStatus.APPROVED 
+                ? `✅ 이미지 "${file.name}"가 성공적으로 교체되었습니다! 이미지는 현재 검토 중입니다.`
+                : `✅ 이미지 "${file.name}"가 성공적으로 업로드되었습니다! 이미지는 현재 검토 중입니다.`;
+            alert(successMessage)
             console.log('업로드 성공:', imageData)
         } catch (error) {
             console.error('이미지 업로드 실패:', error)
             alert('❌ 이미지 업로드에 실패했습니다. 다시 시도해 주세요.')
         }
-    }, [user, userInvestmentInfo]);
+    }, [user, userInvestmentInfo, imageStatus, imageUrl]);
 
     return (
         (user && <>
@@ -335,8 +358,6 @@ export default function Sidebar() {
                                 userOverallRank={userOverallRank}
                                 imageUrl={imageUrl}
                                 imageStatus={imageStatus}
-                                imageStatusColor={imageStatusColor}
-                                imageStatusText={imageStatusText}
                                 continentName={continentName}
                                 onClickOpenImageUploadModal={() => setIsImageUploadModalOpen(true)}
                                 onClickOpenPurchaseModal={() => { setIsPurchaseModalOpen(true) }}
@@ -349,8 +370,8 @@ export default function Sidebar() {
                                 investorList={investorList}
                                 investmentAmount={investmentAmount}
                                 sharePercentage={sharePercentage}
-                                imageStatusColor={imageStatusColor}
-                                imageStatusText={imageStatusText}
+                                imageUrl={imageUrl}
+                                imageStatus={imageStatus}
                                 createdDate={userCreatedDate}
                                 continentName={continentName}
                                 continentList={continentList}

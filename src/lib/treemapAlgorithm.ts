@@ -14,7 +14,7 @@
 import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
-} from "@/components/continent_map/continent_map_public_variables";
+} from "@/components/main/continent_map/continent_map_public_variables";
 import {Investor} from "@/store/investorsStore";
 
 export type PlacementResult = {

@@ -202,7 +202,7 @@ function TerritoryInfoEditModal({
 
     // 모달이 열릴 때 기존 데이터 로드
     useEffect(() => {
-        if (userInvestorInfo && !isInitialized) {
+        if (userInvestorInfo) {
             const defaultColor = userInvestorInfo.area_color || '#FF0000';
             const { h, l } = hexToHsl(defaultColor);
 
@@ -217,21 +217,8 @@ function TerritoryInfoEditModal({
                 contactEmail: userInvestorInfo.contact_email || '',
                 areaColor: defaultColor
             });
-            setIsInitialized(true);
         }
-
-        if (isInitialized) {
-            setProfileData({
-                name: "",
-                description: "",
-                xUrl: "",
-                instagramUrl: "",
-                contactEmail: "",
-                areaColor: "#FF0000"
-            });
-            setIsInitialized(false);
-        }
-    }, [userInvestorInfo, isInitialized, hexToHsl]);
+    }, [userInvestorInfo, hexToHsl]);
 
     if (!userInvestorInfo) {
         return (
