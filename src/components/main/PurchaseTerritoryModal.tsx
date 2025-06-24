@@ -4,7 +4,7 @@ import {useState, useEffect, useMemo, useCallback, useRef, ChangeEvent, memo} fr
 import { useContinentStore, type ContinentId } from '@/store/continentStore'
 import {Investor, useInvestorStore} from "@/store/investorsStore";
 import {useUserStore} from "@/store/userStore";
-import {openCheckout} from "@/utils/polarUtils";
+import {getProductsClient, postCheckoutsClient} from "@/api/client/polar/PolarClientAPI";
 
 function PurchaseTerritoryModal({
     onClose
@@ -170,11 +170,33 @@ function PurchaseTerritoryModal({
 
     // 구매/추가투자 처리
     const handlePurchase = useCallback(async () => {
-        if (!isPurchasePossible) return
+        if (!isPurchasePossible) return;
 
         setIsCalculating(true)
 
-        await openCheckout();
+        try {
+            const getProductsResponse = await getProductsClient();
+
+            const productId = getProductsResponse.items.find((item) => {
+                return !item.name.includes("continent");
+            })?.id;
+
+            if (!productId) {
+                throw new Error("No product found.");
+            }
+
+            const postCheckoutsResponse = await postCheckoutsClient(
+                productId,
+                investmentAmount,
+                user?.email
+            );
+
+            window.location.href = postCheckoutsResponse.url;
+        } catch (error) {
+            console.error(error);
+            setIsCalculating(false)
+            setValidationError('An error occurred while processing your investment. Please try again.')
+        }
         // try {
         //     if (user) {
         //         if (isAdditionalInvestment) {
@@ -197,7 +219,8 @@ function PurchaseTerritoryModal({
         //     setIsCalculating(false)
         //     setValidationError('An error occurred while processing your investment. Please try again.')
         // }
-    }, [isPurchasePossible, selectedContinentId, investmentAmount, investorName]);
+        // }, [isPurchasePossible, selectedContinentId, investmentAmount, investorName]);
+    }, [isPurchasePossible, investmentAmount]);
 
 
     // 모달 열림/닫힘 시 초기화
