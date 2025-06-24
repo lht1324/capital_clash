@@ -1,98 +1,302 @@
-# Capital Clash 프로젝트 - Next.js 서버/클라이언트 사이드 분석 결과
+# 💰 구매 기능 구현 계획
 
-## 📋 프로젝트 개요
-- **프로젝트명**: Capital Clash Frontend
-- **프레임워크**: Next.js 15.3.3 (App Router 사용)
-- **백엔드**: Supabase
-- **상태 관리**: Zustand
-- **스타일링**: Tailwind CSS
+## 📊 현재 판매 상품 분석
 
-## 🏗️ 전체 아키텍처 구조
+### 1. 영역 구매 (PurchaseTerritoryModal)
+**기능:** 새로운 영역 구매 또는 기존 영역 투자 확대
+- **신규 구매:** 사용자가 처음으로 대륙을 선택하고 투자
+- **추가 투자:** 기존 영역에 추가 투자하여 점유율 확대
 
-### 폴더 구조
+### 2. 대륙 변경 (TerritoryTab)
+**기능:** 기존 투자금을 유지하며 다른 대륙으로 이전
+- **현재 구현:** 무료 대륙 변경
+- **향후 계획:** 대륙 변경 시 수수료 부과 ($5)
+
+## 🎯 Polar 제품 구조 설계
+
+### 제품 카테고리
+
+#### 1. **영역 투자 상품 (Territory Investment)**
+```typescript
+// 제품 구조 예시
+{
+  name: "Territory Investment Package",
+  description: "Secure your digital territory and expand your influence",
+  pricing: {
+    type: "one_time", // 일회성 구매
+    amount: "dynamic" // 사용자 입력 금액에 따라 동적
+  },
+  benefits: [
+    "Territory ownership",
+    "Share percentage calculation",
+    "Ranking participation"
+  ]
+}
 ```
-src/
-├── app/                    # Next.js App Router (서버 사이드)
-│   ├── layout.tsx         # 루트 레이아웃 (서버 컴포넌트)
-│   ├── page.tsx           # 메인 페이지 (클라이언트 컴포넌트)
-│   └── admin/             # 관리자 페이지
-│       ├── layout.tsx     # 관리자 레이아웃 (서버 컴포넌트)
-│       └── page.tsx       # 관리자 페이지 (클라이언트 컴포넌트)
-├── components/            # UI 컴포넌트들 (대부분 클라이언트 사이드)
-│   ├── admin/            # 관리자 컴포넌트
-│   └── main/             # 메인 애플리케이션 컴포넌트
-├── lib/                  # 유틸리티 및 API 로직
-│   └── supabase/         # Supabase API 함수들
-├── store/                # Zustand 상태 관리 (클라이언트 사이드)
-├── hooks/                # 커스텀 훅 (클라이언트 사이드)
-├── types/                # TypeScript 타입 정의
-└── utils/                # 유틸리티 함수들
+
+#### 2. **프리미엄 기능 구독 (Premium Features)**
+```typescript
+{
+  name: "Capital Clash Premium",
+  description: "Unlock advanced features and benefits",
+  pricing: {
+    type: "recurring",
+    interval: "monthly",
+    amount: 999 // $9.99/month
+  },
+  benefits: [
+    "Priority territory placement",
+    "Advanced analytics",
+    "Custom profile themes",
+    "Image upload without review",
+    "Unlimited continent transfers"
+  ]
+}
 ```
 
-## 🔍 서버 사이드 vs 클라이언트 사이드 분석
+#### 3. **대륙 변경 상품 (Continent Transfer)**
+```typescript
+{
+  name: "Continent Transfer",
+  description: "Move your investment to a different continent",
+  pricing: {
+    type: "one_time",
+    amount: 500 // $5.00
+  },
+  benefits: [
+    "Instant continent transfer",
+    "Investment amount preservation",
+    "Ranking reset protection"
+  ]
+}
+```
 
-### ✅ 서버 사이드 (Server Components)
-1. **레이아웃 컴포넌트들**
-   - `src/app/layout.tsx` - 루트 레이아웃
-   - `src/app/admin/layout.tsx` - 관리자 레이아웃
-   - 메타데이터 설정 및 HTML 구조 제공
+## 🔧 기술적 구현 계획
 
-2. **API 로직**
-   - `src/lib/supabase/` 폴더의 API 함수들
-   - 서버에서 실행되는 데이터베이스 쿼리 로직
+### 1. **Polar SDK 통합**
 
-### ❌ 클라이언트 사이드 (Client Components)
-**대부분의 컴포넌트가 클라이언트 사이드로 구성됨**
+#### 설치 및 설정
+```bash
+npm install @polar-sh/sdk
+```
 
-1. **페이지 컴포넌트들**
-   - `src/app/page.tsx` - 메인 페이지
-   - `src/app/admin/page.tsx` - 관리자 페이지
+#### 환경 변수 설정
+```typescript
+// .env.local
+POLAR_ACCESS_TOKEN=your_access_token
+POLAR_ORGANIZATION_ID=your_org_id
+POLAR_SERVER=sandbox # or production
+```
 
-2. **UI 컴포넌트들** (모두 'use client' 지시어 사용)
-   - 헤더, 사이드바, 모달 등 모든 인터랙티브 컴포넌트
-   - 지도 컴포넌트 (Three.js 사용)
-   - 폼 및 입력 컴포넌트들
+#### Polar 클라이언트 초기화
+```typescript
+// lib/polar/polar-client.ts
+import { PolarApi } from '@polar-sh/sdk'
 
-3. **상태 관리**
-   - Zustand 스토어들 (continentStore, investorsStore, userStore)
-   - 클라이언트 사이드에서만 동작
+export const polarClient = new PolarApi({
+  accessToken: process.env.POLAR_ACCESS_TOKEN,
+  server: process.env.POLAR_SERVER
+})
+```
 
-4. **커스텀 훅**
-   - `useOnSizeChanged.tsx`
-   - `useSupabaseData.ts`
+### 2. **제품 생성 및 관리**
 
-## 📊 분석 결과 요약
+#### 동적 투자 상품 생성
+```typescript
+// lib/polar/products.ts
+export async function createTerritoryInvestmentProduct(amount: number) {
+  return await polarClient.products.create({
+    name: `Territory Investment - $${amount}`,
+    description: `Invest $${amount} in your digital territory`,
+    pricing: {
+      type: 'one_time',
+      amount: amount * 100 // cents 단위
+    }
+  })
+}
+```
 
-### 🔴 문제점: 서버/클라이언트 분리가 제대로 되지 않음
+#### 프리미엄 구독 상품
+```typescript
+export async function createPremiumSubscription() {
+  return await polarClient.products.create({
+    name: "Capital Clash Premium",
+    description: "Advanced features and benefits",
+    pricing: {
+      type: 'recurring',
+      interval: 'month',
+      amount: 999 // $9.99
+    }
+  })
+}
+```
 
-1. **과도한 클라이언트 사이드 의존성**
-   - 거의 모든 페이지와 컴포넌트가 클라이언트 컴포넌트로 구성
-   - Next.js App Router의 서버 컴포넌트 장점을 활용하지 못함
+### 3. **체크아웃 프로세스 통합**
 
-2. **API 라우트 부재**
-   - Next.js API 라우트를 사용하지 않음
-   - 모든 데이터 페칭이 클라이언트에서 직접 Supabase로 연결
+#### PurchaseTerritoryModal 수정
+```typescript
+// components/main/PurchaseTerritoryModal.tsx 수정
+const handlePolarCheckout = async () => {
+  try {
+    // 1. 동적 제품 생성 또는 기존 제품 사용
+    const product = await createTerritoryInvestmentProduct(investmentAmount)
 
-3. **SEO 및 성능 최적화 부족**
-   - 서버 사이드 렌더링의 이점을 충분히 활용하지 못함
-   - 초기 로딩 시 모든 JavaScript가 클라이언트에서 실행
+    // 2. 체크아웃 세션 생성
+    const checkout = await polarClient.checkout.create({
+      products: [product.id],
+      metadata: {
+        userId: user.id,
+        continentId: selectedContinentId,
+        investmentType: isAdditionalInvestment ? 'additional' : 'new',
+        investorName: investorName
+      }
+    })
 
-### 💡 개선 권장사항
+    // 3. 체크아웃 페이지로 리디렉션
+    window.location.href = checkout.url
+  } catch (error) {
+    console.error('체크아웃 생성 실패:', error)
+  }
+}
+```
 
-1. **서버 컴포넌트 활용 증대**
-   - 정적 콘텐츠나 초기 데이터 로딩은 서버 컴포넌트로 변경
-   - 인터랙션이 필요한 부분만 클라이언트 컴포넌트로 분리
+#### 대륙 변경 결제 통합
+```typescript
+// TerritoryTab.tsx 수정
+const handleContinentTransferPurchase = async (targetContinentId: string) => {
+  try {
+    const checkout = await polarClient.checkout.create({
+      products: [CONTINENT_TRANSFER_PRODUCT_ID],
+      metadata: {
+        userId: user.id,
+        fromContinentId: userInvestmentInfo.continent_id,
+        toContinentId: targetContinentId
+      }
+    })
 
-2. **API 라우트 도입**
-   - `app/api/` 폴더에 API 라우트 추가
-   - 민감한 데이터 처리는 서버 사이드에서 수행
+    window.location.href = checkout.url
+  } catch (error) {
+    console.error('대륙 변경 체크아웃 실패:', error)
+  }
+}
+```
 
-3. **하이브리드 렌더링 전략**
-   - 페이지별로 SSR, SSG, CSR을 적절히 조합
-   - 데이터 특성에 따른 렌더링 방식 선택
+### 4. **웹훅 처리**
 
-## 🎯 결론
+#### 결제 완료 처리
+```typescript
+// pages/api/webhooks/polar.ts
+import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
 
-현재 프로젝트는 **Next.js를 사용하고 있지만 대부분이 클라이언트 사이드로 구성**되어 있어, 사실상 **SPA(Single Page Application)에 가까운 구조**입니다. Next.js의 서버 사이드 렌더링과 하이브리드 렌더링의 장점을 충분히 활용하지 못하고 있는 상태입니다.
+export default async function handler(req: Request) {
+  const event = req.body
 
-**분리 상태**: ❌ **제대로 분리되지 않음** - 개선 필요
+  switch (event.type) {
+    case 'order.created':
+      await handleOrderCreated(event.data)
+      break
+    case 'subscription.created':
+      await handleSubscriptionCreated(event.data)
+      break
+  }
+}
+
+async function handleOrderCreated(order: any) {
+  const { userId, continentId, investmentType, investorName } = order.metadata
+
+  if (investmentType === 'new') {
+    // 새로운 투자자 생성
+    await investorsAPI.insertInvestor(
+      userId,
+      continentId,
+      order.amount / 100, // cents to dollars
+      investorName
+    )
+  } else if (investmentType === 'additional') {
+    // 기존 투자자 업데이트
+    const investor = await investorsAPI.getInvestorByUserId(userId)
+    await investorsAPI.updateInvestorInvestmentAmount(
+      investor,
+      order.amount / 100
+    )
+  }
+}
+```
+
+### 5. **고객 포털 통합**
+
+#### 구독/주문 관리 페이지
+```typescript
+// pages/billing.tsx
+import { CustomerPortal } from '@polar-sh/sdk'
+
+export default function BillingPage() {
+  const handlePortalAccess = async () => {
+    const portal = await CustomerPortal({
+      accessToken: process.env.POLAR_ACCESS_TOKEN,
+      getCustomerId: () => user.polarCustomerId,
+      server: process.env.POLAR_SERVER
+    })
+
+    window.location.href = portal.url
+  }
+
+  return (
+    <button onClick={handlePortalAccess}>
+      💳 Manage Billing
+    </button>
+  )
+}
+```
+
+## 📈 단계별 구현 로드맵
+
+### Phase 1: 기본 통합 (1-2주)
+1. **Polar SDK 설치 및 설정**
+2. **기본 제품 생성 (Territory Investment)**
+3. **PurchaseTerritoryModal 결제 통합**
+4. **웹훅 기본 처리**
+
+### Phase 2: 고급 기능 (2-3주)
+1. **프리미엄 구독 상품 추가**
+2. **대륙 변경 유료화**
+3. **고객 포털 통합**
+4. **결제 히스토리 관리**
+
+### Phase 3: 최적화 (1-2주)
+1. **결제 UX 개선**
+2. **에러 처리 강화**
+3. **분석 및 메트릭스 연동**
+4. **테스트 및 배포**
+
+## 🛡️ 보안 및 검증
+
+### 결제 검증
+```typescript
+// 결제 완료 후 검증 로직
+const verifyPayment = async (orderId: string) => {
+  const order = await polarClient.orders.get(orderId)
+
+  if (order.status === 'succeeded') {
+    // 결제 성공 - 데이터베이스 업데이트
+    await processSuccessfulPayment(order)
+  }
+}
+```
+
+### 중복 결제 방지
+```typescript
+// 주문 ID를 사용한 중복 처리 방지
+const processedOrders = new Set()
+
+const handleOrderCreated = async (order: any) => {
+  if (processedOrders.has(order.id)) {
+    return // 이미 처리됨
+  }
+
+  processedOrders.add(order.id)
+  // 주문 처리 로직
+}
+```
+
+이 계획을 따라 구현하면 현재의 영역 구매 시스템을 Polar의 강력한 결제 인프라와 완벽하게 통합할 수 있으며, 향후 확장 가능한 수익화 모델을 구축할 수 있습니다.

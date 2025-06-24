@@ -1,12 +1,12 @@
 'use client'
 
-import {useState, useEffect, useMemo, useCallback, useRef, ChangeEvent} from 'react'
+import {useState, useEffect, useMemo, useCallback, useRef, ChangeEvent, memo} from 'react'
 import { useContinentStore, type ContinentId } from '@/store/continentStore'
-import { getCurrentUserTileInfo, type UserTileInfo } from '@/utils/userUtils'
 import {Investor, useInvestorStore} from "@/store/investorsStore";
 import {useUserStore} from "@/store/userStore";
+import {openCheckout} from "@/utils/polarUtils";
 
-export default function PurchaseTerritoryModal({
+function PurchaseTerritoryModal({
     onClose
 }: {
     onClose: () => void
@@ -174,28 +174,29 @@ export default function PurchaseTerritoryModal({
 
         setIsCalculating(true)
 
-        try {
-            if (user) {
-                if (isAdditionalInvestment) {
-                    if (userInvestorInfo) {
-                        await updateInvestorInvestmentAmount(userInvestorInfo, investmentAmount);
-                    }
-                } else {
-                    if (selectedContinentId) {
-                        await insertInvestor(user?.id, selectedContinentId, investmentAmount, investorName);
-                    }
-                }
-            }
-
-            // 성공 시 모달 닫기
-            setTimeout(() => {
-                setIsCalculating(false)
-                onClose()
-            }, 1000)
-        } catch (error) {
-            setIsCalculating(false)
-            setValidationError('An error occurred while processing your investment. Please try again.')
-        }
+        await openCheckout();
+        // try {
+        //     if (user) {
+        //         if (isAdditionalInvestment) {
+        //             if (userInvestorInfo) {
+        //                 await updateInvestorInvestmentAmount(userInvestorInfo, investmentAmount);
+        //             }
+        //         } else {
+        //             if (selectedContinentId) {
+        //                 await insertInvestor(user?.id, selectedContinentId, investmentAmount, investorName);
+        //             }
+        //         }
+        //     }
+        //
+        //     // 성공 시 모달 닫기
+        //     setTimeout(() => {
+        //         setIsCalculating(false)
+        //         onClose()
+        //     }, 1000)
+        // } catch (error) {
+        //     setIsCalculating(false)
+        //     setValidationError('An error occurred while processing your investment. Please try again.')
+        // }
     }, [isPurchasePossible, selectedContinentId, investmentAmount, investorName]);
 
 
@@ -524,3 +525,5 @@ export default function PurchaseTerritoryModal({
         </>
     )
 }
+
+export default memo(PurchaseTerritoryModal);

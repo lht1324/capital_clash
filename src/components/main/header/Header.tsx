@@ -41,6 +41,7 @@ function Header({
             await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
+                    redirectTo: "https://capital-clash.vercel.app/",
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
