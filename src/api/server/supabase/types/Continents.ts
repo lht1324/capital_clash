@@ -1,0 +1,18 @@
+export interface Continent {
+    id: string,
+    name: string,
+    color: string,
+    theme_color: string,
+    description: string,
+    current_users: number,
+    max_users: number,
+    position_x: number,
+    position_y: number,
+    position_z: number,
+    camera_target_x: number,
+    camera_target_y: number,
+    camera_target_z: number,
+    is_active: boolean,
+    created_at: string,
+    updated_at: string,
+}

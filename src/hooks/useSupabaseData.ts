@@ -24,7 +24,7 @@ export function useSupabaseData(onSuccess: () => void) {
                 await Promise.all([
                     fetchContinents(),
                     fetchInvestors(),
-                    fetchUser(),
+                    // fetchUser(),
                 ])
 
                 // 실시간 구독 설정

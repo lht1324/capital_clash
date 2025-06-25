@@ -5,6 +5,7 @@ import { X } from 'lucide-react'
 import { useContinentStore } from '@/store/continentStore'
 import {Investor, useInvestorStore} from "@/store/investorsStore";
 import {getShortEnglishLocaleString} from "@/utils/numberUtils";
+import {useComponentStateStore} from "@/store/componentStateStore";
 
 type ContributionNotificationData = {
     id: string
@@ -31,7 +32,8 @@ type ContributionNotificationProps = {
 }
 
 function InvestmentNotificationManager({ isEnabled }: ContributionNotificationManagerProps) {
-    const { continents, isSidebarOpen } = useContinentStore()
+    const { continents } = useContinentStore()
+    const { isSidebarOpen } = useComponentStateStore();
     const { investors, getStakeUpdatedPlayerList } = useInvestorStore();
 
     const [notifications, setNotifications] = useState<ContributionNotificationData[]>([])

@@ -4,7 +4,7 @@ import {baseDeleteFetch, baseGetFetch, basePostFetch, basePutFetch} from "@/api/
 import {GetProductsResponse} from "@/api/client/polar/types/GetProductsTypes";
 import {PostCheckoutResponse} from "@/api/client/polar/types/PostCheckoutTypes";
 
-const BASE_URL = "/api/polar/"
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 // const API_KEY = process.env.POLAR_ACCESS_TOKEN!
 
 export async function postCheckoutsClient(

@@ -1,34 +1,38 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react'
+import { useState, useCallback, useMemo, memo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { supabase } from '@/lib/supabase/supabase'
 import RankingModal from './RankingModal'
 import PurchaseTerritoryModal from '../PurchaseTerritoryModal'
-import { useUserStore } from '@/store/userStore'
 import { UserCircleIcon } from '@heroicons/react/24/outline'
-import { useContinentStore } from '@/store/continentStore'
 import ProfileInfoModal from "@/components/main/header/ProfileInfoModal";
 import DropDownMenu from "@/components/main/header/DropDownMenu";
-import {useInvestorStore} from "@/store/investorsStore";
-import {signInWithOAuth} from "@/api/client/supabase/usersClientAPI";
+import {signInWithOAuth, signOutWithOAuth} from "@/api/client/supabase/usersClientAPI";
+import {User} from "@/api/server/supabase/types/Users";
+import {Continent} from "@/api/server/supabase/types/Continents";
+import {Player} from "@/api/server/supabase/types/Players";
 
-function Header() {
+export interface HeaderClientProps {
+    continentList: Continent[],
+    playerList: Player[],
+    userPlayerInfo: Player | null,
+    user: User | null;
+}
+
+function HeaderClient(props: HeaderClientProps) {
     const [isRankingModalOpen, setIsRankingModalOpen] = useState(false)
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
     const [isProfileInfoModalOpen, setIsProfileInfoModalOpen] = useState(false)
-    const { user, setUser } = useUserStore()
-    const { setSidebarOpen } = useContinentStore()
-    const { investors } = useInvestorStore();
 
-    const isAdditionalContribution = useMemo(() => {
-        const contributor = Object.values(investors).find((investor) => {
-            return investor.user_id === user?.id
-        })
-
-        return !!contributor
-    }, [investors, user?.id])
+    const {
+        continentList,
+        playerList,
+        userPlayerInfo,
+        user
+    } = useMemo(() => {
+        return props;
+    }, [props]);
 
     const handleGoogleLogin = useCallback(async () => {
         try {
@@ -38,31 +42,13 @@ function Header() {
         }
     }, []);
 
-    const handleOpenProfileSettingModal = useCallback(() => {
-        setIsProfileInfoModalOpen(true);
-    }, []);
-
     const handleSignOut = useCallback(async () => {
         try {
-            await supabase.auth.signOut()
-            setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
+            await signOutWithOAuth();
         } catch (error) {
             console.error('로그아웃 중 오류 발생:', error)
         }
     }, []);
-
-    useEffect(() => {
-        // 초기 로그인 상태 체크
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (!session?.user) {
-                setSidebarOpen(false) // 로그아웃 시 사이드바 닫기
-            }
-        })
-
-        return () => {
-            subscription.unsubscribe()
-        }
-    }, [setUser, setSidebarOpen]);
 
     return (
         <header className="fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white z-50">
@@ -92,13 +78,17 @@ function Header() {
                             if (user) {
                                 setIsPurchaseModalOpen(true)
                             } else {
-                                await handleGoogleLogin();
+                                const confirmed = confirm("Please sign in first.");
+
+                                if (confirmed) {
+                                    await handleGoogleLogin();
+                                }
                             }
                         }}
                         className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors"
                     >
                         <span>💎</span>
-                        <span>{isAdditionalContribution ? "Additional Purchase" : "Purchase Territory"}</span>
+                        <span>{(!!userPlayerInfo) ? "Raise Stake" : "Drop the stake"}</span>
                     </button>
                 </div>
 
@@ -116,14 +106,6 @@ function Header() {
                             priority
                             className="hidden sm:block"
                         />
-                        <Image
-                            src="/signin-assets/google_signin_small.png"
-                            alt="Sign in with Google"
-                            width={152}
-                            height={36}
-                            priority
-                            className="sm:hidden"
-                        />
                     </button>
                 ) : (
                     <DropDownMenu
@@ -136,7 +118,9 @@ function Header() {
                         items={[
                             {
                                 label: 'Profile',
-                                onClick: handleOpenProfileSettingModal,
+                                onClick: () => {
+                                    setIsProfileInfoModalOpen(true);
+                                },
                                 icon: '👤'
                             },
                             {
@@ -151,20 +135,27 @@ function Header() {
 
             {/* 랭킹 모달 */}
             {isRankingModalOpen && <RankingModal
+                continentList={continentList}
+                playerList={playerList}
                 onClose={() => setIsRankingModalOpen(false)}
             />}
 
             {/* 구매 모달 */}
             {isPurchaseModalOpen && <PurchaseTerritoryModal
+                continentList={continentList}
+                playerList={playerList}
+                user={user}
+                userPlayerInfo={userPlayerInfo}
                 onClose={() => setIsPurchaseModalOpen(false)}
             />}
 
             {/* 프로필 설정 모달 */}
             {isProfileInfoModalOpen && <ProfileInfoModal
+                user={user}
                 onClose={() => setIsProfileInfoModalOpen(false)}
             />}
         </header>
     )
 }
 
-export default memo(Header);
+export default memo(HeaderClient);

@@ -1,6 +1,6 @@
 import {memo, useMemo} from "react";
-import {Continent} from "@/store/continentStore";
 import {ImageStatus, Investor} from "@/store/investorsStore";
+import {Continent} from "@/api/server/supabase/types/Continents";
 
 function TerritoryTab({
     isUserInvestmentInfoExist,

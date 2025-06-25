@@ -1,20 +1,26 @@
 'use client'
 
 import {useState, useEffect, useMemo, useCallback, useRef, ChangeEvent, memo} from 'react'
-import { useContinentStore, type ContinentId } from '@/store/continentStore'
-import {Investor, useInvestorStore} from "@/store/investorsStore";
-import {useUserStore} from "@/store/userStore";
+import { type ContinentId } from '@/store/continentStore'
 import {getProductsClient, postCheckoutsClient} from "@/api/client/polar/PolarClientAPI";
+import {Continent} from "@/api/server/supabase/types/Continents";
+import {CONTINENT_MAX_USER_COUNT} from "@/components/main/continent_map/continent_map_public_variables";
+import {Player} from "@/api/server/supabase/types/Players";
+import {User} from "@/api/server/supabase/types/Users";
 
 function PurchaseTerritoryModal({
+    continentList,
+    playerList,
+    user,
+    userPlayerInfo,
     onClose
 }: {
+    continentList: Continent[],
+    playerList: Player[],
+    user: User | null,
+    userPlayerInfo: Player | null,
     onClose: () => void
 }) {
-    const { continents } = useContinentStore();
-    const { investors, insertInvestor, updateInvestorInvestmentAmount } = useInvestorStore();
-    const { user } = useUserStore();
-
     // 드래그 상태를 추적하기 위한 ref
     const isDragging = useRef(false);
 
@@ -26,71 +32,66 @@ function PurchaseTerritoryModal({
     const [showPreview, setShowPreview] = useState(false)
 
     const continentItemList = useMemo(() => {
-        return Object.values(continents).filter((continent) => continent.id !== "central")
-    }, [continents]);
+        return continentList.filter((continent) => {
+            return continent.id !== "central";
+        })
+    }, [continentList]);
 
-    const investorList = useMemo(() => {
-        return Object.values(investors);
-    }, [investors]);
-    const filteredInvestorListByContinent = useMemo(() => {
-        return investorList.filter((investor) => { return investor.continent_id === selectedContinentId; });
-    }, [investorList, selectedContinentId]);
-    const userInvestorInfo: Investor | null = useMemo(() => {
-        return investorList.find((investor) => {
-            return investor.user_id === user?.id;
-        }) ?? null;
-    }, [investorList, user]);
+    const filteredPlayerListByContinent = useMemo(() => {
+        return playerList.filter((player) => {
+            return player.continent_id === selectedContinentId;
+        });
+    }, [playerList, selectedContinentId]);
 
-    const continentalTotalInvestmentAmount = useMemo(() => {
-        return filteredInvestorListByContinent.reduce((acc, investor) => {
+    const continentalTotalStakeAmount = useMemo(() => {
+        return filteredPlayerListByContinent.reduce((acc, investor) => {
             return acc + investor.investment_amount
         }, 0);
-    }, [filteredInvestorListByContinent]);
-    const isAdditionalInvestment = useMemo(() => {
-        return !!userInvestorInfo;
-    }, [userInvestorInfo]);
+    }, [filteredPlayerListByContinent]);
+    const isAdditionalStake = useMemo(() => {
+        return !!userPlayerInfo;
+    }, [userPlayerInfo]);
 
-    // isAdditionalInvestment (Current Territory)
+    // isAdditionalStake (Current Territory)
     const userContinentId = useMemo(() => {
-        return userInvestorInfo?.continent_id;
-    }, [userInvestorInfo]);
+        return userPlayerInfo?.continent_id;
+    }, [userPlayerInfo]);
     const userContinentName = useMemo(() => {
         return continentItemList.find(c => c.id === userContinentId)?.name
     }, [continentItemList, userContinentId]);
-    const userInvestmentAmount = useMemo(() => {
-        return userInvestorInfo?.investment_amount ?? 0
-    }, [userInvestorInfo]);
+    const userStakeAmount = useMemo(() => {
+        return userPlayerInfo?.investment_amount ?? 0
+    }, [userPlayerInfo]);
     const userSharePercentage = useMemo(() => {
-        return userInvestmentAmount
-            ? Number(userInvestmentAmount / continentalTotalInvestmentAmount) * 100
+        return userStakeAmount
+            ? Number(userStakeAmount / continentalTotalStakeAmount) * 100
             : 0;
-    }, [userInvestmentAmount, continentalTotalInvestmentAmount]);
+    }, [userStakeAmount, continentalTotalStakeAmount]);
 
     const selectedContinentMaxUserCount = useMemo(() => {
-        return selectedContinentId
-            ? continents[selectedContinentId].max_users
-            : 0
-    }, [selectedContinentId, continents]);
+        return CONTINENT_MAX_USER_COUNT;
+    }, []);
 
     // 실시간 계산 결과
     const expectedSharePercentage = useMemo(() => {
         if (!investmentAmount || investmentAmount <= 0) return 0;
 
-        const newContinentalTotalInvestment = continentalTotalInvestmentAmount + investmentAmount;
-        const newSharePercentage = !isAdditionalInvestment
+        const newContinentalTotalInvestment = continentalTotalStakeAmount + investmentAmount;
+        const newSharePercentage = !isAdditionalStake
             ? Number((investmentAmount / newContinentalTotalInvestment) * 100)
-            : Number(((userInvestmentAmount + investmentAmount) / newContinentalTotalInvestment) * 100);
+            : Number(((userStakeAmount + investmentAmount) / newContinentalTotalInvestment) * 100);
 
         if (selectedContinentId) {
             return newSharePercentage > 0.01
                 ? newSharePercentage
                 : 0.01;
         } else {
-            return isAdditionalInvestment
+            return isAdditionalStake
                 ? newSharePercentage
                 : 0;
         }
-    }, [selectedContinentId, investmentAmount, userInvestmentAmount, continentalTotalInvestmentAmount])
+    }, [selectedContinentId, investmentAmount, userStakeAmount, continentalTotalStakeAmount])
+
     const expectedCellLength = useMemo(() => {
         const maxAreaSize = selectedContinentMaxUserCount * selectedContinentMaxUserCount
         const cells = Math.round(expectedSharePercentage * maxAreaSize / 100)
@@ -103,10 +104,10 @@ function PurchaseTerritoryModal({
 
     // 대륙별 현재 투자자 수 계산
     const getContinentUserCount = useCallback((continentId: ContinentId) => {
-        return Object.values(investors).filter((investor) => {
+        return playerList.filter((investor) => {
             return investor.continent_id === continentId
         }).length;
-    }, []);
+    }, [playerList]);
 
     // 투자 금액 유효성 검사
     const validateInvestmentAmount = useCallback((value: string) => {
@@ -132,7 +133,7 @@ function PurchaseTerritoryModal({
 
     // 중복 투자 검증
     const validateDuplicateInvestment = useCallback((continentId: ContinentId) => {
-        if (isAdditionalInvestment) return true
+        if (isAdditionalStake) return true
 
         // 선택한 대륙이 가득 찬 경우
         const userCount = getContinentUserCount(continentId)
@@ -142,15 +143,15 @@ function PurchaseTerritoryModal({
         }
 
         return true
-    }, [isAdditionalInvestment, selectedContinentMaxUserCount]);
+    }, [isAdditionalStake, selectedContinentMaxUserCount]);
 
     // 입력 검증
     const isPurchasePossible = useMemo(() => {
         const isValidAmount = investmentAmount >= 1;
-        const isValidContinent = isAdditionalInvestment || (selectedContinentId && validateDuplicateInvestment(selectedContinentId))
-        const isValidName = isAdditionalInvestment || (investorName.trim() !== '')
+        const isValidContinent = isAdditionalStake || (selectedContinentId && validateDuplicateInvestment(selectedContinentId))
+        const isValidName = isAdditionalStake || (investorName.trim() !== '')
         return isValidAmount && isValidContinent && isValidName && !validationError
-    }, [investmentAmount, investorName, isAdditionalInvestment, validationError])
+    }, [investmentAmount, investorName, isAdditionalStake, validationError])
 
     // 투자 금액 변경 핸들러
     const handleAmountChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -199,9 +200,9 @@ function PurchaseTerritoryModal({
         }
         // try {
         //     if (user) {
-        //         if (isAdditionalInvestment) {
-        //             if (userInvestorInfo) {
-        //                 await updateInvestorInvestmentAmount(userInvestorInfo, investmentAmount);
+        //         if (isAdditionalStake) {
+        //             if (userPlayerInfo) {
+        //                 await updateInvestorInvestmentAmount(userPlayerInfo, investmentAmount);
         //             }
         //         } else {
         //             if (selectedContinentId) {
@@ -226,11 +227,11 @@ function PurchaseTerritoryModal({
     // 모달 열림/닫힘 시 초기화
     useEffect(() => {
         setSelectedContinentId(
-            isAdditionalInvestment && userContinentId
+            isAdditionalStake && userContinentId
                 ? userContinentId
                 : null
         )
-    }, [isAdditionalInvestment, userContinentId])
+    }, [isAdditionalStake, userContinentId])
 
     // ESC 키로 닫기
     useEffect(() => {
@@ -292,7 +293,7 @@ function PurchaseTerritoryModal({
                     {/* 헤더 */}
                     <div className="flex items-center justify-between p-6 border-b border-gray-700">
                         <h2 className="text-2xl font-bold text-white">
-                            {isAdditionalInvestment ? '💰 Additional Investment' : '🎯 Purchase Territory'}
+                            {isAdditionalStake ? '💰 Additional Investment' : '🎯 Purchase Territory'}
                         </h2>
                         <button
                             onClick={onClose}
@@ -305,7 +306,7 @@ function PurchaseTerritoryModal({
                     {/* 콘텐츠 */}
                     <div className="p-6 space-y-8">
                         {/* 추가 투자 모드일 때 현재 영역 정보 표시 */}
-                        {isAdditionalInvestment && userContinentId && (
+                        {isAdditionalStake && userContinentId && (
                             <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 rounded-xl p-6 border border-blue-700/50 backdrop-blur-sm">
                                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                     <span className="text-2xl">📍</span>
@@ -321,7 +322,7 @@ function PurchaseTerritoryModal({
                                     <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
                                         <span className="text-gray-300">Investment Amount</span>
                                         <span className="text-green-400 font-medium">
-                                            ${userInvestmentAmount?.toLocaleString()}
+                                            ${userStakeAmount?.toLocaleString()}
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
@@ -335,7 +336,7 @@ function PurchaseTerritoryModal({
                         )}
 
                         {/* 단계 1: 대륙 선택 (신규 구매시만) */}
-                        {!isAdditionalInvestment && (
+                        {!isAdditionalStake && (
                             <div>
                                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                                     <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-sm">1</span>
@@ -399,7 +400,7 @@ function PurchaseTerritoryModal({
                         {/* 단계 2: 투자 금액 입력 */}
                         <div>
                             <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                {isAdditionalInvestment ? (
+                                {isAdditionalStake ? (
                                     <>
                                         <span className="text-2xl">💵</span>
                                         <span>Additional Investment Amount</span>
@@ -435,7 +436,7 @@ function PurchaseTerritoryModal({
                                 </div>
 
                                 {/* 투자자 이름 입력 */}
-                                {!isAdditionalInvestment && <div>
+                                {!isAdditionalStake && <div>
                                     <div className="relative">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-semibold text-gray-400">👑</div>
                                         <input
@@ -494,7 +495,7 @@ function PurchaseTerritoryModal({
 
                                         {/* 투자 효과 설명 */}
                                         <div className="bg-blue-900/20 border border-blue-500/20 rounded-xl p-4 text-sm text-gray-300 leading-relaxed">
-                                            {isAdditionalInvestment ? (
+                                            {isAdditionalStake ? (
                                                 <>
                                                     Continental share will be increased from <span className="text-gray-200 font-medium">{userSharePercentage.toFixed(2)}%</span>{' '}
                                                     to <span className="text-blue-400 font-medium">{expectedSharePercentage.toFixed(2)}%</span>,

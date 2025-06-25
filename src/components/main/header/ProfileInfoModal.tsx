@@ -1,15 +1,16 @@
 'use client'
 
 import {memo, useMemo} from 'react'
-import { useUserStore } from "@/store/userStore"
 import Image from 'next/image'
+import {User} from "@/api/server/supabase/types/Users";
 
 function ProfileInfoModal({
+    user,
     onClose,
 }: {
+    user?: User | null,
     onClose: () => void
 }) {
-    const { user } = useUserStore();
 
     const avatarUrl = useMemo(() => {
         return user?.avatar_url;

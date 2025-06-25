@@ -6,12 +6,15 @@ import WorldScene from "@/components/main/continent_map/WorldScene";
 import TerritoryInfoViewModal from "@/components/main/TerritoryInfoViewModal";
 import {memo, useCallback, useEffect, useMemo, useState} from "react";
 import { useInvestorStore } from '@/store/investorsStore';
+import {useContinentStore} from "@/store/continentStore";
+import {Player} from "@/api/server/supabase/types/Players";
 
 function ContinentMap() {
-    const { updateInvestorDailyViews } = useInvestorStore();
+    const { continents } = useContinentStore();
+    const { investors, updateInvestorDailyViews } = useInvestorStore();
 
     const [isTerritoryInfoModalOpen, setIsTerritoryInfoModalOpen] = useState(false);
-    const [investorId, setInvestorId] = useState<string | null>(null);
+    const [openedInvestorId, setOpenedInvestorId] = useState<string | null>(null);
 
     // 1. weekly로 수정.
     /*
@@ -52,18 +55,22 @@ function ContinentMap() {
                 <CameraController />
                 <WorldScene
                     onTileClick={(investorId: string, dailyViews: number[]) => {
-                        setInvestorId(investorId);
+                        setOpenedInvestorId(investorId);
                         updateDailyViews(investorId, dailyViews);
                         setIsTerritoryInfoModalOpen(true);
                     }}
                 />
             </Canvas>
-            {isTerritoryInfoModalOpen && investorId && <TerritoryInfoViewModal
+            {isTerritoryInfoModalOpen && openedInvestorId && <TerritoryInfoViewModal
+                continentList={Object.values(continents)}
+                playerList={Object.values(investors).map((investor) => {
+                    return investor as Player;
+                })}
+                openedInvestorId={openedInvestorId}
                 onClose={() => {
-                    setInvestorId(null);
+                    setOpenedInvestorId(null);
                     setIsTerritoryInfoModalOpen(false);
                 }}
-                investorId={investorId}
             />}
         </main>
     )

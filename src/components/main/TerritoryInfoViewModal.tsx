@@ -5,65 +5,66 @@ import { useInvestorStore } from "@/store/investorsStore";
 import {useCallback, useEffect, useMemo, KeyboardEvent, memo} from 'react'
 import {encodeBase64} from "@/utils/base64Utils";
 import {useUserStore} from "@/store/userStore";
+import {Continent} from "@/api/server/supabase/types/Continents";
+import {Player} from "@/api/server/supabase/types/Players";
 
 function TerritoryInfoViewModal({
+    continentList,
+    playerList, 
+    openedInvestorId,
     onClose,
-    investorId,
 }: {
+    continentList: Continent[],
+    playerList: Player[],
+    openedInvestorId: string,
     onClose: () => void
-    investorId: string
 }) {
-    const { continents } = useContinentStore();
-    const { investors, updateInvestorDailyViews, getTotalInvestmentByContinent } = useInvestorStore();
+    const { getTotalInvestmentByContinent } = useInvestorStore();
     const { user } = useUserStore();
 
-    const investorList = useMemo(() => {
-        return Object.values(investors);
-    }, [investors])
-
-    const investorInfo = useMemo(() => {
-        return investorList.find((investor) => {
-            return investor.id === investorId;
+    const territoryOwnerPlayerInfo = useMemo(() => {
+        return playerList.find((player: Player) => {
+            return player.id === openedInvestorId;
         })
-    }, [investorList, investorId])
+    }, [playerList, openedInvestorId])
 
-    const filteredInvestorListByContinent = useMemo(() => {
-        return investorList.filter((investor) => {
-            return investor.continent_id === investorInfo?.continent_id;
+    const filteredPlayerListByContinent = useMemo(() => {
+        return playerList.filter((player: Player) => {
+            return player.continent_id === territoryOwnerPlayerInfo?.continent_id;
         })
-    }, [investorList, investorInfo]);
+    }, [playerList, territoryOwnerPlayerInfo]);
 
     const userContinentRank = useMemo(() => {
-        if (investorInfo) {
-            const userIndex = filteredInvestorListByContinent.sort((a, b) => {
+        if (territoryOwnerPlayerInfo) {
+            const userIndex = filteredPlayerListByContinent.sort((a, b) => {
                 return b.investment_amount - a.investment_amount;
             }).findIndex((investor) => {
-                return investor.id === investorInfo?.id;
+                return investor.id === territoryOwnerPlayerInfo?.id;
             });
 
             return userIndex + 1;
         } else {
             return -1
         }
-    }, [investorInfo, filteredInvestorListByContinent]);
+    }, [territoryOwnerPlayerInfo, filteredPlayerListByContinent]);
 
     const userOverallRank = useMemo(() => {
-        if (investorInfo) {
-            const userIndex = investorList.sort((a, b) => {
+        if (territoryOwnerPlayerInfo) {
+            const userIndex = playerList.sort((a, b) => {
                 return b.investment_amount - a.investment_amount;
-            }).findIndex((investor) => {
-                return investor.id === investorInfo.id;
+            }).findIndex((player: Player) => {
+                return player.id === territoryOwnerPlayerInfo.id;
             });
 
             return userIndex + 1;
         } else {
             return -1
         }
-    }, [investorList, investorInfo]);
+    }, [playerList, territoryOwnerPlayerInfo]);
 
     const isUserOpenedModal = useMemo(() => {
-        return investorInfo?.user_id === user?.id;
-    }, [investorInfo, user]);
+        return territoryOwnerPlayerInfo?.user_id === user?.id;
+    }, [territoryOwnerPlayerInfo, user]);
 
     // ESC 키로 모달 닫기
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -82,12 +83,14 @@ function TerritoryInfoViewModal({
     }, []);
 
     const openXLink = useCallback(() => {
-        const userIdentifier = encodeBase64(investorId);
+        const userIdentifier = encodeBase64(openedInvestorId);
 
         const targetUrl = new URL("https://capital-clash.vercel.app");
         targetUrl.searchParams.set("user_identifier", encodeURIComponent(userIdentifier));
 
-        const continentName = continents[investorInfo?.continent_id ?? ""]?.name;
+        const continentName = continentList.find((continent) => {
+            return continent.id === territoryOwnerPlayerInfo?.continent_id;
+        })?.name;
         const titleText = userOverallRank === 1
             ? "World? Dominated. By me."
             : userContinentRank === 1
@@ -96,7 +99,7 @@ function TerritoryInfoViewModal({
         const currentContinentText = userContinentRank === 1
             ? `Central (${continentName})`
             : continentName;
-        const contributionText = `Total Contribution - $${investorInfo?.investment_amount.toLocaleString()}`;
+        const contributionText = `Total Contribution - $${territoryOwnerPlayerInfo?.investment_amount.toLocaleString()}`;
         const overallRankText = `Overall Rank - #${userOverallRank}`;
         const continentalRankText = `Continental Rank - #${userContinentRank}`;
         const intent = new URL("https://x.com/intent/post");
@@ -115,9 +118,9 @@ ${targetUrl}
         );
 
         window.open(intent.toString(), "_blank", "noopener,noreferrer");
-    }, [investorId, investorInfo, continents, userOverallRank, userContinentRank]);
+    }, [openedInvestorId, territoryOwnerPlayerInfo, userOverallRank, userContinentRank]);
 
-    if (!investorInfo) {
+    if (!territoryOwnerPlayerInfo) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -158,7 +161,7 @@ ${targetUrl}
                 </div>
 
                 {/* X 공유 버튼 */}
-                {isUserOpenedModal && investorInfo?.x_url && <div className="flex justify-end mb-6">
+                {isUserOpenedModal && territoryOwnerPlayerInfo?.x_url && <div className="flex justify-end mb-6">
                     <button
                         onClick={openXLink}
                         className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors flex items-center"
@@ -169,7 +172,7 @@ ${targetUrl}
                 </div>}
 
                 {/* 인스타그램 공유 버튼 */}
-                {/*{isUserOpenedModal && investorInfo?.instagram_url && <div className="flex justify-end mt-4">*/}
+                {/*{isUserOpenedModal && territoryOwnerPlayerInfo?.instagram_url && <div className="flex justify-end mt-4">*/}
                 {/*    <button*/}
                 {/*        onClick={openXLink}*/}
                 {/*        className="px-6 py-2 text-white rounded hover:opacity-90 transition-colors flex items-center"*/}
@@ -184,11 +187,11 @@ ${targetUrl}
                 {/*</div>}*/}
 
                 {/* 투자자 이미지 */}
-                {investorInfo.image_status === 'approved' && investorInfo.image_url && (
+                {territoryOwnerPlayerInfo.image_status === 'approved' && territoryOwnerPlayerInfo.image_url && (
                     <div className="mb-6 text-center">
                         <img
-                            src={investorInfo.image_url}
-                            alt={`${investorInfo.name} Profile`}
+                            src={territoryOwnerPlayerInfo.image_url}
+                            alt={`${territoryOwnerPlayerInfo.name} Profile`}
                             className="w-full h-auto mx-auto object-cover rounded-lg border-2 border-gray-200"
                         />
                     </div>
@@ -204,14 +207,14 @@ ${targetUrl}
                                     <div className="min-w-6 mr-2">👑</div>
                                     <span className="text-gray-600">Owner</span>
                                 </div>
-                                <span className="font-medium">{investorInfo.name}</span>
+                                <span className="font-medium">{territoryOwnerPlayerInfo.name}</span>
                             </div>
                             <div className="flex justify-between">
                                 <div className="flex flex-row w-fit">
                                     <div className="min-w-6 mr-2">💰</div>
                                     <span className="text-gray-600">Investment Amount</span>
                                 </div>
-                                <span className="font-medium">${investorInfo.investment_amount.toLocaleString()}</span>
+                                <span className="font-medium">${territoryOwnerPlayerInfo.investment_amount.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between">
                                 <div className="flex flex-row w-fit">
@@ -219,7 +222,7 @@ ${targetUrl}
                                     <span className="text-gray-600">Continental Share</span>
                                 </div>
                                 <span className="font-medium">
-                                    {((investorInfo.investment_amount / getTotalInvestmentByContinent(investorInfo.continent_id)) * 100).toFixed(2)}%
+                                    {((territoryOwnerPlayerInfo.investment_amount / getTotalInvestmentByContinent(territoryOwnerPlayerInfo.continent_id)) * 100).toFixed(2)}%
                                 </span>
                             </div>
                             <div className="flex justify-between">
@@ -245,19 +248,19 @@ ${targetUrl}
                 </div>
 
                 {/* 프로필 정보 */}
-                {(investorInfo.description || investorInfo.x_url || investorInfo.contact_email) && (
+                {(territoryOwnerPlayerInfo.description || territoryOwnerPlayerInfo.x_url || territoryOwnerPlayerInfo.contact_email) && (
                     <div className="space-y-4 mb-6">
                         <div className="bg-blue-50 p-4 rounded-lg">
                             <h3 className="font-semibold text-lg text-gray-700 mb-3">📝 Owner </h3>
-                            {investorInfo.description && (
+                            {territoryOwnerPlayerInfo.description && (
                                 <div className="mb-4">
                                     <label className="block text-m font-medium text-gray-600 mb-2">💬 Description</label>
                                     <p className="text-gray-800 text-sm leading-relaxed bg-white p-3 rounded border">
-                                        {investorInfo.description}
+                                        {territoryOwnerPlayerInfo.description}
                                     </p>
                                 </div>
                             )}
-                            {investorInfo.x_url && (
+                            {territoryOwnerPlayerInfo.x_url && (
                                 <div className="flex flex-col mb-4">
                                     <div className="w-fit h-fit p-1 bg-gray-600 mb-2 rounded border">
                                         <img
@@ -267,10 +270,10 @@ ${targetUrl}
                                         />
                                     </div>
                                     <button
-                                        onClick={() => openExternalLink(investorInfo?.x_url!)}
+                                        onClick={() => openExternalLink(territoryOwnerPlayerInfo?.x_url!)}
                                         className="text-blue-600 hover:text-blue-800 underline text-sm bg-white px-3 py-2 rounded border hover:bg-blue-50 transition-colors"
                                     >
-                                        {investorInfo.x_url} ↗
+                                        {territoryOwnerPlayerInfo.x_url} ↗
                                     </button>
                                 </div>
                             )}
@@ -284,18 +287,18 @@ ${targetUrl}
                             {/*            />*/}
                             {/*        </div>*/}
                             {/*        <button*/}
-                            {/*            onClick={() => openExternalLink(investorInfo?.instagram_url!)}*/}
+                            {/*            onClick={() => openExternalLink(territoryOwnerPlayerInfo?.instagram_url!)}*/}
                             {/*            className="text-blue-600 hover:text-blue-800 underline text-sm bg-white px-3 py-2 rounded border hover:bg-blue-50 transition-colors"*/}
                             {/*        >*/}
                             {/*            {investorInfo.instagram_url} ↗*/}
                             {/*        </button>*/}
                             {/*    </div>*/}
                             {/*)}*/}
-                            {investorInfo.contact_email && (
+                            {territoryOwnerPlayerInfo.contact_email && (
                                 <div className="mb-4">
                                     <label className="block text-m font-medium text-gray-600 mb-2">📧 Contact</label>
                                     <p className="text-gray-800 text-sm bg-white p-3 rounded border">
-                                        {investorInfo.contact_email}
+                                        {territoryOwnerPlayerInfo.contact_email}
                                     </p>
                                 </div>
                             )}

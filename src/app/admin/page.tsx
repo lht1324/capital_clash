@@ -1,6 +1,6 @@
 'use client'
 
-import {memo, useEffect, useCallback, useMemo, useState} from "react";
+import {memo, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 import {useUserStore} from "@/store/userStore";
 import {useSupabaseData} from "@/hooks/useSupabaseData";
@@ -13,18 +13,12 @@ function AdminPage() {
 
     const [isInitialized, setIsInitialized] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
-    const [headerHeight, setHeaderHeight] = useState(0);
     const [isImageReviewModalOpen, setIsImageReviewModalOpen] = useState(false);
 
     const isUserAdmin = useMemo(() => {
         console.log(`role = ${user?.role}`)
         return user?.role === 'admin';
     }, [user?.role]);
-
-    const onChangeHeaderHeight = useCallback((height: number) => {
-        console.log(`headerHeight = ${height}`)
-        setHeaderHeight(height);
-    }, []);
 
     useSupabaseData(
         () => {
@@ -53,11 +47,8 @@ function AdminPage() {
     }
 
     return (
-        !isLoading ? (<div className="min-h-screen">
-            <Header
-                onChangeHeight={onChangeHeaderHeight}
-            />
-            <div style={{ height: `${headerHeight}px` }}/>
+        !isLoading ? (<div className="min-h-screen pt-16">
+            <Header/>
             <div className="p-12">
                 <h1 className="text-3xl font-bold mb-8 text-gray-800">관리자 대시보드</h1>
 

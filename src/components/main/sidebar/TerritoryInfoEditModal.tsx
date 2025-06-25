@@ -1,17 +1,19 @@
 'use client'
 
 import {memo, useState, useEffect, useCallback, useMemo, ChangeEvent} from 'react'
-import { useUserStore } from "@/store/userStore"
 import { useInvestorStore } from "@/store/investorsStore"
-import Image from 'next/image'
+import {Player} from "@/api/server/supabase/types/Players";
+import {User} from "@/api/server/supabase/types/Users";
 
 function TerritoryInfoEditModal({
+    userPlayerInfo,
     onClose,
 }: {
-    onClose: () => void
+    user: User | null,
+    userPlayerInfo: Player,
+    onClose: () => void,
 }) {
-    const { user } = useUserStore();
-    const { investors, updateInvestor } = useInvestorStore();
+    const { updateInvestor } = useInvestorStore();
 
     const [isInitialized, setIsInitialized] = useState(false);
 
@@ -28,22 +30,13 @@ function TerritoryInfoEditModal({
     const [hue, setHue] = useState(0)
     const [brightness, setBrightness] = useState(100)
 
-    const userInvestorInfo = useMemo(() => {
-        const userId = user?.id;
-        const investorList = Object.values(investors);
-
-        return userId
-            ? investorList.find((investor) => { return investor.user_id === userId })
-            : null;
-    }, [user?.id, investors]);
-
     const isProfileInfoChanged = useMemo(() => {
-        const isNameChanged = profileData.name !== userInvestorInfo?.name;
-        const isDescriptionChanged = profileData.description !== userInvestorInfo?.description;
-        const isXUrlChanged = profileData.xUrl !== userInvestorInfo?.x_url;
-        const isInstagramUrlChanged = profileData.instagramUrl !== userInvestorInfo?.instagram_url;
-        const isContactEmailChanged = profileData.contactEmail !== userInvestorInfo?.contact_email;
-        const isAreaColorChanged = profileData.areaColor !== userInvestorInfo?.area_color;
+        const isNameChanged = profileData.name !== userPlayerInfo?.name;
+        const isDescriptionChanged = profileData.description !== userPlayerInfo?.description;
+        const isXUrlChanged = profileData.xUrl !== userPlayerInfo?.x_url;
+        const isInstagramUrlChanged = profileData.instagramUrl !== userPlayerInfo?.instagram_url;
+        const isContactEmailChanged = profileData.contactEmail !== userPlayerInfo?.contact_email;
+        const isAreaColorChanged = profileData.areaColor !== userPlayerInfo?.area_color;
 
         return isNameChanged
             || isDescriptionChanged
@@ -180,7 +173,7 @@ function TerritoryInfoEditModal({
         if (isProfileInfoChanged) {
             try {
                 const newInvestorInfo = {
-                    ...userInvestorInfo,
+                    ...userPlayerInfo,
                     name: profileData.name,
                     description: profileData.description,
                     x_url: profileData.xUrl,
@@ -198,29 +191,29 @@ function TerritoryInfoEditModal({
         } else {
             alert('No changes have been made.');
         }
-    }, [isProfileInfoChanged, profileData, isXUrlValid, isInstagramUrlValid, isContactEmailValid, userInvestorInfo, updateInvestor, onClose]);
+    }, [isProfileInfoChanged, profileData, isXUrlValid, isInstagramUrlValid, isContactEmailValid, userPlayerInfo, updateInvestor, onClose]);
 
     // 모달이 열릴 때 기존 데이터 로드
     useEffect(() => {
-        if (userInvestorInfo) {
-            const defaultColor = userInvestorInfo.area_color || '#FF0000';
+        if (userPlayerInfo) {
+            const defaultColor = userPlayerInfo.area_color || '#FF0000';
             const { h, l } = hexToHsl(defaultColor);
 
             setHue(h);
             setBrightness(l);
 
             setProfileData({
-                name: userInvestorInfo.name || '',
-                description: userInvestorInfo.description || '',
-                xUrl: userInvestorInfo.x_url || '',
-                instagramUrl: userInvestorInfo.instagram_url || '',
-                contactEmail: userInvestorInfo.contact_email || '',
+                name: userPlayerInfo.name || '',
+                description: userPlayerInfo.description || '',
+                xUrl: userPlayerInfo.x_url || '',
+                instagramUrl: userPlayerInfo.instagram_url || '',
+                contactEmail: userPlayerInfo.contact_email || '',
                 areaColor: defaultColor
             });
         }
-    }, [userInvestorInfo, hexToHsl]);
+    }, [userPlayerInfo, hexToHsl]);
 
-    if (!userInvestorInfo) {
+    if (!userPlayerInfo) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
