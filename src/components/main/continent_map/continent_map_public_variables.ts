@@ -1,3 +1,5 @@
+export const CONTINENT_MAP_FOV = 60;
 export const CONTINENT_DEFAULT_LENGTH = 25;
 export const CENTRAL_INCREASE_RATIO = 1.4;
 export const CONTINENT_MAX_USER_COUNT = 100;
+export const DROPDOWN_CLICK_CAMERA_Z = 25;

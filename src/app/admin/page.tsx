@@ -4,7 +4,6 @@ import {memo, useEffect, useMemo, useState} from "react";
 import {useRouter} from "next/navigation";
 import {useUserStore} from "@/store/userStore";
 import {useSupabaseData} from "@/hooks/useSupabaseData";
-import Header from "@/components/main/header/Header";
 import ImageReviewModal from "@/components/admin/image_review_modal/ImageReviewModal";
 
 function AdminPage() {
@@ -48,7 +47,7 @@ function AdminPage() {
 
     return (
         !isLoading ? (<div className="min-h-screen pt-16">
-            <Header/>
+            {/*<Header/>*/}
             <div className="p-12">
                 <h1 className="text-3xl font-bold mb-8 text-gray-800">관리자 대시보드</h1>
 

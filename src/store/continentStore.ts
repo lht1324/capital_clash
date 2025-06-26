@@ -31,21 +31,12 @@ interface ContinentStore {
     isLoading: boolean
     error: Error | null
     continents: Record<ContinentId, Continent>
-    selectedContinentId: ContinentId | null
-    isWorldView: boolean
-    cameraTarget: [number, number, number] | null
-    isSidebarOpen: boolean
 
     // 액션
     fetchContinents: () => Promise<void>
     updateContinent: (id: ContinentId, updates: Partial<ContinentRow>) => Promise<void>
-    setSelectedContinentId: (id: ContinentId | null) => void
-    setWorldView: (isWorld: boolean) => void
-    setCameraTarget: (target: [number, number, number] | null) => void
-    resetSelection: () => void
 
     updateContinentUsers: (id: ContinentId, count: number) => void
-    setSidebarOpen: (isOpen: boolean) => void
 }
 
 export const useContinentStore = create<ContinentStore>((set) => ({
@@ -53,10 +44,6 @@ export const useContinentStore = create<ContinentStore>((set) => ({
     isLoading: false,
     error: null,
     continents: {},
-    selectedContinentId: null,
-    isWorldView: true,
-    cameraTarget: null,
-    isSidebarOpen: false,
 
     // 대륙 정보 불러오기
     fetchContinents: async () => {
@@ -104,17 +91,6 @@ export const useContinentStore = create<ContinentStore>((set) => ({
         }
     },
 
-    setSelectedContinentId: (id) => {
-        console.log('🎯 setSelectedContinentId 호출됨:', id)
-        set({ selectedContinentId: id })
-    },
-    setWorldView: (isWorld) => {
-        console.log('🌍 setWorldView 호출됨:', isWorld)
-        set({ isWorldView: isWorld })
-    },
-    setCameraTarget: (target) => set({ cameraTarget: target }),
-    resetSelection: () => set({ selectedContinentId: null, isWorldView: true, cameraTarget: null }),
-
     updateContinentUsers: (id, count) => {
         set(state => ({
             continents: {
@@ -126,7 +102,4 @@ export const useContinentStore = create<ContinentStore>((set) => ({
             }
         }))
     },
-
-    // 사이드바 상태 관리
-    setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
 }))

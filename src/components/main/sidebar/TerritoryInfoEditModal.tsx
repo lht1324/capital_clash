@@ -6,6 +6,7 @@ import {Player} from "@/api/server/supabase/types/Players";
 import {User} from "@/api/server/supabase/types/Users";
 
 function TerritoryInfoEditModal({
+    user,
     userPlayerInfo,
     onClose,
 }: {

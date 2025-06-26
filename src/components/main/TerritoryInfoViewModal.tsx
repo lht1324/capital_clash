@@ -34,6 +34,18 @@ function TerritoryInfoViewModal({
         })
     }, [playerList, territoryOwnerPlayerInfo]);
 
+    const continentTotalStakeAmount = useMemo(() => {
+        return filteredPlayerListByContinent.reduce((acc, player) => {
+            return acc + player.investment_amount;
+        }, 0);
+    }, [filteredPlayerListByContinent]);
+    const userSharePercentage = useMemo(() => {
+        const userStakeAmount = territoryOwnerPlayerInfo?.investment_amount ?? 0;
+        const calcResult = userStakeAmount / continentTotalStakeAmount * 100;
+
+        return calcResult > 0.01 ? calcResult : 0.01;
+    }, [territoryOwnerPlayerInfo, continentTotalStakeAmount]);
+
     const userContinentRank = useMemo(() => {
         if (territoryOwnerPlayerInfo) {
             const userIndex = filteredPlayerListByContinent.sort((a, b) => {
@@ -222,7 +234,7 @@ ${targetUrl}
                                     <span className="text-gray-600">Continental Share</span>
                                 </div>
                                 <span className="font-medium">
-                                    {((territoryOwnerPlayerInfo.investment_amount / getTotalInvestmentByContinent(territoryOwnerPlayerInfo.continent_id)) * 100).toFixed(2)}%
+                                    {userSharePercentage.toFixed(2)}%
                                 </span>
                             </div>
                             <div className="flex justify-between">

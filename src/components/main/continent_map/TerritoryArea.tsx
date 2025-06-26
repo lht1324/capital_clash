@@ -1,3 +1,5 @@
+'use client'
+
 import * as THREE from "three";
 import {memo, useEffect, useMemo, useRef, useState} from "react";
 import {Placement} from "@/lib/treemapAlgorithm";

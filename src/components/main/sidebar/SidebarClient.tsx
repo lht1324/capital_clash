@@ -2,9 +2,10 @@
 
 import {memo, useCallback, useEffect, useMemo, useState} from 'react'
 import { calculateInvestorCoordinates } from "@/lib/treemapAlgorithm";
-import { useContinentStore } from '@/store/continentStore'
 import { storageAPI } from '@/lib/supabase/supabase-storage-api';
 import { investorsAPI } from "@/lib/supabase/supabase-investors-api";
+import {useComponentStateStore} from "@/store/componentStateStore";
+import {useCameraStateStore} from "@/store/cameraStateStore";
 import TerritoryInfoEditModal from "@/components/main/sidebar/TerritoryInfoEditModal";
 import OverviewTab from "@/components/main/sidebar/OverviewTab";
 import TerritoryTab from "@/components/main/sidebar/TerritoryTab";
@@ -14,7 +15,6 @@ import ImageUploadModal from './ImageUploadModal'
 import {Continent} from "@/api/server/supabase/types/Continents";
 import {ImageStatus, Player} from "@/api/server/supabase/types/Players";
 import {User} from "@/api/server/supabase/types/Users";
-import {useComponentStateStore} from "@/store/componentStateStore";
 
 export interface SidebarClientProps {
     user?: User | null
@@ -24,7 +24,7 @@ export interface SidebarClientProps {
     vipPlayerList: Player[];         // 상위 4명
 
     /* 사용자-특화 데이터 */
-    userInvestmentInfo?: Player;     // 로그인 사용자의 투자 정보 (없으면 undefined)
+    userInvestmentInfo: Player | null;     // 로그인 사용자의 투자 정보 (없으면 undefined)
     filteredPlayerListByContinent: Player[];  // 같은 대륙 플레이어만
     isVip: boolean;                  // 상위 4명 안에 포함?
     isUserInvestmentInfoExist: boolean;
@@ -57,8 +57,8 @@ function SidebarClient(props: SidebarClientProps) {
     const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState(false);
 
     // 각 대륙별 현재 유저 수 계산
-    const { continents, setCameraTarget } = useContinentStore();
     const { isSidebarOpen, setIsSidebarOpen } = useComponentStateStore();
+    const { setCameraTarget } = useCameraStateStore();
 
     // 로그인하지 않은 경우 아무것도 렌더링하지 않음
     // if (!user) return null;
@@ -104,7 +104,7 @@ function SidebarClient(props: SidebarClientProps) {
         );
 
         if (userCoordinates) {
-            setCameraTarget([userCoordinates.x, userCoordinates.y, userCoordinates.z]);
+            setCameraTarget(userCoordinates);
         }
     }, [vipPlayerList, filteredPlayerListByContinent, isVip, user?.id, setCameraTarget]);
 
@@ -114,7 +114,10 @@ function SidebarClient(props: SidebarClientProps) {
             return;
         }
 
-        const isConfirmed = confirm(`Are you sure you wanna move from ${continents[userInvestmentInfo.continent_id].name} to ${continents[selectedContinentId].name}?`);
+        const selectedContinentName = continentList.find((continent) => {
+            return continent.id === selectedContinentId;
+        })?.name;
+        const isConfirmed = confirm(`Are you sure you wanna move from ${continentName} to ${selectedContinentName}?`);
 
         if (isConfirmed) {
             try {
@@ -318,13 +321,18 @@ function SidebarClient(props: SidebarClientProps) {
 
             {/* 영역 구매 모달 */}
             {isPurchaseModalOpen && <PurchaseTerritoryModal
+                continentList={continentList}
+                playerList={playerList}
+                user={user}
+                userPlayerInfo={userInvestmentInfo}
                 onClose={() => setIsPurchaseModalOpen(false)}
             />}
 
             {/* 프로필 수정 모달 */}
             {isProfileEditModalOpen && userInvestmentInfo && <TerritoryInfoEditModal
-                onClose={() => setIsProfileEditModalOpen(false)}
+                user={user}
                 userPlayerInfo={userInvestmentInfo}
+                onClose={() => setIsProfileEditModalOpen(false)}
             />}
 
             {/* 이미지 업로드 모달 */}

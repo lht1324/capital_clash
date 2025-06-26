@@ -1,20 +1,28 @@
 import {useFrame, useThree} from "@react-three/fiber";
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import * as THREE from 'three'
-import {useContinentStore} from "@/store/continentStore";
+import {useCameraStateStore} from "@/store/cameraStateStore";
+import {Continent} from "@/api/server/supabase/types/Continents";
+import {Position} from "@/lib/treemapAlgorithm";
 
-function CameraController() {
-    const { camera, gl } = useThree()
+function CameraController({
+    continentList,
+    continentPositionRecord,
+}: {
+    continentList: Continent[],
+    continentPositionRecord: Record<string, Position>
+}) {
+    const { camera, gl } = useThree();
     const {
         selectedContinentId,
-        continents,
         isWorldView,
         setSelectedContinentId,
         setWorldView,
         cameraTarget,
         setCameraTarget,
-        resetSelection
-    } = useContinentStore()
+        resetContinentSelection
+    } = useCameraStateStore();
+
 
     const [isDragging, setIsDragging] = useState(false)
     const [currentCameraPosition, setCurrentCameraPosition] = useState({ x: 0, y: 0 });
@@ -26,8 +34,8 @@ function CameraController() {
         let nearestContinent: string | null = null;
         let minDistance = Infinity
 
-        Object.values(continents).forEach((continent) => {
-            const [x, y, z] = [continent.position_x, continent.position_y, continent.position_z]
+        continentList.forEach((continent) => {
+            const { x, y, z } = continentPositionRecord[continent.id];
             const distance = Math.sqrt(
                 Math.pow(currentCameraPosition.x - x, 2) +
                 Math.pow(currentCameraPosition.y - y, 2)
@@ -40,18 +48,15 @@ function CameraController() {
         })
 
         return nearestContinent
-    }, [currentCameraPosition]);
+    }, [continentList, currentCameraPosition]);
 
     useEffect(() => {
         if (nearestContinentId && nearestContinentId !== selectedContinentId) {
-            const continent = continents[nearestContinentId]
-            console.log('위치 기반 드롭다운 변경:', continent.name)
             setSelectedContinentId(nearestContinentId)
             setWorldView(false)
         }
 
         if (!nearestContinentId && !isWorldView) {
-            console.log('세계 지도로 드롭다운 변경')
             setWorldView(true)
         }
     }, [nearestContinentId, selectedContinentId]);
@@ -102,13 +107,13 @@ function CameraController() {
         // 카메라를 월드 뷰 위치로 설정
         targetPosition.current.set(0, -2.5, 60)
         cameraPosition.current.set(0, -2.5, 60)
-        resetSelection()
+        resetContinentSelection()
     }, [])
 
     // 드롭다운 선택에 따른 카메라 이동 처리
     useEffect(() => {
         if (cameraTarget) {
-            const [x, y, z] = cameraTarget
+            const [x, y, z] = [cameraTarget.x, cameraTarget.y, cameraTarget.z];
             console.log('드롭다운 선택으로 카메라 이동:', x, y, z)
             targetPosition.current.set(x, y, z)
             setCameraTarget(null)
