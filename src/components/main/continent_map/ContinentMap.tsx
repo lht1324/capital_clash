@@ -12,15 +12,18 @@ import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
 import {CONTINENT_MAP_FOV} from "@/components/main/continent_map/continent_map_public_variables";
 import {getWorldViewPositionZ} from "@/utils/cameraUtils";
 import {useCameraStateStore} from "@/store/cameraStateStore";
+import {User} from "@/api/server/supabase/types/Users";
 
 function ContinentMap({
     continentList,
     playerList,
+    user,
     placementResultRecord,
     continentPositionRecord,
 }: {
     continentList: Continent[],
     playerList: Player[],
+    user: User | null,
     placementResultRecord: Record<string, PlacementResult>,
     continentPositionRecord: Record<string, Position>
 }) {
@@ -82,6 +85,7 @@ function ContinentMap({
             {isTerritoryInfoModalOpen && openedInvestorId && <TerritoryInfoViewModal
                 continentList={continentList}
                 playerList={playerList}
+                user={user}
                 openedInvestorId={openedInvestorId}
                 onClose={() => {
                     setOpenedInvestorId(null);

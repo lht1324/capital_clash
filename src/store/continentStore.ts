@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { continentsAPI } from '@/lib/supabase/supabase-continents-api'
 import type { Database } from '@/types/database'
-import { useInvestorStore } from './investorsStore'
 
 type ContinentRow = Database['public']['Tables']['continents']['Row']
 

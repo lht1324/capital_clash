@@ -1,25 +1,24 @@
 import {memo, useCallback, useMemo, useState} from "react";
 import {ImageStatus, useInvestorStore} from "@/store/investorsStore";
 import ImageReviewListItem from "@/components/admin/image_review_modal/ImageReviewListItem";
-
-interface ImageReviewModalProps {
-    onClose: () => void;
-}
+import {Player} from "@/api/server/supabase/types/Players";
 
 function ImageReviewModal({
+    playerList,
     onClose
 } : {
+    playerList: Player[],
     onClose: () => void;
 }) {
-    const { investors, updatePlayerImageStatus } = useInvestorStore();
+    const { updatePlayerImageStatus } = useInvestorStore();
 
-    const playerList = useMemo(() => {
-        return Object.values(investors).filter((player) => {
+    const reviewDataList = useMemo(() => {
+        return playerList.filter((player) => {
             return player.image_url && player.image_status === "pending";
         }).sort((a, b) => {
             return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
         });
-    }, [investors]);
+    }, [playerList]);
 
     const onClickImageStatusChangeButton = useCallback(async (id: string, imageStatus: ImageStatus) => {
         await updatePlayerImageStatus(id, imageStatus);
@@ -51,8 +50,8 @@ function ImageReviewModal({
                     {/* 콘텐츠 영역 */}
                     <div className="p-6">
                         <div className="space-y-4">
-                            {playerList.length > 0 ? (
-                                playerList.map((player) => (
+                            {reviewDataList.length > 0 ? (
+                                reviewDataList.map((player) => (
                                     <ImageReviewListItem
                                         key={player.id}
                                         player={player}

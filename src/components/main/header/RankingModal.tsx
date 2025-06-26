@@ -1,6 +1,4 @@
 import { useMemo, useState, memo } from 'react'
-import { useContinentStore, type ContinentId } from '@/store/continentStore'
-import { useInvestorStore, type Investor } from "@/store/investorsStore";
 import {Continent} from "@/api/server/supabase/types/Continents";
 import {Player} from "@/api/server/supabase/types/Players";
 
@@ -9,7 +7,7 @@ interface RankingData {
     name?: string
     investmentAmount: number
     sharePercentage: number
-    continentId: ContinentId
+    continentId: string
     continentName: string
     dailyViews: number[]
 }
@@ -24,7 +22,7 @@ function RankingModal({
     onClose: () => void
 }) {
     const [activeTab, setActiveTab] = useState<'stake' | 'views'>('stake');
-    const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null);
+    const [selectedContinentId, setSelectedContinentId] = useState<string | null>(null);
 
     const continentInfoMap = useMemo(() => {
         return new Map(continentList.map((continent) => {

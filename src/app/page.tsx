@@ -1,3 +1,5 @@
+'use server'
+
 import SidebarServer from "@/components/main/sidebar/SidebarServer";
 import HeaderServer from "@/components/main/header/HeaderServer";
 import ContinentMapWrapperServer from "@/components/main/continent_map/ContinentMapWrapperServer";

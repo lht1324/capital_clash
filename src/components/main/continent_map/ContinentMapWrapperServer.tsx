@@ -6,10 +6,14 @@ import {Continent} from "@/api/server/supabase/types/Continents";
 import {Player} from "@/api/server/supabase/types/Players";
 import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
 import ContinentMapWrapperClient from "@/components/main/continent_map/ContinentMapWrapperClient";
+import {getSupabaseUser} from "@/utils/userUtils";
+import {usersServerAPI} from "@/api/server/supabase/usersServerAPI";
 
 export default async function ContinentMapWrapperServer() {
     const continentList: Continent[] = await continentsServerAPI.getAll();
     const playerList: Player[] = await playersServerAPI.getAll();
+    const authUser = await getSupabaseUser();
+    const user = await usersServerAPI.getByUserid(authUser?.id);
     const vipPlayerList: Player[] = Object.values(
         playerList.reduce((acc, player) => {
             const id = player.continent_id;
@@ -55,6 +59,7 @@ export default async function ContinentMapWrapperServer() {
     const clientProps = {
         continentList: continentList,
         playerList: playerList,
+        user: user,
         vipPlayerList: vipPlayerList,
         placementResultRecord: placementResultRecord,
         continentPositionRecord: continentPositionRecord,

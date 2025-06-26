@@ -6,11 +6,13 @@ import ContinentMap from "@/components/main/continent_map/ContinentMap";
 import InvestmentNotificationManager from "@/components/main/notification/NotificationManager";
 import {Continent} from "@/api/server/supabase/types/Continents";
 import {Player} from "@/api/server/supabase/types/Players";
+import {User} from "@/api/server/supabase/types/Users";
 import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
 
 export interface ContinentMapWrapperClientProps {
     continentList: Continent[],
     playerList: Player[],
+    user: User | null,
     vipPlayerList: Player[],
     placementResultRecord: Record<string, PlacementResult>,
     continentPositionRecord: Record<string, Position>
@@ -20,6 +22,7 @@ function ContinentMapWrapperClient(props: ContinentMapWrapperClientProps) {
     const {
         continentList,
         playerList,
+        user,
         vipPlayerList,
         placementResultRecord,
         continentPositionRecord,
@@ -41,6 +44,7 @@ function ContinentMapWrapperClient(props: ContinentMapWrapperClientProps) {
             <ContinentMap
                 continentList={continentList}
                 playerList={playerList}
+                user={user}
                 placementResultRecord={placementResultRecord}
                 continentPositionRecord={continentPositionRecord}
             />
