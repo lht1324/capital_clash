@@ -1,18 +1,18 @@
 'use client'
 
+import {memo, useMemo, useCallback, useState, useEffect} from "react";
 import {Canvas} from '@react-three/fiber'
 import CameraController from "@/components/main/continent_map/CameraController";
 import WorldScene from "@/components/main/continent_map/WorldScene";
 import TerritoryInfoViewModal from "@/components/main/TerritoryInfoViewModal";
-import {memo, useMemo, useCallback, useState, useEffect} from "react";
-import { useInvestorStore } from '@/store/investorsStore';
-import {Player} from "@/api/server/supabase/types/Players";
-import {Continent} from "@/api/server/supabase/types/Continents";
+import {Player} from "@/api/types/supabase/Players";
+import {Continent} from "@/api/types/supabase/Continents";
+import {User} from "@/api/types/supabase/Users";
 import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
 import {CONTINENT_MAP_FOV} from "@/components/main/continent_map/continent_map_public_variables";
 import {getWorldViewPositionZ} from "@/utils/cameraUtils";
 import {useCameraStateStore} from "@/store/cameraStateStore";
-import {User} from "@/api/server/supabase/types/Users";
+import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
 
 function ContinentMap({
     continentList,
@@ -27,7 +27,6 @@ function ContinentMap({
     placementResultRecord: Record<string, PlacementResult>,
     continentPositionRecord: Record<string, Position>
 }) {
-    const { updateInvestorDailyViews } = useInvestorStore(); // Client API
     const { setCameraTarget } = useCameraStateStore();
 
     const [isTerritoryInfoModalOpen, setIsTerritoryInfoModalOpen] = useState(false);
@@ -37,20 +36,26 @@ function ContinentMap({
         return getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord);
     }, [continentList, placementResultRecord, continentPositionRecord]);
 
-    const updateDailyViews = useCallback((investorId: string, dailyViews: number[]) => {
+    const updateDailyViews = useCallback(async (investorId: string, dailyViews: number[]) => {
         // Get the current day of the week (0 = Monday, 1 = Tuesday, ..., 6 = Sunday)
         const dayOfWeek = (new Date().getDay() + 6) % 7;
 
         // Create a copy of the daily views array
         const updatedDailyViews = [...dailyViews];
 
+        // 주간 초기화 로직 추가해야 함
+        console.log(`prevUpdatedDailyViews(${dayOfWeek})`, updatedDailyViews);
         // Increment the view count for the current day
         updatedDailyViews[dayOfWeek]++;
+        console.log(`newUpdatedDailyViews(${dayOfWeek})`, updatedDailyViews);
 
         // Update the daily views in the database
-        updateInvestorDailyViews(investorId, updatedDailyViews)
-            .catch(error => console.error('Failed to update daily views:', error));
-    }, [updateInvestorDailyViews]);
+        await playersClientAPI.patchPlayersById(investorId, {
+            daily_views: updatedDailyViews
+        })
+        // updateInvestorDailyViews(investorId, updatedDailyViews)
+        //     .catch(error => console.error('Failed to update daily views:', error));
+    }, []);
 
     useEffect(() => {
         setCameraTarget({ x: 0, y: 0, z: initialCameraPositionZ });
@@ -75,9 +80,9 @@ function ContinentMap({
                     continentList={continentList}
                     placementResultRecord={placementResultRecord}
                     continentPositionRecord={continentPositionRecord}
-                    onTileClick={(investorId: string, dailyViews: number[]) => {
+                    onTileClick={async (investorId: string, dailyViews: number[]) => {
                         setOpenedInvestorId(investorId);
-                        updateDailyViews(investorId, dailyViews);
+                        await updateDailyViews(investorId, dailyViews);
                         setIsTerritoryInfoModalOpen(true);
                     }}
                 />

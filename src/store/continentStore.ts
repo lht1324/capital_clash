@@ -33,9 +33,6 @@ interface ContinentStore {
 
     // 액션
     fetchContinents: () => Promise<void>
-    updateContinent: (id: ContinentId, updates: Partial<ContinentRow>) => Promise<void>
-
-    updateContinentUsers: (id: ContinentId, count: number) => void
 }
 
 export const useContinentStore = create<ContinentStore>((set) => ({
@@ -69,36 +66,5 @@ export const useContinentStore = create<ContinentStore>((set) => ({
         } finally {
             set({ isLoading: false })
         }
-    },
-
-    // 대륙 정보 업데이트
-    updateContinent: async (id, updates) => {
-        try {
-            const updatedContinent = await continentsAPI.update(id, updates)
-            set(state => ({
-                continents: {
-                    ...state.continents,
-                    [id]: {
-                        ...state.continents[id],
-                        ...updatedContinent
-                    }
-                }
-            }))
-        } catch (error) {
-            console.error('❌ 대륙 정보 업데이트 실패:', error)
-            throw error
-        }
-    },
-
-    updateContinentUsers: (id, count) => {
-        set(state => ({
-            continents: {
-                ...state.continents,
-                [id]: {
-                    ...state.continents[id],
-                    current_users: count
-                }
-            }
-        }))
     },
 }))

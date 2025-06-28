@@ -2,7 +2,7 @@
 
 import {memo, useMemo} from 'react'
 import Image from 'next/image'
-import {User} from "@/api/server/supabase/types/Users";
+import {User} from "@/api/types/supabase/Users";
 
 function ProfileInfoModal({
     user,

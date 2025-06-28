@@ -12,7 +12,7 @@ import {
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
 } from "@/components/main/continent_map/continent_map_public_variables";
 import {getFilteredPlayerList} from "@/utils/playerUtils";
-import {Continent} from "@/api/server/supabase/types/Continents";
+import {Continent} from "@/api/types/supabase/Continents";
 
 function WorldScene({
     continentList,

@@ -1,5 +1,6 @@
 import {memo, useCallback, useMemo, useState} from "react";
-import {ImageStatus, Investor} from "@/store/investorsStore";
+import {Investor} from "@/store/investorsStore";
+import {ImageStatus} from "@/api/types/supabase/Players";
 import {getLocaleDateString} from "@/utils/dateUtils";
 
 function ImageReviewListItem({

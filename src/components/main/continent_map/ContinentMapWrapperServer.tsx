@@ -2,8 +2,8 @@
 
 import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
 import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
-import {Continent} from "@/api/server/supabase/types/Continents";
-import {Player} from "@/api/server/supabase/types/Players";
+import {Continent} from "@/api/types/supabase/Continents";
+import {Player} from "@/api/types/supabase/Players";
 import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
 import ContinentMapWrapperClient from "@/components/main/continent_map/ContinentMapWrapperClient";
 import {getSupabaseUser} from "@/utils/userUtils";

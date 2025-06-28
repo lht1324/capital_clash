@@ -5,8 +5,8 @@ import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
 import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
 import {usersServerAPI} from "@/api/server/supabase/usersServerAPI";
 import {getSupabaseUser} from "@/utils/userUtils";
-import {Continent} from "@/api/server/supabase/types/Continents";
-import {Player} from "@/api/server/supabase/types/Players";
+import {Continent} from "@/api/types/supabase/Continents";
+import {Player} from "@/api/types/supabase/Players";
 
 export default async function HeaderServer() {
     const continentList: Continent[] = await continentsServerAPI.getAll();

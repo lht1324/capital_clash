@@ -2,8 +2,9 @@
 
 import {memo, useState, useEffect, useCallback, useMemo, ChangeEvent} from 'react'
 import { useInvestorStore } from "@/store/investorsStore"
-import {Player} from "@/api/server/supabase/types/Players";
-import {User} from "@/api/server/supabase/types/Users";
+import {Player} from "@/api/types/supabase/Players";
+import {User} from "@/api/types/supabase/Users";
+import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
 
 function TerritoryInfoEditModal({
     user,
@@ -14,10 +15,6 @@ function TerritoryInfoEditModal({
     userPlayerInfo: Player,
     onClose: () => void,
 }) {
-    const { updateInvestor } = useInvestorStore();
-
-    const [isInitialized, setIsInitialized] = useState(false);
-
     const [profileData, setProfileData] = useState({
         name: "",
         description: "",
@@ -174,7 +171,6 @@ function TerritoryInfoEditModal({
         if (isProfileInfoChanged) {
             try {
                 const newInvestorInfo = {
-                    ...userPlayerInfo,
                     name: profileData.name,
                     description: profileData.description,
                     x_url: profileData.xUrl,
@@ -182,7 +178,8 @@ function TerritoryInfoEditModal({
                     contact_email: profileData.contactEmail,
                     area_color: profileData.areaColor,
                 }
-                await updateInvestor(newInvestorInfo);
+
+                await playersClientAPI.patchPlayersById(userPlayerInfo.id, newInvestorInfo);
                 alert('Profile information has been successfully saved.');
                 onClose();
             } catch (error) {
@@ -192,7 +189,7 @@ function TerritoryInfoEditModal({
         } else {
             alert('No changes have been made.');
         }
-    }, [isProfileInfoChanged, profileData, isXUrlValid, isInstagramUrlValid, isContactEmailValid, userPlayerInfo, updateInvestor, onClose]);
+    }, [isProfileInfoChanged, profileData, isXUrlValid, isInstagramUrlValid, isContactEmailValid, userPlayerInfo, onClose]);
 
     // 모달이 열릴 때 기존 데이터 로드
     useEffect(() => {

@@ -2,7 +2,7 @@
 
 import {ChangeEvent, DragEvent, useCallback, useRef, useState} from 'react'
 import {AlertCircle, Check, Image as ImageIcon, Upload, X} from 'lucide-react'
-import {ImageStatus} from "@/store/investorsStore";
+import {ImageStatus} from "@/api/types/supabase/Players";
 
 export default function ImageUploadModal({
     onClose,

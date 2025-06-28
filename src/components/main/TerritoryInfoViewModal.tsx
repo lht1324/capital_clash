@@ -3,9 +3,9 @@
 import { useInvestorStore } from "@/store/investorsStore";
 import {useCallback, useMemo, KeyboardEvent, memo} from 'react'
 import {encodeBase64} from "@/utils/base64Utils";
-import {Continent} from "@/api/server/supabase/types/Continents";
-import {Player} from "@/api/server/supabase/types/Players";
-import {User} from "@/api/server/supabase/types/Users";
+import {Continent} from "@/api/types/supabase/Continents";
+import {Player} from "@/api/types/supabase/Players";
+import {User} from "@/api/types/supabase/Users";
 
 function TerritoryInfoViewModal({
     continentList,

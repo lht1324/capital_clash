@@ -4,8 +4,8 @@ import {useState, useEffect, memo, useCallback, useMemo} from 'react'
 import {Investor, useInvestorStore} from "@/store/investorsStore";
 import {useComponentStateStore} from "@/store/componentStateStore";
 import NotificationToast from "@/components/main/notification/NotificationToast";
-import {Continent} from "@/api/server/supabase/types/Continents";
-import {Player} from "@/api/server/supabase/types/Players";
+import {Continent} from "@/api/types/supabase/Continents";
+import {Player} from "@/api/types/supabase/Players";
 
 export interface NotificationData {
     id: string

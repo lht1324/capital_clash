@@ -3,8 +3,8 @@
 import {memo, useEffect, useMemo, useState} from "react";
 import ImageReviewModal from "@/components/admin/image_review_modal/ImageReviewModal";
 import {useRouter} from "next/navigation";
-import {Continent} from "@/api/server/supabase/types/Continents";
-import {Player} from "@/api/server/supabase/types/Players";
+import {Continent} from "@/api/types/supabase/Continents";
+import {Player} from "@/api/types/supabase/Players";
 
 export interface AdminPageClientProps {
     playerList: Player[],

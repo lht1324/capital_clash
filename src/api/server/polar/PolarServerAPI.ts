@@ -1,8 +1,8 @@
 'use server'
 
 import {baseDeleteFetch, baseGetFetch, basePostFetch, basePutFetch} from "@/api/baseFetch";
-import {GetProductsResponse} from "@/api/client/polar/types/GetProductsTypes";
-import {PostCheckoutResponse} from "@/api/client/polar/types/PostCheckoutTypes";
+import {GetProductsResponse} from "@/api/types/polar/GetProductsTypes";
+import {PostCheckoutResponse} from "@/api/types/polar/PostCheckoutTypes";
 
 const BASE_URL = "https://sandbox-api.polar.sh/v1/"
 const API_KEY = process.env.POLAR_ACCESS_TOKEN!
@@ -24,14 +24,11 @@ export async function postCheckoutsServer(
 }
 
 export async function getProductsServer(): Promise<GetProductsResponse> {
-    console.log("getProductsServer")
     return await getFetch("products");
 }
 
 
 async function postFetch(path: string, body: any) {
-    console.log(`postBody`, body);
-
     return await basePostFetch(
         `${BASE_URL}${path}`,
         {

@@ -12,9 +12,9 @@ import TerritoryTab from "@/components/main/sidebar/TerritoryTab";
 import StatsTab from "@/components/main/sidebar/StatsTab";
 import PurchaseTerritoryModal from '../PurchaseTerritoryModal'
 import ImageUploadModal from './ImageUploadModal'
-import {Continent} from "@/api/server/supabase/types/Continents";
-import {ImageStatus, Player} from "@/api/server/supabase/types/Players";
-import {User} from "@/api/server/supabase/types/Users";
+import {Continent} from "@/api/types/supabase/Continents";
+import {ImageStatus, Player} from "@/api/types/supabase/Players";
+import {User} from "@/api/types/supabase/Users";
 
 export interface SidebarClientProps {
     user?: User | null

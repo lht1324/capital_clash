@@ -1,0 +1,34 @@
+# GEMINI.md: 프로젝트 맞춤형 AI 어시스턴트 가이드
+
+이 파일은 Gemini AI 어시스턴트가 이 프로젝트의 작업을 더 정확하고 일관성 있게 수행하도록 돕기 위한 안내서입니다. 여기에 프로젝트의 규칙, 규약, 중요한 정보 등을 기록해두면, 제가 그 내용을 참고하여 답변하고 코드를 수정합니다.
+
+*   **코딩 스타일**
+    * "들여쓰기는 공백 4개를 사용해."
+    * "변수는 카멜 표기법, 클래스, tsx 컴포넌트 등은 파스칼 표기법을 사용해."
+*   **아키텍처 패턴**
+    * "모든 API 요청은 `src/api` 디렉토리의 ~API.ts 파일의 ~API 객체를 통해 이루어져야 해."
+        * 클라이언트에서는 `src/api/client`에 있는 ~ClientAPI.ts의 ~ClientAPI 객체를 사용해야 해,
+        * 서버에서는 `src/api/server`의 ~ServerAPI.ts의 ~ServerAPI 객체를 사용해야 해.
+
+*   **주요 명령어**
+    *   `npm run dev`: 개발 서버 실행
+    *   `npm run build`: 프로덕션 빌드
+    *   `npm run test`: 테스트 실행
+    *   `npm run lint`: 린트 검사
+*   **데이터베이스 스키마**
+    * DB 스키마는 `src/types/database.ts`에 저장돼.
+    * `investors` 테이블은 이후 `players`로 이름을 바꿀 예정이야. 작업 중 player가 보인다면 investor라고 생각하면 돼.
+        * `investors`의 `investment_amount` 컬럼은 `stake_amount`로 이름을 바꿀 거야. Stake는 Investment라고 생각해.
+*   **중요한 제약사항**
+    * 클라이언트에서 API를 호출해야 할 일이 있을 경우, 무조건 서버의 라우터에서 요청을 받은 뒤 대신 한다고 생각해. 흐름을 따지자면<br>
+    `~ClientAPI.requestSomething()`<br>
+    ->`api/[some_route_path]/route.ts`<br>
+    -> API 호출의 목적'<br>
+    이 될 거야.
+
+## 어떻게 사용하나요?
+
+1.  이 파일을 열고 프로젝트에 대한 정보를 마크다운 형식으로 자유롭게 작성합니다.
+2.  파일을 저장합니다.
+
+제가 작업을 시작하기 전에 항상 이 파일을 먼저 읽고 내용을 숙지할 것입니다. 이 파일에 내용이 많을수록, 저는 더 똑똑한 어시스턴트가 될 수 있습니다.

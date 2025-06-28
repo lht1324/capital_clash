@@ -1,4 +1,4 @@
-import {Continent} from "@/api/server/supabase/types/Continents";
+import {Continent} from "@/api/types/supabase/Continents";
 import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
 import {
     CENTRAL_INCREASE_RATIO,

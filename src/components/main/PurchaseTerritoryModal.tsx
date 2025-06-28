@@ -3,10 +3,10 @@
 import {useState, useEffect, useMemo, useCallback, useRef, ChangeEvent, memo} from 'react'
 import { type ContinentId } from '@/store/continentStore'
 import {getProductsClient, postCheckoutsClient} from "@/api/client/polar/PolarClientAPI";
-import {Continent} from "@/api/server/supabase/types/Continents";
+import {Continent} from "@/api/types/supabase/Continents";
 import {CONTINENT_MAX_USER_COUNT} from "@/components/main/continent_map/continent_map_public_variables";
-import {Player} from "@/api/server/supabase/types/Players";
-import {User} from "@/api/server/supabase/types/Users";
+import {Player} from "@/api/types/supabase/Players";
+import {User} from "@/api/types/supabase/Users";
 
 function PurchaseTerritoryModal({
     continentList,
@@ -182,13 +182,16 @@ function PurchaseTerritoryModal({
                 return !item.name.includes("continent");
             })?.id;
 
-            if (!productId) {
+            if (!productId || !user) {
                 throw new Error("No product found.");
             }
 
             const postCheckoutsResponse = await postCheckoutsClient(
                 productId,
+                user.id,
                 investmentAmount,
+                investorName,
+                selectedContinentId,
                 user?.email
             );
 
@@ -221,7 +224,7 @@ function PurchaseTerritoryModal({
         //     setValidationError('An error occurred while processing your investment. Please try again.')
         // }
         // }, [isPurchasePossible, selectedContinentId, investmentAmount, investorName]);
-    }, [isPurchasePossible, investmentAmount]);
+    }, [isPurchasePossible, selectedContinentId, investmentAmount, investorName]);
 
 
     // 모달 열림/닫힘 시 초기화

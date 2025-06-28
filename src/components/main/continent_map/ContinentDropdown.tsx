@@ -2,8 +2,8 @@
 
 import { useCallback, useMemo, useState, memo } from 'react'
 import { useCameraStateStore } from "@/store/cameraStateStore";
-import {Continent} from "@/api/server/supabase/types/Continents";
-import {Player} from "@/api/server/supabase/types/Players";
+import {Continent} from "@/api/types/supabase/Continents";
+import {Player} from "@/api/types/supabase/Players";
 import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
 import {
     CENTRAL_INCREASE_RATIO,

@@ -28,14 +28,25 @@ export async function baseDeleteFetch(
     return await baseFetch(url, 'DELETE', headers);
 }
 
+export async function basePatchFetch(
+    url: string,
+    headers?: any,
+    body?: any
+): Promise<any> {
+    return await baseFetch(url, 'PATCH', headers, body);
+}
+
 async function baseFetch(
     url: string,
-    requestType: 'GET' | 'POST' | 'PUT' | 'DELETE',
+    requestType: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
     headers?: any,
     body?: any
 ) {
-    const baseHeaders = {
+    console.log("postBody", body);
+    const baseHeaders = headers ? {
         ...headers,
+        "Content-Type": "application/json"
+    } : {
         "Content-Type": "application/json"
     }
     const baseRequestBody = {
@@ -49,8 +60,8 @@ async function baseFetch(
         ...baseRequestBody
     }
 
-
     const response = await fetch(url, requestBody);
+    console.log("response", response);
     const data = await response.json();
 
     if (!response.ok) {

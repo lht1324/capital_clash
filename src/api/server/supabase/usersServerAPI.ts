@@ -1,6 +1,6 @@
 import supabase from "@/lib/supabase/supabase";
 import {User as SupabaseUser} from "@supabase/auth-js/dist/module/lib/types";
-import {User} from "@/api/server/supabase/types/Users";
+import {User} from "@/api/types/supabase/Users";
 
 export const usersServerAPI = {
     async getAll(): Promise<User[]> {

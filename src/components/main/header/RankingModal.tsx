@@ -1,6 +1,6 @@
 import { useMemo, useState, memo } from 'react'
-import {Continent} from "@/api/server/supabase/types/Continents";
-import {Player} from "@/api/server/supabase/types/Players";
+import {Continent} from "@/api/types/supabase/Continents";
+import {Player} from "@/api/types/supabase/Players";
 
 interface RankingData {
     id: string

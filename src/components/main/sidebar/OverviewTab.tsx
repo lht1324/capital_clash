@@ -1,5 +1,5 @@
 import {memo, useMemo} from "react";
-import {ImageStatus} from "@/store/investorsStore";
+import {ImageStatus} from "@/api/types/supabase/Players";
 
 function OverviewTab({
     isUserInvestmentInfoExist,

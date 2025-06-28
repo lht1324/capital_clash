@@ -1,5 +1,5 @@
 import supabase from "@/lib/supabase/supabase";
-import {Continent} from "@/api/server/supabase/types/Continents";
+import {Continent} from "@/api/types/supabase/Continents";
 
 // 🌍 대륙 관련 함수들
 export const continentsServerAPI = {

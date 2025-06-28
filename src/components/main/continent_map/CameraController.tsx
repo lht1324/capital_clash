@@ -2,7 +2,7 @@ import {useFrame, useThree} from "@react-three/fiber";
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import * as THREE from 'three'
 import {useCameraStateStore} from "@/store/cameraStateStore";
-import {Continent} from "@/api/server/supabase/types/Continents";
+import {Continent} from "@/api/types/supabase/Continents";
 import {Position} from "@/lib/treemapAlgorithm";
 
 function CameraController({

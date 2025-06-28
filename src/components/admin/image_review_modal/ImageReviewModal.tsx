@@ -1,7 +1,7 @@
-import {memo, useCallback, useMemo, useState} from "react";
-import {ImageStatus, useInvestorStore} from "@/store/investorsStore";
+import {memo, useCallback, useMemo} from "react";
 import ImageReviewListItem from "@/components/admin/image_review_modal/ImageReviewListItem";
-import {Player} from "@/api/server/supabase/types/Players";
+import {ImageStatus, Player} from "@/api/types/supabase/Players";
+import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
 
 function ImageReviewModal({
     playerList,
@@ -10,8 +10,6 @@ function ImageReviewModal({
     playerList: Player[],
     onClose: () => void;
 }) {
-    const { updatePlayerImageStatus } = useInvestorStore();
-
     const reviewDataList = useMemo(() => {
         return playerList.filter((player) => {
             return player.image_url && player.image_status === "pending";
@@ -21,8 +19,11 @@ function ImageReviewModal({
     }, [playerList]);
 
     const onClickImageStatusChangeButton = useCallback(async (id: string, imageStatus: ImageStatus) => {
-        await updatePlayerImageStatus(id, imageStatus);
-    }, [updatePlayerImageStatus]);
+        await playersClientAPI.patchPlayersById(id, {
+            image_status: imageStatus
+        })
+        // await updatePlayerImageStatus(id, imageStatus);
+    }, []);
 
     return (
         <>

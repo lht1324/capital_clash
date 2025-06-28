@@ -1,5 +1,5 @@
 import supabase from '@/lib/supabase/supabase'
-import {Player} from "@/api/server/supabase/types/Players";
+import {Player} from "@/api/types/supabase/Players";
 
 // 🧑‍💼 투자자 관련 함수들
 export const playersServerAPI = {
@@ -15,10 +15,10 @@ export const playersServerAPI = {
     },
 
     // 새 투자자 추가
-    async create(investor: Partial<Player>): Promise<Player> {
+    async create(player: Partial<Player>): Promise<Player> {
         const { data, error } = await supabase
             .from('investors')
-            .insert([investor])
+            .insert([player])
             .select()
 
         if (error) throw error
@@ -38,16 +38,17 @@ export const playersServerAPI = {
     },
 
     // 투자자 정보 업데이트
-    async update(investor: Partial<Player>): Promise<Player> {
+    async update(playerId: string, player: Partial<Player>): Promise<Player | null> {
         const { data, error } = await supabase
             .from('investors')
-            .update(investor)
-            .eq('user_id', investor.user_id)
+            .update(player)
+            .eq('id', playerId)
             .select()
             .single()
 
         if (error) throw error
-        return data
+
+        return data || null
     },
 
     // 투자금과 지분율 업데이트 (영역 구매 후)

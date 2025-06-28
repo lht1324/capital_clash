@@ -4,9 +4,9 @@ import {useMemo, memo} from "react";
 import ContinentDropdown from "@/components/main/continent_map/ContinentDropdown";
 import ContinentMap from "@/components/main/continent_map/ContinentMap";
 import InvestmentNotificationManager from "@/components/main/notification/NotificationManager";
-import {Continent} from "@/api/server/supabase/types/Continents";
-import {Player} from "@/api/server/supabase/types/Players";
-import {User} from "@/api/server/supabase/types/Users";
+import {Continent} from "@/api/types/supabase/Continents";
+import {Player} from "@/api/types/supabase/Players";
+import {User} from "@/api/types/supabase/Users";
 import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
 
 export interface ContinentMapWrapperClientProps {

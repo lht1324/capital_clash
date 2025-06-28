@@ -3,7 +3,7 @@
 import { memo } from "react";
 import TerritoryArea from "@/components/main/continent_map/TerritoryArea";
 import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
-import {Continent} from "@/api/server/supabase/types/Continents";
+import {Continent} from "@/api/types/supabase/Continents";
 
 function SingleContinent({
     continent,
