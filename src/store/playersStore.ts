@@ -7,13 +7,14 @@ import {createWithEqualityFn} from "zustand/traditional";
 
 export interface PlayersStore {
     // --- 상태 (State) ---
+    isPlayersInitialized: boolean;
+
     players: Record<string, Player>; // ID 기반의 빠른 조회를 위한 객체
     playerList: Player[]; // 목록 순회를 위한 배열
     vipPlayerList: Player[]; // 대륙별 1위 플레이어 목록
     placementResultRecord: Record<string, PlacementResult>
     continentPositionRecord: Record<string, Position>
     continentListForReference: Continent[],
-    isInitialized: boolean;
     lastUpdatedPlayerList: PlayerUpdateInfo[];
 
     // --- 액션 (Actions) ---
@@ -95,13 +96,14 @@ function _calculateContinentalLayoutInfo(
 
 export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => ({
     // --- 초기 상태 ---
+    isPlayersInitialized: false,
+
     players: {},
     playerList: [],
     vipPlayerList: [],
     placementResultRecord: {},
     continentPositionRecord: {},
     continentListForReference: [],
-    isInitialized: false,
     lastUpdatedPlayerList: [],
 
     // --- 액션 구현 ---
@@ -110,8 +112,8 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
         initialPlacementResultRecord: Record<string, PlacementResult>,
         initialContinentPositionRecord: Record<string, Position>,
         continentList: Continent[]) => {
-        const { isInitialized } = get();
-        if (isInitialized) {
+        const { isPlayersInitialized } = get();
+        if (isPlayersInitialized) {
             console.log('⚠️ PlayerStore가 이미 초기화되었습니다. 중복 실행을 방지합니다.');
             return;
         }
@@ -128,7 +130,7 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
             placementResultRecord: initialPlacementResultRecord,
             continentPositionRecord: initialContinentPositionRecord,
             continentListForReference: continentList,
-            isInitialized: true
+            isPlayersInitialized: true
         });
         console.log('✅ PlayerStore 초기화 완료.');
     },

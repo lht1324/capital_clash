@@ -8,16 +8,13 @@ import PurchaseTerritoryModal from '../PurchaseTerritoryModal'
 import { UserCircleIcon } from '@heroicons/react/24/outline'
 import ProfileInfoModal from "@/components/main/header/ProfileInfoModal";
 import DropDownMenu from "@/components/main/header/DropDownMenu";
-import {signInWithOAuth, signOutWithOAuth} from "@/api/client/supabase/usersClientAPI";
-import {User} from "@/api/types/supabase/Users";
-import {Continent} from "@/api/types/supabase/Continents";
-import {Player} from "@/api/types/supabase/Players";
+import {usersClientAPI} from "@/api/client/supabase/usersClientAPI";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
+import {useUserStore} from "@/store/userStore";
 
 export interface HeaderClientProps {
-    continentList: Continent[],
-    playerList: Player[],
-    userPlayerInfo: Player | null,
-    user: User | null;
+
 }
 
 function HeaderClient(props: HeaderClientProps) {
@@ -25,18 +22,23 @@ function HeaderClient(props: HeaderClientProps) {
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
     const [isProfileInfoModalOpen, setIsProfileInfoModalOpen] = useState(false)
 
-    const {
-        continentList,
-        playerList,
-        userPlayerInfo,
-        user
-    } = useMemo(() => {
-        return props;
-    }, [props]);
+    const { isContinentsInitialized } = useContinentStore();
+    const { isPlayersInitialized, playerList } = usePlayersStore();
+    const { isUsersInitialized, user } = useUserStore();
+
+    const isInitialized = useMemo(() => {
+        return isContinentsInitialized && isPlayersInitialized && isUsersInitialized;
+    }, [isContinentsInitialized, isPlayersInitialized, isUsersInitialized]);
+
+    const userPlayerInfo = useMemo(() => {
+        return playerList.find((player) => {
+            return player.user_id === user?.id;
+        }) ?? null;
+    }, [playerList, user]);
 
     const handleGoogleLogin = useCallback(async () => {
         try {
-            await signInWithOAuth();
+            await usersClientAPI.signInWithOAuth();
         } catch (error) {
             console.error('로그인 중 오류 발생:', error)
         }
@@ -44,14 +46,14 @@ function HeaderClient(props: HeaderClientProps) {
 
     const handleSignOut = useCallback(async () => {
         try {
-            await signOutWithOAuth();
+            await usersClientAPI.signOutWithOAuth();
         } catch (error) {
             console.error('로그아웃 중 오류 발생:', error)
         }
     }, []);
 
     return (
-        <header className="fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white z-50">
+        isInitialized && <header className="fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white z-50">
             <div className="container h-full mx-auto px-4 flex items-center justify-between">
                 {/* 로고 */}
                 <Link href="/public" className="flex items-center space-x-2">
@@ -135,23 +137,16 @@ function HeaderClient(props: HeaderClientProps) {
 
             {/* 랭킹 모달 */}
             {isRankingModalOpen && <RankingModal
-                continentList={continentList}
-                playerList={playerList}
                 onClose={() => setIsRankingModalOpen(false)}
             />}
 
             {/* 구매 모달 */}
             {isPurchaseModalOpen && <PurchaseTerritoryModal
-                continentList={continentList}
-                playerList={playerList}
-                user={user}
-                userPlayerInfo={userPlayerInfo}
                 onClose={() => setIsPurchaseModalOpen(false)}
             />}
 
             {/* 프로필 설정 모달 */}
             {isProfileInfoModalOpen && <ProfileInfoModal
-                user={user}
                 onClose={() => setIsProfileInfoModalOpen(false)}
             />}
         </header>

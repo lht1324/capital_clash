@@ -82,11 +82,11 @@ function ContinentMap() {
         return getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord);
     }, [continentList, placementResultRecord, continentPositionRecord]);
 
-    const updateDailyViews = useCallback(async (investorId: string) => {
+    const updateDailyViews = useCallback(async (playerId: string) => {
         try {
             // Get the current day of the week (0 = Monday, 1 = Tuesday, ..., 6 = Sunday)
             const dayOfWeek = (new Date().getDay() + 6) % 7;
-            const prevDailyViews = players[investorId]?.daily_views ?? [];
+            const prevDailyViews = players[playerId]?.daily_views ?? [];
 
             // Create a copy of the daily views array
             const updatedDailyViews = [...prevDailyViews];
@@ -98,14 +98,12 @@ function ContinentMap() {
             console.log(`newUpdatedDailyViews(${dayOfWeek})`, updatedDailyViews);
 
             // Update the daily views in the database
-            await playersClientAPI.patchPlayersById(investorId, {
+            await playersClientAPI.patchPlayersById(playerId, {
                 daily_views: updatedDailyViews
             })
         } catch (error) {
             console.log("error", error);
         }
-        // updateInvestorDailyViews(investorId, updatedDailyViews)
-        //     .catch(error => console.error('Failed to update daily views:', error));
     }, [players]);
 
     useEffect(() => {

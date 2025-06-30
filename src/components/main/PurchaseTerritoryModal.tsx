@@ -1,28 +1,26 @@
 'use client'
 
 import {useState, useEffect, useMemo, useCallback, useRef, ChangeEvent, memo} from 'react'
-import { type ContinentId } from '@/store/continentStore'
+import {type ContinentId, useContinentStore} from '@/store/continentStore'
 import {getProductsClient, postCheckoutsClient} from "@/api/client/polar/PolarClientAPI";
 import {Continent} from "@/api/types/supabase/Continents";
 import {CONTINENT_MAX_USER_COUNT} from "@/components/main/continent_map/continent_map_public_variables";
 import {Player} from "@/api/types/supabase/Players";
 import {User} from "@/api/types/supabase/Users";
+import {usePlayersStore} from "@/store/playersStore";
+import {useUserStore} from "@/store/userStore";
 
 function PurchaseTerritoryModal({
-    continentList,
-    playerList,
-    user,
-    userPlayerInfo,
     onClose
 }: {
-    continentList: Continent[],
-    playerList: Player[],
-    user: User | null,
-    userPlayerInfo: Player | null,
     onClose: () => void
 }) {
     // 드래그 상태를 추적하기 위한 ref
     const isDragging = useRef(false);
+
+    const { continentList } = useContinentStore();
+    const { playerList } = usePlayersStore();
+    const { user } = useUserStore();
 
     const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null)
     const [investmentAmount, setInvestmentAmount] = useState<number>(1)
@@ -30,6 +28,12 @@ function PurchaseTerritoryModal({
     const [isCalculating, setIsCalculating] = useState(false)
     const [validationError, setValidationError] = useState<string>('')
     const [showPreview, setShowPreview] = useState(false)
+
+    const userPlayerInfo = useMemo(() => {
+        return playerList.find((player) => {
+            return player.user_id === user?.id;
+        })
+    }, [playerList, user?.id]);
 
     const continentItemList = useMemo(() => {
         return continentList.filter((continent) => {

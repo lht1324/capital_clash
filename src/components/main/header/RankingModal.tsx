@@ -1,6 +1,7 @@
 import { useMemo, useState, memo } from 'react'
-import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
 
 interface RankingData {
     id: string
@@ -13,16 +14,15 @@ interface RankingData {
 }
 
 function RankingModal({
-    continentList,
-    playerList,
     onClose
 }: {
-    continentList: Continent[],
-    playerList: Player[],
     onClose: () => void
 }) {
     const [activeTab, setActiveTab] = useState<'stake' | 'views'>('stake');
     const [selectedContinentId, setSelectedContinentId] = useState<string | null>(null);
+
+    const { continentList } = useContinentStore();
+    const { playerList, vipPlayerList } = usePlayersStore();
 
     const continentInfoMap = useMemo(() => {
         return new Map(continentList.map((continent) => {
@@ -43,6 +43,9 @@ function RankingModal({
 
     const rankingDataList: RankingData[] = useMemo(() => {
         return playerList.map((player: Player) => {
+            const isVip = !!(vipPlayerList.find((vipPlayer) => {
+                return player.id === vipPlayer.id;
+            }));
             const continentInfo = continentInfoMap.get(player.continent_id);
 
             const continentName = continentInfo?.name ?? "-"
@@ -53,7 +56,7 @@ function RankingModal({
                 name: player.name,
                 investmentAmount: player.investment_amount,
                 sharePercentage: (player.investment_amount / totalInvestment) * 100,
-                continentId: player.continent_id,
+                continentId: !isVip ? player.continent_id : "central",
                 continentName: continentName,
                 dailyViews: player.daily_views || [0, 0, 0, 0, 0, 0, 0]
             }
@@ -62,7 +65,9 @@ function RankingModal({
 
     const filteredRankingDataList = useMemo(() => {
         return selectedContinentId
-            ? rankingDataList.filter((rankingItem) => rankingItem.continentId === selectedContinentId)
+            ? rankingDataList.filter((rankingItem) => {
+                return rankingItem.continentId === selectedContinentId;
+            })
             : rankingDataList;
     }, [rankingDataList, selectedContinentId]);
 

@@ -28,6 +28,8 @@ export type ContinentId = string
 
 interface ContinentStore {
     // 상태
+    isContinentsInitialized: boolean
+
     continents: Record<ContinentId, Continent>
     continentList: Continent[],
 
@@ -38,6 +40,8 @@ interface ContinentStore {
 
 export const useContinentStore = create<ContinentStore>((set) => ({
     // 초기 상태
+    isContinentsInitialized: false,
+
     continents: {},
     continentList: [],
 
@@ -73,6 +77,7 @@ export const useContinentStore = create<ContinentStore>((set) => ({
         set({
             continents: continentsMap,
             continentList: initialContinentList,
+            isContinentsInitialized: true,
         });
     }
 }))

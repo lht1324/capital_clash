@@ -3,14 +3,14 @@
 import {memo, useMemo} from 'react'
 import Image from 'next/image'
 import {User} from "@/api/types/supabase/Users";
+import {useUserStore} from "@/store/userStore";
 
 function ProfileInfoModal({
-    user,
     onClose,
 }: {
-    user?: User | null,
     onClose: () => void
 }) {
+    const { user } = useUserStore();
 
     const avatarUrl = useMemo(() => {
         return user?.avatar_url;

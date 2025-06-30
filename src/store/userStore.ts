@@ -16,6 +16,8 @@ type User = {
 }
 
 interface UserState {
+    isUsersInitialized: boolean
+
     user: User | null
 
     fetchUser: () => Promise<void>
@@ -25,6 +27,8 @@ interface UserState {
 }
 
 export const useUserStore = create<UserState>((set) => ({
+    isUsersInitialized: false,
+
     user: null,
 
     fetchUser: async () => {
@@ -48,13 +52,13 @@ export const useUserStore = create<UserState>((set) => ({
 
             const user = await usersAPI.getByUserid(authUser.id);
             console.log("userStore user", user)
-            set({ user: user })
+            set({ user: user, isUsersInitialized: true })
 
             console.log('✅ 유저 정보 로드 완료')
         } catch (error) {
             console.error('❌ 유저 정보 로드 실패:', error)
         }
     },
-    initializeUser: (user) => set({ user }),
+    initializeUser: (user) => set({ user: user, isUsersInitialized: true }),
     clearUser: () => set({ user: null })
 }))
