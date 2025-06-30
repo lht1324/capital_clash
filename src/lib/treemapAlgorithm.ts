@@ -11,6 +11,7 @@
        4) 결과 → 3D 공간        : 셀 좌표 → 3D 월드 좌표 변환
    ========================================================================== */
 
+import { Player } from "@/api/types/supabase/Players";
 import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
@@ -24,7 +25,8 @@ export type PlacementResult = {
 }
 
 export type Placement = {
-    investor: Investor,
+    // investor: Investor,
+    playerId: string,
     x: number,  // 중심 기준으로 좌표 조정
     y: number,
     width: number,
@@ -41,7 +43,7 @@ export type Boundary = {
 }
 
 export type Square = {
-    investor: Investor,
+    playerId: string,
     sideLength: number, // 최소 1×1
 }
 
@@ -54,10 +56,10 @@ export type Position = {
 /**---------------------------------------------------------------------------*
  * 광고판 스타일 배치 알고리즘 (Billboard-Style Placement)
  *---------------------------------------------------------------------------*/
-export function calculateSquareLayout(filteredInvestorListByContinent: Investor[], continentId: string): PlacementResult {
+export function calculateSquareLayout(filteredPlayerListByContinent: Player[], continentId: string): PlacementResult {
     console.log('🏢 Billboard-Style 배치 알고리즘 시작')
 
-    if (filteredInvestorListByContinent.length === 0) {
+    if (filteredPlayerListByContinent.length === 0) {
         return {
             placements: [],
             boundary: {
@@ -75,7 +77,7 @@ export function calculateSquareLayout(filteredInvestorListByContinent: Investor[
     try {
         // Billboard 알고리즘 사용
         // const result = calculateBillboardLayout(investorList, maxUserCount)
-        const result = calculateRectangularSquareLayout(filteredInvestorListByContinent);
+        const result = calculateRectangularSquareLayout(filteredPlayerListByContinent);
         console.log(`✅ Billboard 배치 완료: ${result.placements.length}개 정사방형`)
         return {
             ...result,
@@ -85,8 +87,8 @@ export function calculateSquareLayout(filteredInvestorListByContinent: Investor[
         console.error(`❌ Billboard 에러, 간단 배치로 대체:`, error)
 
         // 에러 시 간단한 배치로 대체
-        const placements = filteredInvestorListByContinent.map((investor, index) => ({
-            investor,
+        const placements = filteredPlayerListByContinent.map((player, index) => ({
+            playerId: player.id,
             x: (index % 2) * 10 - 5,
             y: Math.floor(index / 2) * 10 - 5,
             width: 8,
@@ -101,18 +103,18 @@ export function calculateSquareLayout(filteredInvestorListByContinent: Investor[
     }
 }
 
-function calculateRectangularSquareLayout(investorList: Investor[]) {
+function calculateRectangularSquareLayout(playerList: Player[]) {
     // 1. 각 투자자의 지분율에 따라 정사각형 크기 계산
-    const totalInvestmentAmount = investorList.reduce((acc, investor) => {
-        return acc + investor.investment_amount;
+    const totalInvestmentAmount = playerList.reduce((acc, player) => {
+        return acc + player.investment_amount;
     }, 0);
-    const squares = investorList.map(investor => {
-        const sharePercentage = investor.investment_amount / totalInvestmentAmount;
+    const squares = playerList.map((player) => {
+        const sharePercentage = player.investment_amount / totalInvestmentAmount;
         const area = sharePercentage * CONTINENT_MAX_USER_COUNT * CONTINENT_MAX_USER_COUNT;
         const sideLength = Math.floor(Math.sqrt(area));
 
         return {
-            investor,
+            playerId: player.id,
             sideLength: Math.max(1, sideLength)
         };
     });
@@ -145,7 +147,7 @@ function placeSquaresInHorizontalRectangle(squares: Square[]) {
         if (currentY + square.sideLength <= maxLength) {
             // 현재 열에 배치
             placements.push({
-                investor: square.investor,
+                playerId: square.playerId,
                 x: currentX,
                 y: currentY,
                 width: square.sideLength,
@@ -165,7 +167,7 @@ function placeSquaresInHorizontalRectangle(squares: Square[]) {
 
             // 새 열에 배치
             placements.push({
-                investor: square.investor,
+                playerId: square.playerId,
                 x: currentX,
                 y: currentY,
                 width: square.sideLength,
@@ -219,27 +221,24 @@ function centerPlacements(placements: Placement[], boundary: Boundary) {
 
 // 투자자 좌표 계산 함수
 export function calculateInvestorCoordinates(
-    centralInvestorList: Investor[],
+    vipPlayerList: Player[],
     filteredInvestorListByUserContinent: Investor[],
     userContinentId: string,
     isVip: boolean,
-    userId?: string,
+    userPlayerInfoId: string,
 ): Position | null {
-    if (!userId) return null;
-
     const cellLength = !isVip
         ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT
         : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
 
     // 4. 영역 배치 계산
-    const centralPlacementResult = calculateSquareLayout(centralInvestorList, "central");
+    const centralPlacementResult = calculateSquareLayout(vipPlayerList, "central");
     const userPlacementResult = isVip
         ? centralPlacementResult
         : calculateSquareLayout(filteredInvestorListByUserContinent, userContinentId);
 
     const userPlacementInfo = userPlacementResult.placements.find((placement) => {
-        console.log(`(Calc) ${placement.investor.user_id}, ${userId}, ${placement.investor.user_id === userId}`)
-        return placement.investor.user_id === userId;
+        return placement.playerId === userPlayerInfoId;
     });
 
     if (!userPlacementInfo) return null;

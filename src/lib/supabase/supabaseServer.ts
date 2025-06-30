@@ -11,7 +11,7 @@ export async function createSupabaseServer(): Promise<SupabaseClient<Database>> 
 
     return createServerClient<Database>(
         process.env.SUPABASE_URL!,
-        process.env.SUPABASE_ANON_KEY!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
         {
             cookies: {
                 /** 브라우저가 보낸 쿠키 → Supabase */
@@ -39,7 +39,7 @@ export async function createSupabaseServerReadOnly(): Promise<SupabaseClient<Dat
 
     return createServerClient<Database>(
         process.env.SUPABASE_URL!,
-        process.env.SUPABASE_ANON_KEY!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
         {
             cookies: {
                 /** 브라우저가 보낸 쿠키 → Supabase */

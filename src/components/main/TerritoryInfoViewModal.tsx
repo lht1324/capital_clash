@@ -1,84 +1,29 @@
 'use client'
 
-import { useInvestorStore } from "@/store/investorsStore";
 import {useCallback, useMemo, KeyboardEvent, memo} from 'react'
 import {encodeBase64} from "@/utils/base64Utils";
 import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
 import {User} from "@/api/types/supabase/Users";
 
+export interface TerritoryInfoViewModalProps {
+    continentList: Continent[],
+    territoryOwnerPlayerInfo: Player,
+    isUserOpenedModal: boolean,
+    userContinentalRank: number,
+    userOverallRank: number,
+    userSharePercentage: number,
+    onClose: () => void
+}
 function TerritoryInfoViewModal({
     continentList,
-    playerList,
-    user,
-    openedInvestorId,
+    territoryOwnerPlayerInfo,
+    isUserOpenedModal,
+    userContinentalRank,
+    userOverallRank,
+    userSharePercentage,
     onClose,
-}: {
-    continentList: Continent[],
-    playerList: Player[],
-    user: User | null,
-    openedInvestorId: string,
-    onClose: () => void
-}) {
-    const { getTotalInvestmentByContinent } = useInvestorStore();
-    // const { user } = useUserStore();
-
-    const territoryOwnerPlayerInfo = useMemo(() => {
-        return playerList.find((player: Player) => {
-            return player.id === openedInvestorId;
-        })
-    }, [playerList, openedInvestorId])
-
-    const filteredPlayerListByContinent = useMemo(() => {
-        return playerList.filter((player: Player) => {
-            return player.continent_id === territoryOwnerPlayerInfo?.continent_id;
-        })
-    }, [playerList, territoryOwnerPlayerInfo]);
-
-    const continentTotalStakeAmount = useMemo(() => {
-        return filteredPlayerListByContinent.reduce((acc, player) => {
-            return acc + player.investment_amount;
-        }, 0);
-    }, [filteredPlayerListByContinent]);
-    const userSharePercentage = useMemo(() => {
-        const userStakeAmount = territoryOwnerPlayerInfo?.investment_amount ?? 0;
-        const calcResult = userStakeAmount / continentTotalStakeAmount * 100;
-
-        return calcResult > 0.01 ? calcResult : 0.01;
-    }, [territoryOwnerPlayerInfo, continentTotalStakeAmount]);
-
-    const userContinentRank = useMemo(() => {
-        if (territoryOwnerPlayerInfo) {
-            const userIndex = filteredPlayerListByContinent.sort((a, b) => {
-                return b.investment_amount - a.investment_amount;
-            }).findIndex((investor) => {
-                return investor.id === territoryOwnerPlayerInfo?.id;
-            });
-
-            return userIndex + 1;
-        } else {
-            return -1
-        }
-    }, [territoryOwnerPlayerInfo, filteredPlayerListByContinent]);
-
-    const userOverallRank = useMemo(() => {
-        if (territoryOwnerPlayerInfo) {
-            const userIndex = playerList.sort((a, b) => {
-                return b.investment_amount - a.investment_amount;
-            }).findIndex((player: Player) => {
-                return player.id === territoryOwnerPlayerInfo.id;
-            });
-
-            return userIndex + 1;
-        } else {
-            return -1
-        }
-    }, [playerList, territoryOwnerPlayerInfo]);
-
-    const isUserOpenedModal = useMemo(() => {
-        return territoryOwnerPlayerInfo?.user_id === user?.id;
-    }, [territoryOwnerPlayerInfo, user]);
-
+}: TerritoryInfoViewModalProps) {
     // ESC 키로 모달 닫기
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -96,7 +41,7 @@ function TerritoryInfoViewModal({
     }, []);
 
     const openXLink = useCallback(() => {
-        const userIdentifier = encodeBase64(openedInvestorId);
+        const userIdentifier = encodeBase64(territoryOwnerPlayerInfo.id);
 
         const targetUrl = new URL("https://capital-clash.vercel.app");
         targetUrl.searchParams.set("user_identifier", encodeURIComponent(userIdentifier));
@@ -106,15 +51,15 @@ function TerritoryInfoViewModal({
         })?.name;
         const titleText = userOverallRank === 1
             ? "World? Dominated. By me."
-            : userContinentRank === 1
+            : userContinentalRank === 1
                 ? `${continentName} is mine.`
                 : "See where I stand!";
-        const currentContinentText = userContinentRank === 1
+        const currentContinentText = userContinentalRank === 1
             ? `Central (${continentName})`
             : continentName;
         const contributionText = `Total Contribution - $${territoryOwnerPlayerInfo?.investment_amount.toLocaleString()}`;
         const overallRankText = `Overall Rank - #${userOverallRank}`;
-        const continentalRankText = `Continental Rank - #${userContinentRank}`;
+        const continentalRankText = `Continental Rank - #${userContinentalRank}`;
         const intent = new URL("https://x.com/intent/post");
         intent.searchParams.set(
             "text",
@@ -131,7 +76,7 @@ ${targetUrl}
         );
 
         window.open(intent.toString(), "_blank", "noopener,noreferrer");
-    }, [openedInvestorId, territoryOwnerPlayerInfo, userOverallRank, userContinentRank]);
+    }, [territoryOwnerPlayerInfo, userOverallRank, userContinentalRank]);
 
     if (!territoryOwnerPlayerInfo) {
         return (
@@ -243,8 +188,8 @@ ${targetUrl}
                                     <div className="min-w-6 mr-2">🏅</div>
                                     <span className="text-gray-600">Continental Rank</span>
                                 </div>
-                                <span className={`${userContinentRank === 1 ? "text-yellow-500" : "text-black-600"} font-medium`}>
-                                    # {userContinentRank}
+                                <span className={`${userContinentalRank === 1 ? "text-yellow-500" : "text-black-600"} font-medium`}>
+                                    # {userContinentalRank}
                                 </span>
                             </div>
                             <div className="flex justify-between">

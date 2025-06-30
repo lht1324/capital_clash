@@ -1,7 +1,8 @@
-import {createSupabaseClient} from "@/lib/supabase/supabaseClient";
+import { supabase } from "@/lib/supabase/supabaseClient";
 
 export async function signInWithOAuth() {
-    const supabase = createSupabaseClient();
+    // const supabase = createSupabaseClient();
+
 
     await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -16,7 +17,7 @@ export async function signInWithOAuth() {
 }
 
 export async function signOutWithOAuth() {
-    const supabase = createSupabaseClient();
+    // const supabase = createSupabaseClient();
 
     try {
         await supabase.auth.signOut()

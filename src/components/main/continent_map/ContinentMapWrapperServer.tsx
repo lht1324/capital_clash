@@ -57,12 +57,11 @@ export default async function ContinentMapWrapperServer() {
     });
 
     const clientProps = {
-        continentList: continentList,
-        playerList: playerList,
-        user: user,
-        vipPlayerList: vipPlayerList,
-        placementResultRecord: placementResultRecord,
-        continentPositionRecord: continentPositionRecord,
+        initialContinentList: continentList,
+        initialPlayerList: playerList,
+        initialPlacementResultRecord: placementResultRecord,
+        initialContinentPositionRecord: continentPositionRecord,
+        initialUser: user,
     }
 
     return (

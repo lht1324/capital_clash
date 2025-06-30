@@ -1,19 +1,15 @@
-import {useCallback, useEffect} from 'react'
-import { useContinentStore } from '@/store/continentStore'
+import { useEffect} from 'react'
 import { useInvestorStore } from '@/store/investorsStore'
-import {useUserStore} from "@/store/userStore";
 
 /**
  * Supabase 데이터 초기화 및 실시간 구독을 관리하는 훅
  */
 export function useSupabaseData(onSuccess: () => void) {
-    const { fetchContinents } = useContinentStore()
+    // const { fetchContinents } = useContinentStore()
     const {
-        fetchInvestors,
         subscribeToInvestors,
         unsubscribeFromInvestors
     } = useInvestorStore()
-    const { fetchUser } = useUserStore();
 
     useEffect(() => {
         // 초기 데이터 로드
@@ -21,12 +17,6 @@ export function useSupabaseData(onSuccess: () => void) {
             console.log('🌍 초기 데이터 로드 시작')
 
             try {
-                await Promise.all([
-                    fetchContinents(),
-                    fetchInvestors(),
-                    // fetchUser(),
-                ])
-
                 // 실시간 구독 설정
                 await subscribeToInvestors()
 
@@ -83,5 +73,5 @@ export function useSupabaseData(onSuccess: () => void) {
             window.removeEventListener('online', handleNetworkChange)
             window.removeEventListener('offline', handleNetworkChange)
         }
-    }, [fetchContinents, fetchInvestors, subscribeToInvestors, unsubscribeFromInvestors])
+    }, [subscribeToInvestors, unsubscribeFromInvestors])
 }

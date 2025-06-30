@@ -13,18 +13,17 @@ import {
 } from "@/components/main/continent_map/continent_map_public_variables";
 import {getFilteredPlayerList} from "@/utils/playerUtils";
 import {Continent} from "@/api/types/supabase/Continents";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
 
 function WorldScene({
-    continentList,
-    placementResultRecord,
-    continentPositionRecord,
     onTileClick,
 }: {
-    continentList: Continent[];
-    placementResultRecord: Record<string, PlacementResult>
-    continentPositionRecord: Record<string, Position>,
-    onTileClick: (investorId: string, dailyViews: number[]) => void;
+    onTileClick: (investorId: string) => void;
 }) {
+    const { continentList } = useContinentStore();
+    const { placementResultRecord } = usePlayersStore();
+
     // 전체 화면을 커버하는 격자 무늬 생성
     const gridLines = useMemo(() => {
         const geometries = [];
@@ -76,22 +75,11 @@ function WorldScene({
 
             {/* 모든 대륙 렌더링 */}
             {continentList.map((continent) => {
-                const placementResult = placementResultRecord[continent.id];
-
-                if (placementResult) {
-                    const position = continentPositionRecord[continent.id];
-                    // cellLength 계산 방식을 treemapAlgorithm.ts의 getContinentSizes 함수와 통일
-                    const cellLength = continent.id !== "central"
-                        ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT  // 일반 대륙은 max_users 대신 100 사용
-                        : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
-
+                if (placementResultRecord[continent.id]) {
                     return (
                         <SingleContinent
                             key={continent.id}
                             continent={continent}
-                            placementResult={placementResult}
-                            position={position}
-                            cellLength={cellLength}
                             onTileClick={onTileClick}
                         />
                     );

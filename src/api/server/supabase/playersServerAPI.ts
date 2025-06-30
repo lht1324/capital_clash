@@ -1,5 +1,6 @@
-import supabase from '@/lib/supabase/supabase'
-import {Player} from "@/api/types/supabase/Players";
+
+import { Player } from "@/api/types/supabase/Players";
+import { supabase } from "@/lib/supabase/supabaseClient";
 
 // 🧑‍💼 투자자 관련 함수들
 export const playersServerAPI = {
@@ -44,78 +45,13 @@ export const playersServerAPI = {
             .update(player)
             .eq('id', playerId)
             .select()
-            .single()
+            .single();
+
+        console.log("data", data)
+        console.log("error", error)
 
         if (error) throw error
 
         return data || null
-    },
-
-    // 투자금과 지분율 업데이트 (영역 구매 후)
-    async updateInvestment(id: string, amount: number, sharePercentage: number): Promise<Player> {
-        console.log('🔄 투자금 및 지분율 업데이트:', id, amount, sharePercentage)
-
-        const { data, error } = await supabase
-            .from('investors')
-            .update({
-                investment_amount: amount,
-                share_percentage: sharePercentage,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', id)
-            .select()
-            .single()
-
-        if (error) throw error
-        console.log('✅ 투자금 및 지분율 업데이트 완료:', data)
-        return data
-    },
-
-    async updateContinentId(id: string, selectedContinentId: string): Promise<Player> {
-        const { data, error } = await supabase
-            .from('investors')
-            .update({
-                continent_id: selectedContinentId,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', id)
-            .select()
-            .single()
-
-        if (error) throw error
-        console.log('✅ 투자금 및 지분율 업데이트 완료:', data)
-        return data
-    },
-
-    async updateImageStatus(id: string, imageStatus: string): Promise<Player> {
-        const { data, error } = await supabase
-            .from('investors')
-            .update({
-                image_status: imageStatus,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', id)
-            .select()
-            .single()
-
-        if (error) throw error
-        console.log('✅ 투자금 및 지분율 업데이트 완료:', data)
-        return data
-    },
-
-    async updateDailyViews(id: string, dailyViews: number[]): Promise<Player> {
-        const { data, error } = await supabase
-            .from('investors')
-            .update({
-                daily_views: dailyViews,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', id)
-            .select()
-            .single()
-
-        if (error) throw error
-        console.log('✅ 투자금 및 지분율 업데이트 완료:', data)
-        return data
     },
 }

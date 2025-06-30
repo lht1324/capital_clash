@@ -4,15 +4,13 @@ import * as THREE from 'three'
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import {Continent} from "@/api/types/supabase/Continents";
 import {Position} from "@/lib/treemapAlgorithm";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
 
-function CameraController({
-    continentList,
-    continentPositionRecord,
-}: {
-    continentList: Continent[],
-    continentPositionRecord: Record<string, Position>
-}) {
+function CameraController() {
     const { camera, gl } = useThree();
+    const { continentList } = useContinentStore();
+    const { continentPositionRecord } = usePlayersStore();
     const {
         selectedContinentId,
         isWorldView,

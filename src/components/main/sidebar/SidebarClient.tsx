@@ -95,18 +95,20 @@ function SidebarClient(props: SidebarClientProps) {
     }, [props]);
 
     const onClickMoveToTerritory = useCallback(() => {
-        const userCoordinates = calculateInvestorCoordinates(
-            vipPlayerList,
-            filteredPlayerListByContinent,
-            continentName.toLowerCase(),
-            isVip,
-            user?.id,
-        );
+        if (userInvestmentInfo) {
+            const userCoordinates = calculateInvestorCoordinates(
+                vipPlayerList,
+                filteredPlayerListByContinent,
+                continentName.toLowerCase(),
+                isVip,
+                userInvestmentInfo.id,
+            );
 
-        if (userCoordinates) {
-            setCameraTarget(userCoordinates);
+            if (userCoordinates) {
+                setCameraTarget(userCoordinates);
+            }
         }
-    }, [vipPlayerList, filteredPlayerListByContinent, isVip, user?.id, setCameraTarget]);
+    }, [vipPlayerList, filteredPlayerListByContinent, isVip, userInvestmentInfo, setCameraTarget]);
 
     const onClickSwitchContinent = useCallback(async (selectedContinentId: string) => {
         if (!userInvestmentInfo) {

@@ -6,6 +6,8 @@ import {useComponentStateStore} from "@/store/componentStateStore";
 import NotificationToast from "@/components/main/notification/NotificationToast";
 import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
 
 export interface NotificationData {
     id: string
@@ -23,16 +25,18 @@ export enum NotificationType {
 }
 
 interface NotificationManagerProps {
-    continentList: Continent[],
-    playerList: Player[],
+    // continentList: Continent[],
+    // playerList: Player[],
     isEnabled: boolean
 }
 
 function NotificationManager({
-    continentList,
-    playerList,
+    // continentList,
+    // playerList,
     isEnabled
 }: NotificationManagerProps) {
+    const { continentList } = useContinentStore();
+    const { playerList } = usePlayersStore();
     const { isSidebarOpen } = useComponentStateStore();
     const { getStakeUpdatedPlayerList } = useInvestorStore();
 

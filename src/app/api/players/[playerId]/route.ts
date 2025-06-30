@@ -37,7 +37,7 @@ export async function PATCH(
     try {
         const { playerId } = await params;
         const updatePlayerInfo: Partial<Player> = await request.json();
-        console.log("updatePlayerInfo", updatePlayerInfo)
+        console.log(`updatePlayerInfo[${playerId}]`, updatePlayerInfo)
 
         const result = await playersServerAPI.update(playerId, updatePlayerInfo);
 

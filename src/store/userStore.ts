@@ -20,7 +20,7 @@ interface UserState {
 
     fetchUser: () => Promise<void>
 
-    setUser: (user: User | null) => void
+    initializeUser: (user: User | null) => void
     clearUser: () => void
 }
 
@@ -55,6 +55,6 @@ export const useUserStore = create<UserState>((set) => ({
             console.error('❌ 유저 정보 로드 실패:', error)
         }
     },
-    setUser: (user) => set({ user }),
+    initializeUser: (user) => set({ user }),
     clearUser: () => set({ user: null })
 }))

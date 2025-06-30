@@ -41,7 +41,6 @@ function getWorldBoundary(
         const boundary = placementResult.boundary;
         const { x = 0, y = 0, z = 0 } = continentPositionRecord[continent.id] ?? {};
 
-        console.log(`${continent.id} boundary`, boundary);
         minX = Math.min(minX, boundary.minX * cellLength + x);
         maxX = Math.max(maxX, boundary.maxX * cellLength + x);
         minY = Math.min(minY, boundary.minY * cellLength + y);

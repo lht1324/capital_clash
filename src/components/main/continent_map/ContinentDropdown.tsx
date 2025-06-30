@@ -12,22 +12,20 @@ import {
 } from "@/components/main/continent_map/continent_map_public_variables";
 import {MathUtils} from "three";
 import {getWorldViewPositionZ} from "@/utils/cameraUtils";
+import {usePlayersStore} from "@/store/playersStore";
+import {useContinentStore} from "@/store/continentStore";
 
 const DROPDOWN_CAMERA_MOVE_Z = 25;
 
-function ContinentDropdown({
-    continentList,
-    playerList,
-    vipPlayerList,
-    placementResultRecord,
-    continentPositionRecord
-}: {
-    continentList: Continent[],
-    playerList: Player[],
-    vipPlayerList: Player[],
-    placementResultRecord: Record<string, PlacementResult>,
-    continentPositionRecord: Record<string, Position>
-}) {
+function ContinentDropdown() {
+    const { continentList } = useContinentStore();
+    const {
+        playerList,
+        vipPlayerList,
+        placementResultRecord,
+        continentPositionRecord,
+    } = usePlayersStore();
+
     const {
         selectedContinentId,
         isWorldView,
@@ -52,7 +50,7 @@ function ContinentDropdown({
             : selectedContinentData || { name: 'Loading...', description: 'Loading continent data', color: '#6B7280' }
     }, [isWorldView, selectedContinentData]);
 
-    const getFilteredPlayerListByContinent = useCallback((continentId?: string) => {
+    const getFilteredPlayerListByContinent = useCallback((continentId: string | null) => {
         return continentId !== "central"
             ? playerList.filter((player) => {
                 return player.continent_id === continentId;

@@ -285,42 +285,6 @@ export interface Database {
                     expires_at?: string
                 }
             }
-
-            // 관리자 로그 테이블
-            admin_logs: {
-                Row: {
-                    id: string
-                    admin_id: string
-                    action: string
-                    target_type: string
-                    target_id: string
-                    metadata?: Json
-                    ip_address?: string
-                    user_agent?: string
-                    created_at: string
-                }
-                Insert: {
-                    id?: string
-                    admin_id: string
-                    action: string
-                    target_type: string
-                    target_id: string
-                    metadata?: Json
-                    ip_address?: string
-                    user_agent?: string
-                    created_at?: string
-                }
-                Update: {
-                    id?: string
-                    admin_id?: string
-                    action?: string
-                    target_type?: string
-                    target_id?: string
-                    metadata?: Json
-                    ip_address?: string
-                    user_agent?: string
-                }
-            }
         }
         Views: {
             [_ in never]: never

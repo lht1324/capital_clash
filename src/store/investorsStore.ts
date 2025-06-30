@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { supabase } from '@/lib/supabase/supabase'
+import { supabase } from '@/lib/supabase/supabaseClient'
 import { investorsAPI } from '@/lib/supabase/supabase-investors-api'
 import { ImageStatus } from "@/api/types/supabase/Players";
 import { arePlayerListsEqualById } from "@/utils/playerUtils";
@@ -37,9 +37,9 @@ interface InvestorStore {
     unsubscribeFromInvestors: () => Promise<void>
 
     // 헬퍼 함수
-    getFilteredInvestorListByContinent: (continentId: string) => Investor[]
-    getTotalInvestmentByContinent: (continentId: string) => number
-    getPlayerInfoChangedByContinent: (prevPlayerList: Investor[], continentId: string) => boolean
+    getFilteredInvestorListByContinent: (continentId: string) => Investor[] // fin
+    getTotalInvestmentByContinent: (continentId: string) => number // fin
+    getPlayerInfoChangedByContinent: (prevPlayerList: Investor[], continentId: string) => boolean // fin
     getStakeUpdatedPlayerList: (prevPlayerList: Investor[]) => { player: Investor, isNewUser: boolean }[]
 }
 

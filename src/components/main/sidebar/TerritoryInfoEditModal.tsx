@@ -1,7 +1,6 @@
 'use client'
 
 import {memo, useState, useEffect, useCallback, useMemo, ChangeEvent} from 'react'
-import { useInvestorStore } from "@/store/investorsStore"
 import {Player} from "@/api/types/supabase/Players";
 import {User} from "@/api/types/supabase/Users";
 import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
