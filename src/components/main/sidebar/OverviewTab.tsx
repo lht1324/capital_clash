@@ -1,70 +1,114 @@
 import {memo, useMemo} from "react";
 import {ImageStatus} from "@/api/types/supabase/Players";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
+import {useUserStore} from "@/store/userStore";
 
 function OverviewTab({
-    isUserInvestmentInfoExist,
-    isVip,
-    investmentAmount,
-    sharePercentage,
-    userContinentRank,
-    userOverallRank,
-    imageUrl,
-    imageStatus,
-    continentName,
     onClickOpenImageUploadModal,
     onClickOpenPurchaseModal
 } : {
-    isUserInvestmentInfoExist: boolean,
-    isVip: boolean,
-    investmentAmount: number,
-    sharePercentage: number,
-    userContinentRank: number,
-    userOverallRank: number,
-    imageUrl?: string,
-    imageStatus: ImageStatus,
-    continentName: string,
     onClickOpenImageUploadModal: () => void,
     onClickOpenPurchaseModal: () => void
 }) {
+    const { continents } = useContinentStore();
+    const {
+        playerList,
+        vipPlayerList,
+        getSharePercentageByContinent,
+        getContinentalRankByContinent,
+        getOverallRank,
+        getViewsRank
+    } = usePlayersStore();
+    const { user } = useUserStore();
+
+    const userPlayerInfo = useMemo(() => {
+        return playerList.find((player) => {
+            return player.user_id === user?.id;
+        }) ?? null;
+    }, [playerList, user?.id]);
+
+    const isUserVip = useMemo(() => {
+        return !!(vipPlayerList.find((player) => {
+            return player.user_id === user?.id;
+        }));
+    }, [vipPlayerList, user?.id]);
+
+    const userInvestmentAmount = useMemo(() => {
+        return userPlayerInfo?.investment_amount ?? 0;
+    }, [userPlayerInfo?.investment_amount]);
+
+    const userSharePercentage = useMemo(() => {
+        return userPlayerInfo
+            ? getSharePercentageByContinent(userPlayerInfo.id, userPlayerInfo?.continent_id)
+            : 0.01;
+    }, [userPlayerInfo, getSharePercentageByContinent]);
+
+    const userContinentalRank = useMemo(() => {
+        return userPlayerInfo
+            ? getContinentalRankByContinent(userPlayerInfo.id, userPlayerInfo.continent_id)
+            : -1;
+    }, [userPlayerInfo, getContinentalRankByContinent]);
+
+    const userOverallRank = useMemo(() => {
+        return userPlayerInfo?.id
+            ? getOverallRank(userPlayerInfo.id)
+            : -1;
+    }, [userPlayerInfo?.id, getOverallRank]);
+
+    const userViewsRank = useMemo(() => {
+        return userPlayerInfo?.id
+            ? getViewsRank(userPlayerInfo.id)
+            : -1;
+    }, [userPlayerInfo?.id, getViewsRank]);
+
+    const imageUrl = useMemo(() => {
+        return userPlayerInfo?.image_url ?? null;
+    }, [userPlayerInfo?.image_url]);
+
     const imageStatusColor = useMemo(() => {
-        switch (imageStatus) {
+        switch (userPlayerInfo?.image_status) {
             case ImageStatus.APPROVED: return 'text-green-400'
             case ImageStatus.PENDING: return 'text-yellow-400'
             case ImageStatus.REJECTED: return 'text-red-400'
             default: return 'text-gray-400'
         }
-    }, [imageStatus]);
+    }, [userPlayerInfo?.image_status]);
 
     const imageStatusText = useMemo(() => {
-        switch (imageStatus) {
+        switch (userPlayerInfo?.image_status) {
             case ImageStatus.APPROVED: return '✅ Approved'
             case ImageStatus.PENDING: return '⏳ Under Review'
             case ImageStatus.REJECTED: return '❌ Rejected'
             default: return '📷 Not uploaded'
         }
-    }, [imageStatus]);
+    }, [userPlayerInfo?.image_status]);
+
+    const continentName = useMemo(() => {
+        return continents[userPlayerInfo?.continent_id ?? ""]?.name ?? null
+    }, [continents, userPlayerInfo?.continent_id]);
 
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-bold text-white mb-4">Investment Status</h3>
 
-            {isUserInvestmentInfoExist ? (
+            {userPlayerInfo ? (
                 <>
                     {/* 전체 요약 */}
                     <div className="bg-gray-800 rounded-lg p-4 space-y-3">
                         <div className="flex justify-between items-center">
                             <span className="text-gray-400">Investment</span>
                             <span
-                                className="text-xl font-bold text-green-400">${investmentAmount.toLocaleString()}</span>
+                                className="text-xl font-bold text-green-400">${userInvestmentAmount.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-gray-400">Continental Share</span>
-                            <span className="text-lg font-semibold text-blue-400">{sharePercentage.toFixed(2)}%</span>
+                            <span className="text-lg font-semibold text-blue-400">{userSharePercentage.toFixed(2)}%</span>
                         </div>
-                        {userContinentRank !== -1 && (
+                        {userContinentalRank !== -1 && (
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-400">Continental Rank</span>
-                                <span className="text-lg font-semibold text-white">#{userContinentRank}</span>
+                                <span className="text-lg font-semibold text-white">#{userContinentalRank}</span>
                             </div>
                         )}
                         {userOverallRank !== -1 && (
@@ -80,18 +124,12 @@ function OverviewTab({
                         <h4 className="text-md font-semibold text-white mb-3">Current Territory</h4>
 
                         {/* Current Image Preview */}
-                        {imageStatus && (
+                        {userPlayerInfo?.image_status && (
                             <div className="mb-4 p-3 rounded-lg bg-gray-700">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-sm font-medium text-white">Territory Image</span>
                                     <span className={`text-xs px-2 py-1 rounded-full ${imageStatusColor}`}>
-                                        {
-                                            imageStatus === 'pending'
-                                                ? '🔄 Under Review'
-                                                : imageStatus === 'approved'
-                                                    ? '✅ Approved'
-                                                    : '❌ Rejected'
-                                        }
+                                        {imageStatusText}
                                     </span>
                                 </div>
 
@@ -121,13 +159,13 @@ function OverviewTab({
                             </div>
                         )}
                         <div className="space-y-2">
-                            <div className="flex justify-between items-center">
+                            {continentName && <div className="flex justify-between items-center">
                                 <span className="text-gray-300">Continent</span>
                                 <div className="flex items-end gap-1 w-fit">
-                                    {isVip && <span className="text-white font-medium "><b>Central</b></span>}
-                                    <span className="text-white font-medium">{isVip ? `(${continentName})` : continentName}</span>
+                                    {isUserVip && <span className="text-white font-medium "><b>Central</b></span>}
+                                    <span className="text-white font-medium">{isUserVip ? `(${continentName})` : continentName}</span>
                                 </div>
-                            </div>
+                            </div>}
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-300">Image Status</span>
                                 <span className={imageStatusColor}>

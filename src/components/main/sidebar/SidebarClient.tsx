@@ -1,9 +1,9 @@
 'use client'
 
 import {memo, useCallback, useEffect, useMemo, useState} from 'react'
-import { calculateInvestorCoordinates } from "@/lib/treemapAlgorithm";
-import { storageAPI } from '@/lib/supabase/supabase-storage-api';
-import { investorsAPI } from "@/lib/supabase/supabase-investors-api";
+import {calculateInvestorCoordinates} from "@/lib/treemapAlgorithm";
+import {storageAPI} from '@/lib/supabase/supabase-storage-api';
+import {investorsAPI} from "@/lib/supabase/supabase-investors-api";
 import {useComponentStateStore} from "@/store/componentStateStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import TerritoryInfoEditModal from "@/components/main/sidebar/TerritoryInfoEditModal";
@@ -12,42 +12,13 @@ import TerritoryTab from "@/components/main/sidebar/TerritoryTab";
 import StatsTab from "@/components/main/sidebar/StatsTab";
 import PurchaseTerritoryModal from '../PurchaseTerritoryModal'
 import ImageUploadModal from './ImageUploadModal'
-import {Continent} from "@/api/types/supabase/Continents";
-import {ImageStatus, Player} from "@/api/types/supabase/Players";
-import {User} from "@/api/types/supabase/Users";
+import {ImageStatus} from "@/api/types/supabase/Players";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
+import {useUserStore} from "@/store/userStore";
 
 export interface SidebarClientProps {
-    user?: User | null
-    /* 원본 데이터 */
-    continentList: Continent[];      // 대륙 전체
-    playerList: Player[];            // 전체 플레이어
-    vipPlayerList: Player[];         // 상위 4명
 
-    /* 사용자-특화 데이터 */
-    userInvestmentInfo: Player | null;     // 로그인 사용자의 투자 정보 (없으면 undefined)
-    filteredPlayerListByContinent: Player[];  // 같은 대륙 플레이어만
-    isVip: boolean;                  // 상위 4명 안에 포함?
-    isUserInvestmentInfoExist: boolean;
-
-    /* 금액·지분 */
-    investmentAmount: number;        // 내가 투자한 금액
-    totalInvestmentAmount: number;   // 내 대륙 총 투자 금액
-    sharePercentage: number;         // 내 지분(%)
-
-    /* 랭킹 */
-    userContinentRank: number;       // 대륙 내 순위 (없으면 –1)
-    userOverallRank: number;         // 전체 순위 (없으면 –1)
-    userViewsRank: number;           // 조회수 순위 (없으면 –1)
-
-    /* 프로필 이미지 · 상태 */
-    imageUrl?: string;               // 이미지 URL (없으면 undefined)
-    imageStatus: ImageStatus;        // PENDING | APPROVED | REJECTED …
-
-    /* 부가 정보 */
-    continentName: string;           // 사용자가 속한 대륙 이름 ("-": 미정)
-    userCreatedDate: string;         // 가입 일자(로컬 문자열) 또는 "-"
-    userDailyViewList: number[];     // 최근 7일 조회수
-    userPreviousSundayView: number;  // 전 주 일요일 조회수
 }
 
 function SidebarClient(props: SidebarClientProps) {
@@ -60,97 +31,86 @@ function SidebarClient(props: SidebarClientProps) {
     const { isSidebarOpen, setIsSidebarOpen } = useComponentStateStore();
     const { setCameraTarget } = useCameraStateStore();
 
-    // 로그인하지 않은 경우 아무것도 렌더링하지 않음
-    // if (!user) return null;
+    const { continents } = useContinentStore();
+    const { playerList, vipPlayerList } = usePlayersStore();
+    const { user } = useUserStore();
 
-    const {
-        user,
-        /* 원본 데이터 */
-        continentList,
-        playerList,
-        vipPlayerList,
-        /* 사용자-특화 데이터 */
-        userInvestmentInfo,
-        filteredPlayerListByContinent,
-        isVip,
-        isUserInvestmentInfoExist,
-        /* 금액·지분 */
-        investmentAmount,
-        totalInvestmentAmount,
-        sharePercentage,
-        /* 랭킹 */
-        userContinentRank,
-        userOverallRank,
-        userViewsRank,
-        /* 프로필 이미지 · 상태 */
-        imageUrl,
-        imageStatus,
-        /* 부가 정보 */
-        continentName,
-        userCreatedDate,
-        userDailyViewList,
-        userPreviousSundayView,
-    } = useMemo(() => {
-        return props;
-    }, [props]);
+    const userPlayerInfo = useMemo(() => {
+        return playerList.find((player) => {
+            return player.user_id === user?.id;
+        }) ?? null;
+    }, [playerList, user?.id]);
+
+    const userImageUrl = useMemo(() => {
+        return userPlayerInfo?.image_url ?? null;
+    }, [userPlayerInfo?.image_url]);
+
+    const userImageStatus = useMemo(() => {
+        return userPlayerInfo?.image_status ?? ImageStatus.PENDING;
+    }, [userPlayerInfo?.image_status]);
 
     const onClickMoveToTerritory = useCallback(() => {
-        if (userInvestmentInfo) {
+        if (userPlayerInfo) {
+            const filteredPlayerListByContinent = playerList.filter((player) => {
+                return player.continent_id === userPlayerInfo.continent_id;
+            });
+
             const userCoordinates = calculateInvestorCoordinates(
                 vipPlayerList,
                 filteredPlayerListByContinent,
-                continentName.toLowerCase(),
-                isVip,
-                userInvestmentInfo.id,
+                userPlayerInfo.continent_id,
+                !!(vipPlayerList.find((player) => {
+                    return player.id === userPlayerInfo.id;
+                })),
+                userPlayerInfo.id,
             );
 
             if (userCoordinates) {
                 setCameraTarget(userCoordinates);
             }
         }
-    }, [vipPlayerList, filteredPlayerListByContinent, isVip, userInvestmentInfo, setCameraTarget]);
+    }, [userPlayerInfo, playerList, vipPlayerList, setCameraTarget]);
 
     const onClickSwitchContinent = useCallback(async (selectedContinentId: string) => {
-        if (!userInvestmentInfo) {
+        if (!userPlayerInfo) {
             console.error('User or investment info not found');
             return;
         }
 
-        const selectedContinentName = continentList.find((continent) => {
-            return continent.id === selectedContinentId;
-        })?.name;
-        const isConfirmed = confirm(`Are you sure you wanna move from ${continentName} to ${selectedContinentName}?`);
+        const prevContinentName = continents[userPlayerInfo.continent_id]?.name;
+        const selectedContinentName = continents[selectedContinentId]?.name;
+        const isConfirmed = confirm(`Are you sure you wanna move from ${prevContinentName} to ${selectedContinentName}?`);
 
         if (isConfirmed) {
             try {
                 // Update the investor's continent_id
-                const result = await investorsAPI.updateContinentId(userInvestmentInfo.id, selectedContinentId);
+                const result = await investorsAPI.updateContinentId(userPlayerInfo.id, selectedContinentId);
                 console.log(`Continent switched to: ${selectedContinentId}`, result);
             } catch (error) {
                 console.error('Failed to switch continent:', error);
             }
         }
-    }, [userInvestmentInfo]);
+    }, [userPlayerInfo]);
 
     // Handle image upload
     const handleImageUpload = useCallback(async (file: File) => {
         console.log(`🖼️ Image uploaded: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`)
 
-        if (!user || !userInvestmentInfo) {
-            alert('❌ 로그인 상태 또는 투자 정보를 확인할 수 없습니다.')
+        if (!user || !userPlayerInfo) {
+            alert('❌ Unable to verify login status or investment information.')
             return
         }
 
         try {
             // Approved 상태이고 기존 이미지가 있는 경우 삭제
-            if (imageUrl) {
+            if (userImageUrl) {
                 try {
                     console.log('🗑️ 기존 이미지 삭제 시작...')
 
                     // 1. 기존 이미지의 images 테이블 레코드 찾기
-                    const imageList = await storageAPI.getImagesByInvestorId(userInvestmentInfo.id);
+                    const imageList = await storageAPI.getImagesByInvestorId(userPlayerInfo.id);
                     const existingImage = imageList.find((imageInfo) => {
-                        return imageInfo.original_url === imageUrl;
+                        return imageInfo.original_url === userImageUrl;
                     });
 
                     if (existingImage) {
@@ -183,7 +143,7 @@ function SidebarClient(props: SidebarClientProps) {
             const { imageData, error } = await storageAPI.uploadImage(
                 file,
                 user.id,
-                userInvestmentInfo.id
+                userPlayerInfo.id
             )
 
             console.log("imageData", imageData);
@@ -193,16 +153,15 @@ function SidebarClient(props: SidebarClientProps) {
             }
 
             // 성공 메시지 표시
-            const successMessage = imageStatus === ImageStatus.APPROVED 
-                ? `✅ 이미지 "${file.name}"가 성공적으로 교체되었습니다! 이미지는 현재 검토 중입니다.`
-                : `✅ 이미지 "${file.name}"가 성공적으로 업로드되었습니다! 이미지는 현재 검토 중입니다.`;
-            alert(successMessage)
+            alert(
+                `✅ Image successfully ${userImageStatus === ImageStatus.APPROVED ? "replaced" : "uploaded"}! Image is currently under review.`
+            )
             console.log('업로드 성공:', imageData)
         } catch (error) {
             console.error('이미지 업로드 실패:', error)
-            alert('❌ 이미지 업로드에 실패했습니다. 다시 시도해 주세요.')
+            alert('❌ Image upload failed. Please try again.')
         }
-    }, [user, userInvestmentInfo, imageStatus, imageUrl]);
+    }, [user, userPlayerInfo, userImageUrl, userImageStatus]);
 
     useEffect(() => {
         if (!user) {
@@ -276,15 +235,6 @@ function SidebarClient(props: SidebarClientProps) {
                     <div className="flex-1 overflow-y-auto p-4">
                         {activeTab === 'overview' && (
                             <OverviewTab
-                                isUserInvestmentInfoExist={isUserInvestmentInfoExist}
-                                isVip={isVip}
-                                investmentAmount={investmentAmount}
-                                sharePercentage={sharePercentage}
-                                userContinentRank={userContinentRank}
-                                userOverallRank={userOverallRank}
-                                imageUrl={imageUrl}
-                                imageStatus={imageStatus}
-                                continentName={continentName}
                                 onClickOpenImageUploadModal={() => setIsImageUploadModalOpen(true)}
                                 onClickOpenPurchaseModal={() => { setIsPurchaseModalOpen(true) }}
                             />
@@ -292,15 +242,6 @@ function SidebarClient(props: SidebarClientProps) {
 
                         {activeTab === 'territory' && (
                             <TerritoryTab
-                                isUserInvestmentInfoExist={isUserInvestmentInfoExist}
-                                investorList={playerList}
-                                investmentAmount={investmentAmount}
-                                sharePercentage={sharePercentage}
-                                imageUrl={imageUrl}
-                                imageStatus={imageStatus}
-                                createdDate={userCreatedDate}
-                                continentName={continentName}
-                                continentList={continentList.filter((continent) => continent.id !== "central")}
                                 onClickMoveToTerritory={onClickMoveToTerritory}
                                 onClickSwitchContinent={onClickSwitchContinent}
                                 onClickOpenImageUploadModal={() => setIsImageUploadModalOpen(true)}
@@ -310,12 +251,7 @@ function SidebarClient(props: SidebarClientProps) {
                         )}
 
                         {activeTab === 'stats' && (
-                            <StatsTab
-                                isUserInvestmentInfoExist={isUserInvestmentInfoExist}
-                                dailyViews={userDailyViewList}
-                                previousSundayView={userPreviousSundayView}
-                                userViewsRank={userViewsRank}
-                            />
+                            <StatsTab/>
                         )}
                     </div>
                 </div>
@@ -323,17 +259,11 @@ function SidebarClient(props: SidebarClientProps) {
 
             {/* 영역 구매 모달 */}
             {isPurchaseModalOpen && <PurchaseTerritoryModal
-                continentList={continentList}
-                playerList={playerList}
-                user={user}
-                userPlayerInfo={userInvestmentInfo}
                 onClose={() => setIsPurchaseModalOpen(false)}
             />}
 
             {/* 프로필 수정 모달 */}
-            {isProfileEditModalOpen && userInvestmentInfo && <TerritoryInfoEditModal
-                user={user}
-                userPlayerInfo={userInvestmentInfo}
+            {isProfileEditModalOpen && userPlayerInfo && <TerritoryInfoEditModal
                 onClose={() => setIsProfileEditModalOpen(false)}
             />}
 
@@ -341,7 +271,6 @@ function SidebarClient(props: SidebarClientProps) {
             {isImageUploadModalOpen && <ImageUploadModal
                 onClose={() => setIsImageUploadModalOpen(false)}
                 onUpload={handleImageUpload}
-                currentImageStatus={imageStatus}
             />}
         </>)
     )

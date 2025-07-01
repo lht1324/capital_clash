@@ -20,7 +20,7 @@ function createSupabaseClient(): SupabaseClient<Database> {
             params: {
                 eventsPerSecond: 10,
             },
-            // Sup
+            // ----- Temporary Solution -----
             WebSocket: (url: string) => new WebSocket(url),
         } as unknown as RealtimeClientOptions,
     });

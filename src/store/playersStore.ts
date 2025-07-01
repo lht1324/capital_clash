@@ -25,6 +25,11 @@ export interface PlayersStore {
         continentList: Continent[]
     ) => void;
     subscribeToPlayers: () => () => void; // 구독 해제 함수를 반환
+
+    getSharePercentageByContinent: (playerId: string, continentId: string) => number;
+    getContinentalRankByContinent: (playerId: string, continentId: string) => number;
+    getOverallRank: (playerId: string) => number;
+    getViewsRank: (playerId: string) => number;
 }
 
 /**
@@ -72,10 +77,6 @@ function _calculateContinentalLayoutInfo(
                     continent.id
                 )
                 : prevPlacementResultRecord[continent.id]
-            // placementResultRecord[continent.id] = calculateSquareLayout(
-            //     filteredPlayerListByContinent,
-            //     continent.id
-            // )
         }
 
         if (placementResultRecord[continent.id]) {
@@ -266,6 +267,61 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
         };
 
         return unsubscribe;
+    },
+
+    getSharePercentageByContinent: (playerId, continentId) => {
+        const { players, playerList } = get();
+        const player = players[playerId];
+
+        const filteredPlayerListByContinent = playerList.filter((player) => {
+            return player.continent_id === continentId;
+        });
+
+        const continentalTotalInvestment = filteredPlayerListByContinent.reduce((acc, player) => {
+            return acc + player.investment_amount;
+        }, 0);
+        const newSharePercentage = (player.investment_amount / continentalTotalInvestment) * 100;
+
+        return newSharePercentage > 0.01
+            ? newSharePercentage
+            : 0.01;
+    },
+
+
+    getContinentalRankByContinent: (playerId: string, continentId: string) => {
+        const { playerList } = get();
+
+        return playerList.filter((player) => {
+            return player.continent_id === continentId;
+        }).sort((a, b) => {
+            return b.investment_amount - a.investment_amount;
+        }).findIndex((player) => {
+            return player.id === playerId;
+        }) + 1;
+    },
+
+    getOverallRank: (playerId: string) => {
+        const { playerList } = get();
+
+        return playerList.sort((a, b) => {
+            return b.investment_amount - a.investment_amount;
+        }).findIndex((player) => {
+            return player.id === playerId;
+        }) + 1;
+    },
+
+    getViewsRank: (playerId: string) => {
+        const sumDailyViews = (dailyViews: number[]) => {
+            return dailyViews.reduce((acc, dailyView) => acc + dailyView, 0);
+        }
+
+        const { playerList } = get();
+
+        return playerList.sort((a, b) => {
+            return sumDailyViews(b.daily_views) - sumDailyViews(a.daily_views);
+        }).findIndex((player) => {
+            return player.id === playerId;
+        }) + 1;
     },
 }));
 

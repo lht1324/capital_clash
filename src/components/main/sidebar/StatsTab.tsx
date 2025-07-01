@@ -1,25 +1,37 @@
 import {memo, useCallback, useMemo} from "react";
+import {usePlayersStore} from "@/store/playersStore";
+import {useUserStore} from "@/store/userStore";
 
-function StatsTab({
-    isUserInvestmentInfoExist,
-    dailyViews,
-    previousSundayView,
-    userViewsRank
-} : {
-    isUserInvestmentInfoExist: boolean,
-    dailyViews: number[],
-    previousSundayView: number,
-    userViewsRank: number
-}) {
+function StatsTab() {
+    const { playerList, getViewsRank } = usePlayersStore();
+    const { user } = useUserStore();
+
+    const userPlayerInfo = useMemo(() => {
+        return playerList.find((player) => {
+            return player.user_id === user?.id;
+        }) ?? null;
+    }, [playerList, user?.id]);
+
+    const userDailyViews = useMemo(() => {
+        return userPlayerInfo?.daily_views ?? [0, 0, 0, 0, 0, 0, 0];
+    }, [userPlayerInfo?.daily_views]);
+
+    const userViewsRank = useMemo(() => {
+        return userPlayerInfo?.id
+            ? getViewsRank(userPlayerInfo.id)
+            : -1;
+    }, [userPlayerInfo?.id, getViewsRank]);
+
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    const shortDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    const totalView = useMemo(() => {
-        return dailyViews.reduce((acc, dailyView) => acc + dailyView, 0);
-    }, [dailyViews]);
+    const weeklyViews = useMemo(() => {
+        return userDailyViews.reduce((acc, dailyView) => {
+            return acc + dailyView;
+        }, 0);
+    }, [userDailyViews]);
     const averageDailyView = useMemo(() => {
-        return totalView / dailyViews.length;
-    }, [totalView, dailyViews]);
+        return weeklyViews / 7;
+    }, [weeklyViews]);
 
     const currentDayOfWeek = useMemo(() => {
         const day = new Date().getDay();
@@ -33,7 +45,7 @@ function StatsTab({
         <div className="space-y-4">
             <h3 className="text-lg font-bold text-white mb-4">View Statistics</h3>
 
-            {isUserInvestmentInfoExist ? (
+            {userPlayerInfo ? (
                 <>
                     {/* Weekly Views Trend */}
                     <div className="bg-gray-800 rounded-lg p-4">
@@ -52,31 +64,29 @@ function StatsTab({
 
                         {/* Table Body */}
                         <div className="space-y-3">
-                            {[0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => {
+                            {days.map((dayOfWeekText, dayOfWeek) => {
                                 // 요일명 계산 (월~일)
-                                const views = dailyViews[dayOfWeek]
-                                // 변화량 계산 (오늘-어제 등)
-                                // 어제와 비교
-                                const change = dayOfWeek !== 0
-                                    ? dailyViews[dayOfWeek] - dailyViews[dayOfWeek - 1]
-                                    : dailyViews[dayOfWeek] - previousSundayView;
-                                const today = days[dayOfWeek];
-                                const shortToday = shortDays[dayOfWeek];
-                                const isToday = dayOfWeek === currentDayOfWeek
-                                const isPast = dayOfWeek < currentDayOfWeek
-                                const isFuture = dayOfWeek > currentDayOfWeek
-                                const changeColor = change !== 0 && dayOfWeek <= currentDayOfWeek
-                                    ? change > 0
+                                const dailyViewCount = userDailyViews[dayOfWeek]
+
+                                const isToday = dayOfWeek === currentDayOfWeek;
+                                const isPast = dayOfWeek < currentDayOfWeek;
+                                const isFuture = dayOfWeek > currentDayOfWeek;
+
+                                const changeRate = isToday && dayOfWeek !== 0
+                                    ? (dailyViewCount - averageDailyView) / averageDailyView * 100
+                                    : isPast
+                                        ? dayOfWeek !== 0
+                                            ? (dailyViewCount - userDailyViews[dayOfWeek - 1]) / userDailyViews[dayOfWeek - 1] * 100
+                                            : 0
+                                        : 0
+
+                                const changeColor = changeRate !== 0 && dayOfWeek <= currentDayOfWeek
+                                    ? changeRate > 0
                                         ? 'text-green-400'
                                         : 'text-red-400'
                                     : 'text-gray-400';
-                                const changeIcon = change !== 0 && dayOfWeek <= currentDayOfWeek
-                                    ? change > 0
-                                        ? '↗'
-                                        : '↘'
-                                    : ""
                                 return (
-                                    <div key={shortToday}
+                                    <div key={dayOfWeekText}
                                          className={`grid grid-cols-3 gap-4 py-2 px-3 rounded-lg transition-all duration-200 ${
                                              isToday
                                                  ? 'bg-purple-500/20 border border-purple-500/30'
@@ -94,11 +104,11 @@ function StatsTab({
                                                             : 'text-white'
                                                 }`
                                             }>
-                                                {today}
+                                                {dayOfWeekText}
                                             </span>
                                         </div>
                                         <div className="text-right">
-                                            {views !== null ? (
+                                            {dailyViewCount !== null ? (
                                                 <span
                                                     className={`text-lg font-semibold ${
                                                         isToday
@@ -106,25 +116,17 @@ function StatsTab({
                                                             : 'text-gray-200'
                                                     }`
                                                 }>
-                                                    {views.toLocaleString()}
+                                                    {dailyViewCount.toLocaleString()}
                                                 </span>
                                             ) : (
                                                 <span className="text-lg font-semibold text-gray-500">-</span>
                                             )}
                                         </div>
-                                        <div className="text-right flex items-center justify-end space-x-1">
-                                            <>
-                                                <span className={`text-sm font-medium ${changeColor}`}>
-                                                    {change > 0 ? '+' : ''}
-                                                    {
-                                                        change !== 0 && dayOfWeek <= currentDayOfWeek
-                                                            ? change
-                                                            : "-"
-                                                    }
-                                                </span>
-                                                <span className={`text-xs ${changeColor}`}>{changeIcon}</span>
-                                            </>
-                                        </div>
+                                        {changeRate !== 0 && <div className="text-right flex items-center justify-end space-x-1">
+                                            <span className={`text-sm font-medium ${changeColor}`}>
+                                                {`${changeRate.toFixed(0)}%`}
+                                            </span>
+                                        </div>}
                                     </div>
                                 )
                             })}
@@ -135,7 +137,7 @@ function StatsTab({
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-400">Current Total</span>
                                 <span
-                                    className="text-white font-semibold">{totalView} views</span>
+                                    className="text-white font-semibold">{weeklyViews} views</span>
                             </div>
                             <div className="flex justify-between items-center text-sm mt-1">
                                 <span className="text-gray-400">Daily Average</span>
@@ -157,12 +159,12 @@ function StatsTab({
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Today</span>
                                 <span
-                                    className="text-white">{dailyViews[currentDayOfWeek]} views</span>
+                                    className="text-white">{userDailyViews[currentDayOfWeek]} views</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-400">This Week</span>
                                 <span
-                                    className="text-purple-400">{totalView} views</span>
+                                    className="text-purple-400">{weeklyViews} views</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Daily Average</span>
@@ -172,7 +174,7 @@ function StatsTab({
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Peak Day</span>
                                 <span
-                                    className="text-yellow-400">{Math.max(...dailyViews)} views</span>
+                                    className="text-yellow-400">{Math.max(...userDailyViews)} views</span>
                             </div>
                         </div>
                     </div>

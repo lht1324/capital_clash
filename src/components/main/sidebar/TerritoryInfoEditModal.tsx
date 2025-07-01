@@ -4,16 +4,23 @@ import {memo, useState, useEffect, useCallback, useMemo, ChangeEvent} from 'reac
 import {Player} from "@/api/types/supabase/Players";
 import {User} from "@/api/types/supabase/Users";
 import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
+import {usePlayersStore} from "@/store/playersStore";
+import {useUserStore} from "@/store/userStore";
 
 function TerritoryInfoEditModal({
-    user,
-    userPlayerInfo,
     onClose,
 }: {
-    user: User | null,
-    userPlayerInfo: Player,
     onClose: () => void,
 }) {
+    const { playerList } = usePlayersStore();
+    const { user } = useUserStore();
+
+    const userPlayerInfo = useMemo(() => {
+        return playerList.find((player) => {
+            return player.user_id === user?.id;
+        }) ?? null;
+    }, [playerList, user?.id]);
+
     const [profileData, setProfileData] = useState({
         name: "",
         description: "",
@@ -156,6 +163,11 @@ function TerritoryInfoEditModal({
     }, [hue, hslToHex, profileData]);
 
     const handleSave = useCallback(async () => {
+        if (!userPlayerInfo) {
+            alert("Please try again.")
+            return;
+        }
+
         // 입력값 유효성 검사
         if (profileData.xUrl && (!isXUrlValid || !isInstagramUrlValid)) {
             alert('Please enter a valid website URL.');
@@ -167,26 +179,30 @@ function TerritoryInfoEditModal({
             return;
         }
 
-        if (isProfileInfoChanged) {
-            try {
-                const newInvestorInfo = {
-                    name: profileData.name,
-                    description: profileData.description,
-                    x_url: profileData.xUrl,
-                    instagram_url: profileData.instagramUrl,
-                    contact_email: profileData.contactEmail,
-                    area_color: profileData.areaColor,
-                }
+        try {
+            if (isProfileInfoChanged) {
+                try {
+                    const newInvestorInfo = {
+                        name: profileData.name,
+                        description: profileData.description,
+                        x_url: profileData.xUrl,
+                        instagram_url: profileData.instagramUrl,
+                        contact_email: profileData.contactEmail,
+                        area_color: profileData.areaColor,
+                    }
 
-                await playersClientAPI.patchPlayersById(userPlayerInfo.id, newInvestorInfo);
-                alert('Profile information has been successfully saved.');
-                onClose();
-            } catch (error) {
-                console.error('Failed to save profile information:', error);
-                alert('Failed to save profile information. Please try again.');
+                    await playersClientAPI.patchPlayersById(userPlayerInfo.id, newInvestorInfo);
+                    alert('Profile information has been successfully saved.');
+                    onClose();
+                } catch (error) {
+                    console.error('Failed to save profile information:', error);
+                    alert('Failed to save profile information. Please try again.');
+                }
+            } else {
+                alert('No changes have been made.');
             }
-        } else {
-            alert('No changes have been made.');
+        } catch (error) {
+            alert("Please try again.");
         }
     }, [isProfileInfoChanged, profileData, isXUrlValid, isInstagramUrlValid, isContactEmailValid, userPlayerInfo, onClose]);
 

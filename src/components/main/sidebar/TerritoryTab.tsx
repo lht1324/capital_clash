@@ -1,62 +1,88 @@
-import {memo, useMemo} from "react";
+import {memo, useCallback, useMemo} from "react";
 import {Investor} from "@/store/investorsStore";
-import {ImageStatus} from "@/api/types/supabase/Players";
+import {ImageStatus, Player} from "@/api/types/supabase/Players";
 import {Continent} from "@/api/types/supabase/Continents";
+import {usePlayersStore} from "@/store/playersStore";
+import {useContinentStore} from "@/store/continentStore";
+import {useUserStore} from "@/store/userStore";
 
 function TerritoryTab({
-    isUserInvestmentInfoExist,
-    investorList,
-    investmentAmount,
-    sharePercentage,
-    imageUrl,
-    imageStatus,
-    createdDate,
-    continentName,
-    continentList,
     onClickMoveToTerritory,
     onClickSwitchContinent,
     onClickOpenImageUploadModal,
     onClickOpenPurchaseModal,
     onClickOpenProfileEditModal,
 } : {
-    isUserInvestmentInfoExist: boolean,
-    investorList: Investor[],
-    investmentAmount: number,
-    sharePercentage: number,
-    imageUrl?: string,
-    imageStatus: ImageStatus,
-    createdDate: string,
-    continentName: string,
-    continentList: Continent[],
     onClickMoveToTerritory: () => void,
     onClickSwitchContinent: (selectedContinentId: string) => void,
     onClickOpenImageUploadModal: () => void,
     onClickOpenPurchaseModal: () => void,
     onClickOpenProfileEditModal: () => void,
 }) {
+    const { continents, continentList } = useContinentStore();
+    const { playerList, getSharePercentageByContinent } = usePlayersStore();
+    const { user } = useUserStore();
+
+    const userPlayerInfo = useMemo(() => {
+        return playerList.find((player) => {
+            return player.user_id === user?.id;
+        }) ?? null;
+    }, [playerList, user?.id]);
+
+    const investmentAmount = useMemo(() => {
+        return userPlayerInfo?.investment_amount ?? 0;
+    }, [userPlayerInfo?.investment_amount]);
+
+    const sharePercentage = useMemo(() => {
+        return userPlayerInfo
+            ? getSharePercentageByContinent(userPlayerInfo.id, userPlayerInfo?.continent_id)
+            : 0.01;
+    }, [userPlayerInfo, getSharePercentageByContinent]);
+
+    const imageUrl = useMemo(() => {
+        return userPlayerInfo?.image_url ?? null;
+    }, [userPlayerInfo?.image_url]);
     const imageStatusColor = useMemo(() => {
-        switch (imageStatus) {
+        switch (userPlayerInfo?.image_status) {
             case ImageStatus.APPROVED: return 'text-green-400'
             case ImageStatus.PENDING: return 'text-yellow-400'
             case ImageStatus.REJECTED: return 'text-red-400'
             default: return 'text-gray-400'
         }
-    }, [imageStatus]);
+    }, [userPlayerInfo?.image_status]);
 
     const imageStatusText = useMemo(() => {
-        switch (imageStatus) {
+        switch (userPlayerInfo?.image_status) {
             case ImageStatus.APPROVED: return '✅ Approved'
             case ImageStatus.PENDING: return '⏳ Under Review'
             case ImageStatus.REJECTED: return '❌ Rejected'
             default: return '📷 Not uploaded'
         }
-    }, [imageStatus]);
+    }, [userPlayerInfo?.image_status]);
+
+    const continentName = useMemo(() => {
+        return userPlayerInfo?.continent_id
+            ? continents[userPlayerInfo.continent_id].name
+            : "-"
+    }, [userPlayerInfo?.continent_id, continents]);
+
+    const createdDate = useMemo(() => {
+        return userPlayerInfo?.created_at
+            ? new Date(userPlayerInfo.created_at).toLocaleString()
+            : "-"
+    }, [userPlayerInfo?.created_at]);
+
+    const getContinentPlayerCount = useCallback((continentId: string) => {
+        return playerList.filter((player) => {
+            return player.continent_id === continentId;
+        }).length;
+    }, [playerList]);
 
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-bold text-white mb-4">Territory Management</h3>
 
-            {isUserInvestmentInfoExist ? (
+            {userPlayerInfo ? (
                 <>
                     {/* 현재 영역 상세 정보 */}
                     <div className="bg-gray-800 rounded-lg p-4">
@@ -74,7 +100,7 @@ function TerritoryTab({
                                 <span className={`text-sm ${imageStatusColor} mb-1`}>
                                     {imageStatusText}
                                 </span>
-                                <span className="text-xs text-gray-400">생성일: {createdDate}</span>
+                                <span className="text-xs text-gray-400">{createdDate}</span>
                             </div>
 
                             <div className="space-y-2">
@@ -124,12 +150,12 @@ function TerritoryTab({
 
                         {/* X 모양 대륙 현황 */}
                         <div className="space-y-2 mb-3">
-                            {continentList.map((continent) => {
-                                const currentCount = investorList.filter((investor) => {
-                                    return investor.continent_id === continent.id;
-                                }).length;
+                            {continentList.filter((continent) => {
+                                return continent.id !== "central";
+                            }).map((continent) => {
+                                const currentCount = getContinentPlayerCount(continent.id);
                                 const isFull = currentCount >= continent.max_users;
-                                const isCurrentContinent = continentName === continent.name
+                                const isCurrentContinent = userPlayerInfo?.continent_id === continent.id
 
                                 // 대륙 이동 판매 -> $5
                                 return (
@@ -174,10 +200,10 @@ function TerritoryTab({
 
                     {/* 대륙 선택 옵션 */}
                     <div className="space-y-2">
-                        {continentList.map((continent) => {
-                            const currentCount = investorList.filter((investor) => {
-                                return investor.continent_id === continent.id;
-                            }).length;
+                        {continentList.filter((continent) => {
+                            return continent.id !== "central";
+                        }).map((continent) => {
+                            const currentCount = getContinentPlayerCount(continent.id);
                             const isFull = currentCount >= continent.max_users
 
                             return (
