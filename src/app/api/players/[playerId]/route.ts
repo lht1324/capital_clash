@@ -19,7 +19,7 @@ export async function GET(
 
         if (error) throw error
 
-        return NextResponse.json({ data: data }, { status: 201 });
+        return NextResponse.json({ ...(data?.[0]) }, { status: 201 });
     } catch (error) {
         console.log(error);
 

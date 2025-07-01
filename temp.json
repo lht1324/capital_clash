@@ -1,25 +1,10 @@
-SELECT
-    nsp.nspname AS schema_name,
-    tbl.relname AS table_name,
-    pol.polname AS policy_name,
-    CASE pol.polcmd
-        WHEN 'r' THEN 'SELECT'
-        WHEN 'a' THEN 'INSERT'
-        WHEN 'w' THEN 'UPDATE'
-        WHEN 'd' THEN 'DELETE'
-        WHEN '*' THEN 'ALL'
-    END AS policy_command,
-    pol.polpermissive AS is_permissive,
-    (SELECT array_agg(rolname) FROM pg_roles WHERE oid = ANY(pol.polroles)) AS policy_roles,
-    pg_get_expr(pol.polqual, pol.polrelid) AS policy_using_expression,
-    pg_get_expr(pol.polwithcheck, pol.polrelid) AS policy_with_check_expression
-FROM
-    pg_policy pol
-JOIN
-    pg_class tbl ON tbl.oid = pol.polrelid
-JOIN
-    pg_namespace nsp ON nsp.oid = tbl.relnamespace
-WHERE
-    nsp.nspname = 'public'
-ORDER BY
-    table_name, policy_name;
+Error: Route "/api/users/[userId]" used `params.userId`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis at GET (c:\Users\Jaeho\Desktop\Projects\Playground\capital_clash_fe\src\app\api\users\[userId]\route.ts:10:16)
+8 | export async function GET(
+9 |     _req: NextRequest,
+> 10 |     { params: { userId } }: { params: { userId: string } }
+|                ^
+11 | ) {
+12 |     try {
+13 |         const supabase = await createSupabaseServer();
+
+userId = id

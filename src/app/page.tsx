@@ -5,19 +5,14 @@ import HeaderServer from "@/components/main/header/HeaderServer";
 import ContinentMapWrapperServer from "@/components/main/continent_map/ContinentMapWrapperServer";
 import StoreInitializer from "@/components/main/StoreInitializer";
 import {Continent} from "@/api/types/supabase/Continents";
-import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
 import {Player} from "@/api/types/supabase/Players";
+import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
 import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
-import {getSupabaseUser} from "@/utils/userUtils";
-import {usersServerAPI} from "@/api/server/supabase/usersServerAPI";
 import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
-import {User} from "@/api/types/supabase/Users";
 
 export default async function Page() {
     const continentList: Continent[] = await continentsServerAPI.getAll();
     const playerList: Player[] = await playersServerAPI.getAll();
-    const authUser = await getSupabaseUser();
-    const user = await usersServerAPI.getByUserid(authUser?.id);
     const vipPlayerList: Player[] = Object.values(
         playerList.reduce((acc, player) => {
             const id = player.continent_id;
@@ -65,7 +60,6 @@ export default async function Page() {
         playerList: playerList,
         placementResultRecord: placementResultRecord,
         continentPositionRecord: continentPositionRecord,
-        user: user
     }
 
     return (

@@ -72,10 +72,6 @@ function TerritoryArea({
         }
     }, [player.image_url, player.image_status]);
 
-    useEffect(() => {
-        console.log("player updated", player);
-    }, [player]);
-
     return (
         <group position={[x, y, 1.1]}>
             {/* 🌳 NEW: 기본 직사각형 베이스 - 최적화된 애니메이션 */}

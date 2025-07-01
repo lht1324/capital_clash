@@ -1,12 +1,12 @@
 import {User as SupabaseUser, UserResponse} from "@supabase/auth-js";
-import {createSupabaseServerReadOnly} from "@/lib/supabase/supabaseServer";
-import {Database} from "@/types/database";
-import {cookies} from "next/headers";
+import { createSupabaseServer } from "@/lib/supabase/supabaseServer";
+import { unstable_noStore as noStore } from 'next/cache';
 
 
 export async function getSupabaseUser(): Promise<SupabaseUser | null> {
+    noStore();
     try {
-        const supabase = await createSupabaseServerReadOnly();
+        const supabase = await createSupabaseServer();
         const { data: { user }, error: userError }: UserResponse = await supabase.auth.getUser();
 
         if (userError) throw userError;

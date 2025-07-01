@@ -12,12 +12,15 @@ import {usersClientAPI} from "@/api/client/supabase/usersClientAPI";
 import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
+import {useRouter} from "next/navigation";
 
 export interface HeaderClientProps {
 
 }
 
 function HeaderClient(props: HeaderClientProps) {
+    const router = useRouter();
+
     const [isRankingModalOpen, setIsRankingModalOpen] = useState(false)
     const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
     const [isProfileInfoModalOpen, setIsProfileInfoModalOpen] = useState(false)
@@ -31,6 +34,7 @@ function HeaderClient(props: HeaderClientProps) {
     }, [isContinentsInitialized, isPlayersInitialized, isUsersInitialized]);
 
     const userPlayerInfo = useMemo(() => {
+        console.log("userHeader", user);
         return playerList.find((player) => {
             return player.user_id === user?.id;
         }) ?? null;
@@ -40,15 +44,21 @@ function HeaderClient(props: HeaderClientProps) {
         try {
             await usersClientAPI.signInWithOAuth();
         } catch (error) {
-            console.error('로그인 중 오류 발생:', error)
+            console.error('로그인 중 오류 발생', error)
         }
     }, []);
 
     const handleSignOut = useCallback(async () => {
         try {
-            await usersClientAPI.signOutWithOAuth();
+            const isConfirmed = confirm("Are you sure you want to sign out?");
+
+            if (isConfirmed) {
+                await usersClientAPI.signOutWithOAuth(() => {
+                    router.refresh();
+                });
+            }
         } catch (error) {
-            console.error('로그아웃 중 오류 발생:', error)
+            console.error('로그아웃 중 오류 발생', error)
         }
     }, []);
 

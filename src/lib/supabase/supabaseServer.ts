@@ -11,7 +11,7 @@ export async function createSupabaseServer(): Promise<SupabaseClient<Database>> 
 
     return createServerClient<Database>(
         process.env.SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
                 /** 브라우저가 보낸 쿠키 → Supabase */
@@ -33,28 +33,28 @@ export async function createSupabaseServer(): Promise<SupabaseClient<Database>> 
     )
 }
 
-export async function createSupabaseServerReadOnly(): Promise<SupabaseClient<Database>> {
-    // v15+: Promise 반환
-    const store = await cookies();
-
-    return createServerClient<Database>(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        {
-            cookies: {
-                /** 브라우저가 보낸 쿠키 → Supabase */
-                getAll() {
-                    return store.getAll().map(({ name, value, ...opts }) => ({
-                        name,
-                        value,
-                        options: opts as CookieOptions,
-                    }))
-                },
-                /** Supabase가 돌려준 쿠키 → 브라우저 */
-                setAll() {
-                    /* no-op */
-                },
-            },
-        },
-    )
-}
+// export async function createSupabaseServerReadOnly(): Promise<SupabaseClient<Database>> {
+//     // v15+: Promise 반환
+//     const store = await cookies();
+//
+//     return createServerClient<Database>(
+//         process.env.SUPABASE_URL!,
+//         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+//         {
+//             cookies: {
+//                 /** 브라우저가 보낸 쿠키 → Supabase */
+//                 getAll() {
+//                     return store.getAll().map(({ name, value, ...opts }) => ({
+//                         name,
+//                         value,
+//                         options: opts as CookieOptions,
+//                     }))
+//                 },
+//                 /** Supabase가 돌려준 쿠키 → 브라우저 */
+//                 setAll() {
+//                     /* no-op */
+//                 },
+//             },
+//         },
+//     )
+// }

@@ -1,6 +1,5 @@
 import {baseDeleteFetch, baseGetFetch, basePatchFetch, basePostFetch, basePutFetch} from "@/api/baseFetch";
 import {Player} from "@/api/types/supabase/Players";
-import {PostPlayersReq} from "@/api/types/supabase/players/PostPlayersReq";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL + "players/";
 
@@ -13,7 +12,7 @@ export const playersClientAPI = {
         return await postFetch("", req);
     },
 
-    async getPlayersById(id: string): Promise<Player> {
+    async getPlayerById(id: string): Promise<Player> {
         return await getFetch(`${id}`)
     },
 
