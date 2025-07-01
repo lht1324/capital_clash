@@ -123,7 +123,17 @@ function HeaderClient(props: HeaderClientProps) {
                     <DropDownMenu
                         trigger={
                             <div className="flex items-center space-x-2">
-                                <UserCircleIcon className="h-6 w-6" />
+                                {user?.avatar_url ? (
+                                    <Image
+                                        src={user.avatar_url}
+                                        alt="User Avatar"
+                                        width={24}
+                                        height={24}
+                                        className="rounded-full"
+                                    />
+                                ) : (
+                                    <UserCircleIcon className="h-6 w-6" />
+                                )}
                                 <span>{user?.name || 'User'}</span>
                             </div>
                         }
