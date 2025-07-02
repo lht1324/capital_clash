@@ -120,6 +120,7 @@ export interface Database {
                     previous_sunday_view: number
                     last_viewed_at?: string
                     area_color?: string
+                    is_changed_continent: boolean
                 }
                 Insert: {
                     id?: string
@@ -140,6 +141,7 @@ export interface Database {
                     previous_sunday_view: number
                     last_viewed_at?: string
                     area_color?: string
+                    is_changed_continent: boolean
                 }
                 Update: {
                     id?: string
@@ -160,6 +162,7 @@ export interface Database {
                     previous_sunday_view: number
                     last_viewed_at?: string
                     area_color?: string
+                    is_changed_continent: boolean
                 }
             }
 

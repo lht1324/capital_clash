@@ -1,13 +1,11 @@
 import { create } from 'zustand'
 import {Continent} from "@/api/types/supabase/Continents";
 
-export type ContinentId = string
-
 interface ContinentStore {
     // 상태
     isContinentsInitialized: boolean
 
-    continents: Record<ContinentId, Continent>
+    continents: Record<string, Continent>
     continentList: Continent[],
 
     // 액션

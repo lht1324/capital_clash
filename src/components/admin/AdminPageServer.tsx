@@ -4,9 +4,9 @@ import {getSupabaseUser} from "@/utils/userUtils";
 import AdminPageClient from "@/components/admin/AdminPageClient";
 
 export default async function AdminPageServer() {
-    const playerList = await playersServerAPI.getAll();
+    const playerList = await playersServerAPI.getPlayers();
     const authUser = await getSupabaseUser();
-    const user = await usersServerAPI.getByUserid(authUser?.id);
+    const user = await usersServerAPI.getUsersByUserid(authUser?.id);
 
     const isUserAdmin = user?.role === 'admin';
 

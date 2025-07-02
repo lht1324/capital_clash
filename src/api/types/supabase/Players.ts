@@ -16,6 +16,7 @@ export interface Player {
     previous_sunday_view: number
     last_viewed_at?: string
     area_color?: string
+    is_changed_continent: boolean
 }
 
 export enum ImageStatus {

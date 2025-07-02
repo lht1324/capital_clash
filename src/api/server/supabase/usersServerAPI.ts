@@ -1,8 +1,8 @@
-import { createSupabaseServer } from "@/lib/supabase/supabaseServer";
 import {User} from "@/api/types/supabase/Users";
+import {createSupabaseServer} from "@/lib/supabase/supabaseServer";
 
 export const usersServerAPI = {
-    async getAll(): Promise<User[]> {
+    async getUsers(): Promise<User[]> {
         const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase
@@ -15,14 +15,14 @@ export const usersServerAPI = {
         return data || [];
     },
 
-    async getByUserid(userId?: string): Promise<User | null> {
+    async getUsersByUserid(userId?: string): Promise<User | null> {
         if (!userId) return null;
+
+        const supabase = await createSupabaseServer();
 
         console.log('🔄 유저 정보 불러오기 시작')
 
         try {
-            const supabase = await createSupabaseServer();
-
             const { data, error } = await supabase
                 .from('users')
                 .select('*')

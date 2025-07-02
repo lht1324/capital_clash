@@ -16,6 +16,7 @@ import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
 import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
 import {storageClientAPI} from "@/api/client/supabase/storageClientAPI";
+import {polarClientAPI} from "@/api/client/polar/polarClientAPI";
 
 export interface SidebarClientProps {
 
@@ -83,20 +84,43 @@ function SidebarClient(props: SidebarClientProps) {
 
         if (isConfirmed) {
             try {
-                // Update the investor's continent_id
-                // const result = await investorsAPI.updateContinentId(userPlayerInfo.id, selectedContinentId);
-                const result = await playersClientAPI.patchPlayersById(
-                    userPlayerInfo.id,
-                    {
-                        continent_id: selectedContinentId
+                const isAlreadyChangedContinent = userPlayerInfo.is_changed_continent; // once free, patchPlayers or postCheckout
+
+                if (isAlreadyChangedContinent) {
+                    const getProductsResponse = await polarClientAPI.getProductsClient();
+
+                    const productId = getProductsResponse.items.find((item) => {
+                        return item.name.includes("continent");
+                    })?.id;
+
+                    if (!productId || !user) {
+                        throw new Error("No product found.");
                     }
-                )
-                console.log(`Continent switched to: ${selectedContinentId}`, result);
+
+                    const postCheckoutsResponse = await polarClientAPI.postCheckoutsChangeContinentClient(
+                        productId,
+                        userPlayerInfo.id,
+                        selectedContinentId,
+                        user.email,
+                    );
+
+                    window.location.assign(postCheckoutsResponse.url);
+                } else {
+                    await playersClientAPI.patchPlayersById(
+                        userPlayerInfo.id,
+                        {
+                            continent_id: selectedContinentId,
+                            is_changed_continent: true,
+                        }
+                    )
+
+                    alert(`Continent moved from ${continents[userPlayerInfo.continent_id]?.name} to ${continents[selectedContinentId]?.name}!`);
+                }
             } catch (error) {
                 console.error('Failed to switch continent:', error);
             }
         }
-    }, [userPlayerInfo]);
+    }, [continents, user, userPlayerInfo]);
 
     // Handle image upload
     const handleImageUpload = useCallback(async (file: File) => {

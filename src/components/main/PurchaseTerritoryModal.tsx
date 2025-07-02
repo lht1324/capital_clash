@@ -1,14 +1,11 @@
 'use client'
 
 import {useState, useEffect, useMemo, useCallback, useRef, ChangeEvent, memo} from 'react'
-import {type ContinentId, useContinentStore} from '@/store/continentStore'
-import {getProductsClient, postCheckoutsClient} from "@/api/client/polar/PolarClientAPI";
-import {Continent} from "@/api/types/supabase/Continents";
-import {CONTINENT_MAX_USER_COUNT} from "@/components/main/continent_map/continent_map_public_variables";
-import {Player} from "@/api/types/supabase/Players";
-import {User} from "@/api/types/supabase/Users";
+import {useContinentStore} from '@/store/continentStore'
 import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
+import {polarClientAPI} from "@/api/client/polar/polarClientAPI";
+import {CONTINENT_MAX_USER_COUNT} from "@/components/main/continent_map/continent_map_public_variables";
 
 function PurchaseTerritoryModal({
     onClose
@@ -22,7 +19,7 @@ function PurchaseTerritoryModal({
     const { playerList } = usePlayersStore();
     const { user } = useUserStore();
 
-    const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null)
+    const [selectedContinentId, setSelectedContinentId] = useState<string | null>(null)
     const [investmentAmount, setInvestmentAmount] = useState<number>(1)
     const [investorName, setInvestorName] = useState<string>('')
     const [isCalculating, setIsCalculating] = useState(false)
@@ -107,7 +104,7 @@ function PurchaseTerritoryModal({
     }, [expectedSharePercentage, selectedContinentMaxUserCount]);
 
     // 대륙별 현재 투자자 수 계산
-    const getContinentUserCount = useCallback((continentId: ContinentId) => {
+    const getContinentUserCount = useCallback((continentId: string) => {
         return playerList.filter((investor) => {
             return investor.continent_id === continentId
         }).length;
@@ -136,7 +133,7 @@ function PurchaseTerritoryModal({
     }, []);
 
     // 중복 투자 검증
-    const validateDuplicateInvestment = useCallback((continentId: ContinentId) => {
+    const validateDuplicateInvestment = useCallback((continentId: string) => {
         if (isAdditionalStake) return true
 
         // 선택한 대륙이 가득 찬 경우
@@ -175,12 +172,12 @@ function PurchaseTerritoryModal({
 
     // 구매/추가투자 처리
     const handlePurchase = useCallback(async () => {
-        if (!isPurchasePossible) return;
+        if (!isPurchasePossible || !user) return;
 
         setIsCalculating(true)
 
         try {
-            const getProductsResponse = await getProductsClient();
+            const getProductsResponse = await polarClientAPI.getProductsClient();
 
             const productId = getProductsResponse.items.find((item) => {
                 return !item.name.includes("continent");
@@ -190,44 +187,22 @@ function PurchaseTerritoryModal({
                 throw new Error("No product found.");
             }
 
-            const postCheckoutsResponse = await postCheckoutsClient(
+            const postCheckoutsResponse = await polarClientAPI.postCheckoutsStakeClient(
                 productId,
                 user.id,
                 investmentAmount,
-                investorName,
+                user.email,
+                investorName.length !== 0 ? investorName : null,
                 selectedContinentId,
-                user?.email
             );
 
-            window.location.href = postCheckoutsResponse.url;
+            // window.location.href = postCheckoutsResponse.url;
+            window.location.assign(postCheckoutsResponse.url);
         } catch (error) {
             console.error(error);
             setIsCalculating(false)
             setValidationError('An error occurred while processing your investment. Please try again.')
         }
-        // try {
-        //     if (user) {
-        //         if (isAdditionalStake) {
-        //             if (userPlayerInfo) {
-        //                 await updateInvestorInvestmentAmount(userPlayerInfo, investmentAmount);
-        //             }
-        //         } else {
-        //             if (selectedContinentId) {
-        //                 await insertInvestor(user?.id, selectedContinentId, investmentAmount, investorName);
-        //             }
-        //         }
-        //     }
-        //
-        //     // 성공 시 모달 닫기
-        //     setTimeout(() => {
-        //         setIsCalculating(false)
-        //         onClose()
-        //     }, 1000)
-        // } catch (error) {
-        //     setIsCalculating(false)
-        //     setValidationError('An error occurred while processing your investment. Please try again.')
-        // }
-        // }, [isPurchasePossible, selectedContinentId, investmentAmount, investorName]);
     }, [isPurchasePossible, selectedContinentId, investmentAmount, investorName]);
 
 

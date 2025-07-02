@@ -10,16 +10,9 @@ export async function GET(
     { params: { id } }: { params: { id: string } }
 ) {
     try {
-        const supabase = await createSupabaseServer();
+        const player = await playersServerAPI.getPlayersByUserId(id);
 
-        const { data, error } = await supabase
-            .from('investors')
-            .select('*')
-            .eq("id", id);
-
-        if (error) throw error
-
-        return NextResponse.json({ ...(data?.[0]) }, { status: 201 });
+        return NextResponse.json({ ...player }, { status: 201 });
     } catch (error) {
         console.log(error);
 
@@ -39,7 +32,7 @@ export async function PATCH(
         const updatePlayerInfo: Partial<Player> = await request.json();
         console.log(`updatePlayerInfo[${playerId}]`, updatePlayerInfo)
 
-        const result = await playersServerAPI.update(playerId, updatePlayerInfo);
+        const result = await playersServerAPI.patchPlayersById(playerId, updatePlayerInfo);
 
         return NextResponse.json({ data: result }, { status: 201 });
     } catch (error) {

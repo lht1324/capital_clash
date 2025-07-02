@@ -1,10 +1,9 @@
 import { createSupabaseServer } from "@/lib/supabase/supabaseServer";
 import {Continent} from "@/api/types/supabase/Continents";
 
-// 🌍 대륙 관련 함수들
 export const continentsServerAPI = {
     // 모든 대륙 조회
-    async getAll(): Promise<Continent[]> {
+    async getContinents(): Promise<Continent[]> {
         const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase

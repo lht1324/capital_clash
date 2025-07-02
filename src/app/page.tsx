@@ -11,8 +11,8 @@ import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
 import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
 
 export default async function Page() {
-    const continentList: Continent[] = await continentsServerAPI.getAll();
-    const playerList: Player[] = await playersServerAPI.getAll();
+    const continentList: Continent[] = await continentsServerAPI.getContinents();
+    const playerList: Player[] = await playersServerAPI.getPlayers();
     const vipPlayerList: Player[] = Object.values(
         playerList.reduce((acc, player) => {
             const id = player.continent_id;
