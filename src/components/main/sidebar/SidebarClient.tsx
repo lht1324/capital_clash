@@ -1,7 +1,7 @@
 'use client'
 
 import {memo, useCallback, useEffect, useMemo, useState} from 'react'
-import {calculateInvestorCoordinates} from "@/lib/treemapAlgorithm";
+import {calculatePlayerCoordinates} from "@/lib/treemapAlgorithm";
 import {useComponentStateStore} from "@/store/componentStateStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import TerritoryInfoEditModal from "@/components/main/sidebar/TerritoryInfoEditModal";
@@ -56,13 +56,10 @@ function SidebarClient(props: SidebarClientProps) {
                 return player.continent_id === userPlayerInfo.continent_id;
             });
 
-            const userCoordinates = calculateInvestorCoordinates(
+            const userCoordinates = calculatePlayerCoordinates(
                 vipPlayerList,
                 filteredPlayerListByContinent,
                 userPlayerInfo.continent_id,
-                !!(vipPlayerList.find((player) => {
-                    return player.id === userPlayerInfo.id;
-                })),
                 userPlayerInfo.id,
             );
 

@@ -19,64 +19,12 @@ import {useUserStore} from "@/store/userStore";
 
 function ContinentMap() {
     const { continentList } = useContinentStore();
-    const { players, playerList, placementResultRecord, continentPositionRecord } = usePlayersStore();
-    const { user } = useUserStore();
-    const { setCameraTarget } = useCameraStateStore();
+    const { players, placementResultRecord, continentPositionRecord } = usePlayersStore();
+    const { externalCameraTarget, setCameraTarget, setExternalCameraTarget } = useCameraStateStore();
 
+    const [isCameraInitialized, setIsCameraInitialized] = useState(false);
     const [isTerritoryInfoModalOpen, setIsTerritoryInfoModalOpen] = useState(false);
     const [territoryOwnerId, setTerritoryOwnerId] = useState<string | null>(null);
-
-    const territoryOwnerPlayerInfo = useMemo(() => {
-        return territoryOwnerId
-            ? players[territoryOwnerId] ?? null
-            : null
-    }, [territoryOwnerId]);
-
-    const filteredPlayerListByContinent = useMemo(() => {
-        return playerList.filter((player: Player) => {
-            return player.continent_id === territoryOwnerPlayerInfo?.continent_id;
-        })
-    }, [playerList, territoryOwnerPlayerInfo]);
-
-    const continentalTotalStakeAmount = useMemo(() => {
-        return playerList.filter((player: Player) => {
-            return player.continent_id === territoryOwnerPlayerInfo?.continent_id;
-        }).reduce((acc, player) => {
-            return acc + player.investment_amount;
-        }, 0);
-    }, [playerList, territoryOwnerPlayerInfo]);
-
-    const territoryInfoViewModalProps: TerritoryInfoViewModalProps | null = useMemo(() => {
-        return territoryOwnerPlayerInfo ? {
-            continentList: continentList,
-            territoryOwnerPlayerInfo: territoryOwnerPlayerInfo,
-            isUserOpenedModal: territoryOwnerPlayerInfo?.user_id === user?.id,
-            userContinentalRank: (() => {
-                return filteredPlayerListByContinent.sort((a, b) => {
-                    return b.investment_amount - a.investment_amount;
-                }).findIndex((investor) => {
-                    return investor.id === territoryOwnerPlayerInfo?.id;
-                }) + 1;
-            })(),
-            userOverallRank: (() => {
-                return playerList.sort((a, b) => {
-                    return b.investment_amount - a.investment_amount;
-                }).findIndex((player: Player) => {
-                    return player.id === territoryOwnerPlayerInfo.id;
-                }) + 1;
-            })(),
-            userSharePercentage: (() => {
-                const userStakeAmount = territoryOwnerPlayerInfo?.investment_amount ?? 0;
-                const calcResult = userStakeAmount / continentalTotalStakeAmount * 100;
-
-                return calcResult > 0.01 ? calcResult : 0.01;
-            })(),
-            onClose: () => {
-                setTerritoryOwnerId(null);
-                setIsTerritoryInfoModalOpen(false);
-            },
-        } : null;
-    }, [territoryOwnerPlayerInfo, user, continentList, playerList, filteredPlayerListByContinent, continentalTotalStakeAmount]);
 
     const initialCameraPositionZ = useMemo(() => {
         return getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord);
@@ -91,11 +39,8 @@ function ContinentMap() {
             // Create a copy of the daily views array
             const updatedDailyViews = [...prevDailyViews];
 
-            // 주간 초기화 로직 추가해야 함
-            console.log(`prevUpdatedDailyViews(${dayOfWeek})`, updatedDailyViews);
             // Increment the view count for the current day
             updatedDailyViews[dayOfWeek]++;
-            console.log(`newUpdatedDailyViews(${dayOfWeek})`, updatedDailyViews);
 
             // Update the daily views in the database
             await playersClientAPI.patchPlayersById(playerId, {
@@ -107,16 +52,16 @@ function ContinentMap() {
     }, [players]);
 
     useEffect(() => {
-        setCameraTarget({ x: 0, y: 0, z: initialCameraPositionZ });
-    }, [initialCameraPositionZ]);
-
-    useEffect(() => {
-        console.log("players update");
-    }, [players]);
-
-    useEffect(() => {
-        console.log("playerList update");
-    }, [playerList]);
+        if (!isCameraInitialized) {
+            if (externalCameraTarget) {
+                setCameraTarget(externalCameraTarget);
+                setIsCameraInitialized(true);
+                setExternalCameraTarget(null);
+            } else {
+                setCameraTarget({ x: 0, y: 0, z: initialCameraPositionZ });
+            }
+        }
+    }, [externalCameraTarget, isCameraInitialized, initialCameraPositionZ]);
 
     return (
         <main className="w-full h-screen" style={{ backgroundColor: '#37aff7' }}>
@@ -138,8 +83,12 @@ function ContinentMap() {
                     }}
                 />
             </Canvas>
-            {isTerritoryInfoModalOpen && territoryInfoViewModalProps && <TerritoryInfoViewModal
-                {...territoryInfoViewModalProps}
+            {isTerritoryInfoModalOpen && territoryOwnerId && <TerritoryInfoViewModal
+                territoryOwnerPlayerId={territoryOwnerId}
+                onClose={() => {
+                    setTerritoryOwnerId(null);
+                    setIsTerritoryInfoModalOpen(false);
+                }}
             />}
         </main>
     )

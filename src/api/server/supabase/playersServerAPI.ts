@@ -30,6 +30,20 @@ export const playersServerAPI = {
     },
 
     // 특정 사용자의 투자자 정보 조회
+    async getPlayersByPlayerId(playerId: string): Promise<Player | null> {
+        const supabase = await createSupabaseServer();
+
+        const { data, error } = await supabase
+            .from('investors')
+            .select('*')
+            .eq('id', playerId)
+            .single();
+
+        if (error) throw error
+        return data || null
+    },
+
+    // 특정 사용자의 투자자 정보 조회
     async getPlayersByUserId(userId: string): Promise<Player | null> {
         const supabase = await createSupabaseServer();
 
@@ -37,10 +51,7 @@ export const playersServerAPI = {
             .from('investors')
             .select('*')
             .eq('user_id', userId)
-            .single()
-
-        console.log("playersData", data);
-        console.log("playersError", error);
+            .single();
 
         if (error) throw error
         return data || null

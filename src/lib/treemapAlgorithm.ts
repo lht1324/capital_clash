@@ -219,13 +219,16 @@ function centerPlacements(placements: Placement[], boundary: Boundary) {
 }
 
 // 투자자 좌표 계산 함수
-export function calculateInvestorCoordinates(
+export function calculatePlayerCoordinates(
     vipPlayerList: Player[],
     filteredPlayerListByUserContinent: Player[],
     userContinentId: string,
-    isVip: boolean,
     userPlayerInfoId: string,
 ): Position | null {
+    const isVip = !!(vipPlayerList.find((player) => {
+        return player.id === userPlayerInfoId;
+    }));
+
     const cellLength = !isVip
         ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT
         : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
