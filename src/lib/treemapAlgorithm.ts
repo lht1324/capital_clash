@@ -16,7 +16,6 @@ import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
 } from "@/components/main/continent_map/continent_map_public_variables";
-import {Investor} from "@/store/investorsStore";
 
 export type PlacementResult = {
     placements: Placement[],
@@ -222,7 +221,7 @@ function centerPlacements(placements: Placement[], boundary: Boundary) {
 // 투자자 좌표 계산 함수
 export function calculateInvestorCoordinates(
     vipPlayerList: Player[],
-    filteredInvestorListByUserContinent: Investor[],
+    filteredPlayerListByUserContinent: Player[],
     userContinentId: string,
     isVip: boolean,
     userPlayerInfoId: string,
@@ -235,7 +234,7 @@ export function calculateInvestorCoordinates(
     const centralPlacementResult = calculateSquareLayout(vipPlayerList, "central");
     const userPlacementResult = isVip
         ? centralPlacementResult
-        : calculateSquareLayout(filteredInvestorListByUserContinent, userContinentId);
+        : calculateSquareLayout(filteredPlayerListByUserContinent, userContinentId);
 
     const userPlacementInfo = userPlacementResult.placements.find((placement) => {
         return placement.playerId === userPlayerInfoId;

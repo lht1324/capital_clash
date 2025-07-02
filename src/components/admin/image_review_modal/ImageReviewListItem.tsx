@@ -1,13 +1,12 @@
 import {memo, useCallback, useMemo, useState} from "react";
-import {Investor} from "@/store/investorsStore";
-import {ImageStatus} from "@/api/types/supabase/Players";
+import {ImageStatus, Player} from "@/api/types/supabase/Players";
 import {getLocaleDateString} from "@/utils/dateUtils";
 
 function ImageReviewListItem({
     player,
     onClickImageStatusChangeButton,
 } : {
-    player: Investor,
+    player: Player,
     onClickImageStatusChangeButton: (id: string, imageStatus: ImageStatus) => void;
 }) {
     const [isExpanded, setIsExpanded] = useState(false);

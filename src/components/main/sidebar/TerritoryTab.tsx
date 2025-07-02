@@ -1,9 +1,7 @@
 import {memo, useCallback, useMemo} from "react";
-import {Investor} from "@/store/investorsStore";
-import {ImageStatus, Player} from "@/api/types/supabase/Players";
-import {Continent} from "@/api/types/supabase/Continents";
-import {usePlayersStore} from "@/store/playersStore";
+import {ImageStatus} from "@/api/types/supabase/Players";
 import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
 
 function TerritoryTab({

@@ -2,17 +2,7 @@
 
 import {memo, useMemo} from "react";
 import SingleContinent from "@/components/main/continent_map/SingleContinent";
-import {
-    PlacementResult,
-    Position
-} from "@/lib/treemapAlgorithm";
 import * as THREE from "three";
-import {
-    CENTRAL_INCREASE_RATIO,
-    CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
-} from "@/components/main/continent_map/continent_map_public_variables";
-import {getFilteredPlayerList} from "@/utils/playerUtils";
-import {Continent} from "@/api/types/supabase/Continents";
 import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 

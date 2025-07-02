@@ -2,8 +2,6 @@
 
 import {memo, useCallback, useEffect, useMemo, useState} from 'react'
 import {calculateInvestorCoordinates} from "@/lib/treemapAlgorithm";
-import {storageAPI} from '@/lib/supabase/supabase-storage-api';
-import {investorsAPI} from "@/lib/supabase/supabase-investors-api";
 import {useComponentStateStore} from "@/store/componentStateStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import TerritoryInfoEditModal from "@/components/main/sidebar/TerritoryInfoEditModal";
@@ -16,6 +14,8 @@ import {ImageStatus} from "@/api/types/supabase/Players";
 import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
+import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
+import {storageClientAPI} from "@/api/client/supabase/storageClientAPI";
 
 export interface SidebarClientProps {
 
@@ -84,7 +84,13 @@ function SidebarClient(props: SidebarClientProps) {
         if (isConfirmed) {
             try {
                 // Update the investor's continent_id
-                const result = await investorsAPI.updateContinentId(userPlayerInfo.id, selectedContinentId);
+                // const result = await investorsAPI.updateContinentId(userPlayerInfo.id, selectedContinentId);
+                const result = await playersClientAPI.patchPlayersById(
+                    userPlayerInfo.id,
+                    {
+                        continent_id: selectedContinentId
+                    }
+                )
                 console.log(`Continent switched to: ${selectedContinentId}`, result);
             } catch (error) {
                 console.error('Failed to switch continent:', error);
@@ -108,18 +114,21 @@ function SidebarClient(props: SidebarClientProps) {
                     console.log('🗑️ 기존 이미지 삭제 시작...')
 
                     // 1. 기존 이미지의 images 테이블 레코드 찾기
-                    const imageList = await storageAPI.getImagesByInvestorId(userPlayerInfo.id);
+                    // const imageList = await storageAPI.getImagesByInvestorId(userPlayerInfo.id);
+                    const imageList = await storageClientAPI.getImagesByInvestorId(userPlayerInfo.id);
                     const existingImage = imageList.find((imageInfo) => {
                         return imageInfo.original_url === userImageUrl;
                     });
 
                     if (existingImage) {
                         // 2. 파일 경로 추출
-                        const filePath = storageAPI.getFilePathFromUrl(existingImage.original_url);
+                        // const filePath = storageAPI.getFilePathFromUrl(existingImage.original_url);
+                        const filePath = storageClientAPI.getFilePathFromUrl(existingImage.original_url);
 
                         if (filePath) {
                             // 3. 기존 이미지 삭제
-                            const deleteSuccess = await storageAPI.deleteImage(existingImage.id, filePath);
+                            // const deleteSuccess = await storageAPI.deleteImage(existingImage.id, filePath);
+                            const deleteSuccess = await storageClientAPI.deleteImage(existingImage.id, filePath);
                             if (deleteSuccess) {
                                 console.log('✅ 기존 이미지 삭제 완료');
                             } else {
@@ -140,7 +149,7 @@ function SidebarClient(props: SidebarClientProps) {
             console.log(loadingMessage)
 
             // Supabase Storage에 이미지 업로드
-            const { imageData, error } = await storageAPI.uploadImage(
+            const { imageData, error } = await storageClientAPI.uploadImage(
                 file,
                 user.id,
                 userPlayerInfo.id

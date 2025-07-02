@@ -1,9 +1,10 @@
-import supabase from "@/lib/supabase/supabase";
-import {User as SupabaseUser} from "@supabase/auth-js/dist/module/lib/types";
+import { createSupabaseServer } from "@/lib/supabase/supabaseServer";
 import {User} from "@/api/types/supabase/Users";
 
 export const usersServerAPI = {
     async getAll(): Promise<User[]> {
+        const supabase = await createSupabaseServer();
+
         const { data, error } = await supabase
             .from('users')
             .select('*')
@@ -20,6 +21,8 @@ export const usersServerAPI = {
         console.log('🔄 유저 정보 불러오기 시작')
 
         try {
+            const supabase = await createSupabaseServer();
+
             const { data, error } = await supabase
                 .from('users')
                 .select('*')

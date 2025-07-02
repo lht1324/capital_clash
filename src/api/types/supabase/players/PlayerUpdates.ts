@@ -3,6 +3,7 @@ import {Player} from "@/api/types/supabase/Players";
 export enum UpdateType {
     STAKE_CHANGE = 'STAKE_CHANGE',
     NEW_PLAYER = 'NEW_PLAYER',
+    CONTINENT_CHANGE = 'CONTINENT_CHANGE',
     PLAYER_REMOVED = 'PLAYER_REMOVED',
     IMAGE_APPROVED = 'IMAGE_APPROVED',
     IMAGE_REJECTED = 'IMAGE_REJECTED',

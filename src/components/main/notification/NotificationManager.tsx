@@ -1,18 +1,18 @@
 'use client'
 
 import {useState, useEffect, memo, useCallback, useMemo} from 'react'
-import {Investor, useInvestorStore} from "@/store/investorsStore";
-import {useComponentStateStore} from "@/store/componentStateStore";
-import NotificationToast from "@/components/main/notification/NotificationToast";
-import {Continent} from "@/api/types/supabase/Continents";
-import {Player} from "@/api/types/supabase/Players";
+import {UpdateType} from "@/api/types/supabase/players/PlayerUpdates";
 import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
+import {useComponentStateStore} from "@/store/componentStateStore";
+import {Player} from "@/api/types/supabase/Players";
+import NotificationToast from "@/components/main/notification/NotificationToast";
 
 export interface NotificationData {
     id: string
     investorName: string
     continentName: string
+    continentColor: string
     additionalStakeAmount: number
     totalStakeAmount: number
     timestamp: Date
@@ -22,6 +22,8 @@ export interface NotificationData {
 export enum NotificationType {
     NEW_STAKE = 'NEW_STAKE',
     NEW_USER = 'NEW_USER',
+    CONTINENT_CHANGE = 'CONTINENT_CHANGE',
+    NO_NEED_TO_NOTIFY = 'NO_NEED_TO_NOTIFY'
 }
 
 interface NotificationManagerProps {
@@ -36,12 +38,10 @@ function NotificationManager({
     isEnabled
 }: NotificationManagerProps) {
     const { continentList } = useContinentStore();
-    const { playerList } = usePlayersStore();
+    const { lastUpdatedPlayerList } = usePlayersStore();
     const { isSidebarOpen } = useComponentStateStore();
-    const { getStakeUpdatedPlayerList } = useInvestorStore();
 
     const [notifications, setNotifications] = useState<NotificationData[]>([])
-    const [triggerPlayerList, setTriggerPlayerList] = useState<Player[]>([]);
 
     // 🔥 실제 투자 알림만 처리 (테스트 로직 제거됨)
     // 실제 투자가 발생했을 때 알림을 추가하는 함수
@@ -88,42 +88,58 @@ function NotificationManager({
     }, [isEnabled]);
 
     useEffect(() => {
-        setTriggerPlayerList((prevTriggerPlayerList) => {
-            if (prevTriggerPlayerList.length !== 0) {
-                const updatedPlayerList = getStakeUpdatedPlayerList(prevTriggerPlayerList);
-                const notificationList = updatedPlayerList.map((updatedPlayerInfo) => {
-                    const { player: updatedPlayer, isNewUser } = updatedPlayerInfo;
-                    const prevPlayer = prevTriggerPlayerList.find((player) => {
-                        return player.id === updatedPlayer.id;
-                    });
+        if (lastUpdatedPlayerList.length === 0) return;
 
-                    const additionalStakeAmount = prevPlayer
-                        ? updatedPlayer.investment_amount - prevPlayer.investment_amount
-                        : updatedPlayer.investment_amount;
+        const notificationList: NotificationData[] = lastUpdatedPlayerList.map((updatedPlayerInfo) => {
+            const { player: updatedPlayer, updateType, previousStake } = updatedPlayerInfo;
 
-                    const continentName = continentList.find((continent) => {
-                        return continent.id === updatedPlayer.continent_id;
-                    })?.name ?? "-";
+            const additionalStakeAmount = updateType === UpdateType.STAKE_CHANGE && previousStake !== undefined
+                ? updatedPlayer.investment_amount - previousStake
+                : updatedPlayer.investment_amount;
 
-                    return {
-                        id: updatedPlayer.id,
-                        investorName: updatedPlayer.name,
-                        continentName: continentName,
-                        additionalStakeAmount: additionalStakeAmount,
-                        totalStakeAmount: updatedPlayer.investment_amount,
-                        timestamp: new Date(),
-                        notificationType: isNewUser
-                            ? NotificationType.NEW_USER
-                            : NotificationType.NEW_STAKE
-                    }
-                });
+            const continent = continentList.find((continent) => {
+                return continent.id === updatedPlayer.continent_id;
+            }) ?? null;
+            const continentName = continent?.name ?? "-";
+            const continentColor = continent?.color ?? "#6B7280";
 
-                setNotifications(notificationList)
+            let notificationType: NotificationType;
+            switch (updateType) {
+                case UpdateType.NEW_PLAYER: {
+                    notificationType = NotificationType.NEW_USER;
+                    break;
+                }
+                case UpdateType.STAKE_CHANGE: {
+                    notificationType = NotificationType.NEW_STAKE;
+                    break;
+                }
+                case UpdateType.CONTINENT_CHANGE: {
+                    notificationType = NotificationType.CONTINENT_CHANGE;
+                    break;
+                }
+                default: {
+                    notificationType = NotificationType.NO_NEED_TO_NOTIFY;
+                }
             }
 
-            return prevTriggerPlayerList;
-        })
-    }, [playerList]);
+            return notificationType !== NotificationType.NO_NEED_TO_NOTIFY
+                ? {
+                    id: updatedPlayer.id,
+                    investorName: updatedPlayer.name,
+                    continentName: continentName,
+                    continentColor: continentColor,
+                    additionalStakeAmount: additionalStakeAmount,
+                    totalStakeAmount: updatedPlayer.investment_amount,
+                    timestamp: new Date(),
+                    notificationType: notificationType
+                }
+                : null;
+        }).filter((notificationData) => {
+            return notificationData !== null;
+        });
+
+        setNotifications(notificationList);
+    }, [lastUpdatedPlayerList, continentList]);
 
     if (!isEnabled || notifications.length === 0) return null
 

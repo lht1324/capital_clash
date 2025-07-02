@@ -1,4 +1,4 @@
-import {Player} from '@/api/types/supabase/Players';
+import {ImageStatus, Player} from '@/api/types/supabase/Players';
 import {supabase} from '@/lib/supabase/supabaseClient';
 import {PlayerUpdateInfo, UpdateType} from "@/api/types/supabase/players/PlayerUpdates";
 import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
@@ -39,14 +39,16 @@ export interface PlayersStore {
  */
 const _calculateVipPlayerList = (players: Record<string, Player>): Player[] => {
     const vipsByContinent: Record<string, Player> = {};
-    for (const playerId in players) {
-        const player = players[playerId];
-        const continentId = player.continent_id;
 
-        if (!vipsByContinent[continentId] || player.investment_amount > vipsByContinent[continentId].investment_amount) {
-            vipsByContinent[continentId] = player;
+    Object.values(players).forEach((player) => {
+        const playerContinentId = player.continent_id;
+        const currentContinentVip = vipsByContinent[playerContinentId];
+
+        if (!currentContinentVip || (currentContinentVip && currentContinentVip.investment_amount < player.investment_amount)) {
+            vipsByContinent[playerContinentId] = player;
         }
-    }
+    })
+
     return Object.values(vipsByContinent);
 };
 
@@ -150,7 +152,10 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                 },
                 (payload) => {
                     console.log("payload received", payload)
-                    const { players: previousPlayers, continentListForReference: continentList } = get();
+                    const {
+                        players: previousPlayers,
+                        continentListForReference: continentList
+                    } = get();
                     const updatedInfos: PlayerUpdateInfo[] = [];
                     let newPlayers: Record<string, Player> = previousPlayers;
 
@@ -175,14 +180,31 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                             if (oldPlayer) {
                                 const isStakeAmountChanged = oldPlayer.investment_amount !== updatedPlayer.investment_amount;
                                 const isImageStatusChanged = oldPlayer.image_status !== updatedPlayer.image_status;
+                                const isContinentChanged = oldPlayer.continent_id !== updatedPlayer.continent_id;
 
-                                if (isStakeAmountChanged || isImageStatusChanged) {
+                                if (isStakeAmountChanged || isImageStatusChanged || isContinentChanged) {
                                     if (isStakeAmountChanged) {
                                         updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.STAKE_CHANGE, previousStake: oldPlayer.investment_amount });
+                                    } else if (isImageStatusChanged) {
+                                        switch(updatedPlayer.image_status) {
+                                            case ImageStatus.APPROVED: {
+                                                updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.IMAGE_APPROVED })
+                                                break;
+                                            }
+                                            case ImageStatus.REJECTED: {
+                                                updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.IMAGE_REJECTED })
+                                                break;
+                                            }
+                                            case ImageStatus.PENDING: {
+                                                updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.IMAGE_PENDING })
+                                                break;
+                                            }
+                                            default: {
+                                                break;
+                                            }
+                                        }
                                     } else {
-                                        if (updatedPlayer.image_status === 'approved') updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.IMAGE_APPROVED });
-                                        else if (updatedPlayer.image_status === 'rejected') updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.IMAGE_REJECTED });
-                                        else if (updatedPlayer.image_status === 'pending') updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.IMAGE_PENDING });
+                                        updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.CONTINENT_CHANGE })
                                     }
                                 } else {
                                     updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.NONE_UI_UPDATE });
@@ -212,11 +234,29 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                         })
 
                         if (needUIUpdate) {
-                            const rerenderingContinentIdList = [...new Set(updatedInfos.filter((updatedInfo) => {
-                                return updatedInfo.updateType === UpdateType.STAKE_CHANGE || updatedInfo.updateType === UpdateType.NEW_PLAYER;
-                            }).map((updatedInfo) => {
-                                return updatedInfo.player.continent_id;
-                            }))];
+                            const continentIdsToRerender = new Set<string>();
+
+                            for (const { updateType, player } of updatedInfos) {
+                                // 1) 공통 케이스: 새 대륙 ID
+                                if (
+                                    updateType === UpdateType.STAKE_CHANGE ||
+                                    updateType === UpdateType.NEW_PLAYER ||
+                                    updateType === UpdateType.CONTINENT_CHANGE
+                                ) {
+                                    continentIdsToRerender.add(player.continent_id);
+                                }
+
+                                // 2) 대륙 이동이면 이전 대륙 ID도 추가
+                                if (updateType === UpdateType.CONTINENT_CHANGE) {
+                                    const prevContinentId = previousPlayers[player.id]?.continent_id;
+
+                                    if (prevContinentId) continentIdsToRerender.add(prevContinentId);
+                                }
+                            }
+
+                            const rerenderingContinentIdList = [...continentIdsToRerender, "central"];
+
+                            console.log("rerenderingList", rerenderingContinentIdList)
 
                             if (rerenderingContinentIdList.length !== 0) {
                                 const {
@@ -225,6 +265,8 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                                 } = get();
 
                                 const newVipList = _calculateVipPlayerList(newPlayers);
+
+                                console.log("newVipList", newVipList);
                                 const { newPlacementResultRecord, newContinentPositionRecord } = _calculateContinentalLayoutInfo(
                                     newPlayerList,
                                     newVipList,

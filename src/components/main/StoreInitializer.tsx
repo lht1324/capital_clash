@@ -22,15 +22,15 @@ export interface StoreInitializerProps {
 function StoreInitializer(props: StoreInitializerProps) {
     const { isContinentsInitialized, initializeContinents } = useContinentStore();
     const { isPlayersInitialized, initializePlayers, subscribeToPlayers } = usePlayersStore();
-    const { isUsersInitialized, initializeUser } = useUserStore();
-
-    let unsubscribePlayers: (() => void) | null = null;
-    let authListener: any = null;
+    const { initializeUser } = useUserStore();
 
     useEffect(() => {
         if (!isContinentsInitialized) {
             initializeContinents(props.continentList);
         }
+    }, [props, isContinentsInitialized, initializeContinents]);
+
+    useEffect(() => {
         if (!isPlayersInitialized) {
             initializePlayers(
                 props.playerList,
@@ -40,37 +40,33 @@ function StoreInitializer(props: StoreInitializerProps) {
             );
         }
 
-        if (!isUsersInitialized) {
-            // onAuthStateChange 리스너 설정
-            const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-                const currentUser = session?.user ?? null;
-
-                authListener = listener;
-
-                console.log("listenerUser", currentUser);
-
-                if (currentUser) {
-                    usersClientAPI.getUserById(currentUser.id).then((user) => {
-                        console.log("listenerUserListener", user);
-                        initializeUser(user);
-                    });
-                } else {
-                    initializeUser(null);
-                }
-            });
-        }
-
         if (isPlayersInitialized) {
-            unsubscribePlayers = subscribeToPlayers();
+            const unsubscribePlayers = subscribeToPlayers();
+
+            return () => {
+                unsubscribePlayers();
+            }
         }
+    }, [props, isPlayersInitialized, initializePlayers, subscribeToPlayers]);
+
+    useEffect(() => {
+        // onAuthStateChange 리스너 설정
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            const currentUser = session?.user ?? null;
+
+            if (currentUser) {
+                usersClientAPI.getUserById(currentUser.id).then((user) => {
+                    initializeUser(user);
+                });
+            } else {
+                initializeUser(null);
+            }
+        });
 
         return () => {
-            if (isPlayersInitialized) {
-                unsubscribePlayers ? unsubscribePlayers() : null;
-            }
-            authListener?.subscription.unsubscribe();
-        };
-    }, [isContinentsInitialized, isPlayersInitialized, props, initializeContinents, initializePlayers, initializeUser, subscribeToPlayers]);
+            authListener.subscription.unsubscribe();
+        }
+    }, [initializeUser]);
 
     return null
 }
