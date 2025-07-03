@@ -11,6 +11,7 @@ import {Player} from "@/api/types/supabase/Players";
 import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
 import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
 import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
 
 type Props = {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -76,7 +77,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function Page({ searchParams }: Props) {
     const awaitedParams = await searchParams;
     const encodedPlayerId = awaitedParams?.user_identifier as string;
+    const encodedCheckoutSuccessStatus = awaitedParams?.checkout_success_status as string;
     const targetPlayerId = encodedPlayerId ? decodeBase64(decodeURIComponent(encodedPlayerId)) : null;
+    const checkoutSuccessStatus = encodedCheckoutSuccessStatus ? decodeURIComponent(encodedCheckoutSuccessStatus) : null;
 
     const continentList: Continent[] = await continentsServerAPI.getContinents();
     const playerList: Player[] = await playersServerAPI.getPlayers();
@@ -127,7 +130,10 @@ export default async function Page({ searchParams }: Props) {
         playerList: playerList,
         placementResultRecord: placementResultRecord,
         continentPositionRecord: continentPositionRecord,
+
+        // params
         targetPlayerId: targetPlayerId,
+        checkoutSuccessStatus: checkoutSuccessStatus as CheckoutSuccessStatus,
     }
 
     return (

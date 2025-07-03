@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { playersServerAPI } from "@/api/server/supabase/playersServerAPI";
+import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
 
 export async function GET(req: NextRequest) {
     try {
@@ -19,7 +20,10 @@ export async function GET(req: NextRequest) {
             continent_id: targetContinentId
         });
 
-        return NextResponse.redirect(new URL('/', req.url))
+        const redirectUrl = new URL("/", req.url);
+        redirectUrl.searchParams.set('checkout_success_status', CheckoutSuccessStatus.CONTINENT_CHANGE);
+
+        return NextResponse.redirect(redirectUrl);
     } catch (err: any) {
         console.error("Error processing Polar checkout success:", err);
         return NextResponse.json(

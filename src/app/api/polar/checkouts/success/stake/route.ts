@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { playersServerAPI } from "@/api/server/supabase/playersServerAPI";
+import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
 
 export async function GET(req: NextRequest) {
     try {
@@ -48,12 +49,10 @@ export async function GET(req: NextRequest) {
             })
         }
 
-        // TODO: 여기에 결제 성공 후 필요한 로직을 추가하세요 (예: 주문 상태 업데이트, 사용자에게 알림 등)
+        const redirectUrl = new URL("/", req.url);
+        redirectUrl.searchParams.set('checkout_success_status', CheckoutSuccessStatus.NEW_STAKE);
 
-        // 임시 응답: 성공적으로 데이터를 받았음을 알립니다.
-        // return NextResponse.json({ message: "Checkout succeed!" }, { status: 200 });
-        return NextResponse.redirect(new URL('/', req.url))
-
+        return NextResponse.redirect(redirectUrl);
     } catch (err: any) {
         console.error("Error processing Polar checkout success:", err);
         return NextResponse.json(

@@ -78,7 +78,7 @@ function TerritoryInfoViewModal({
                 : "See where I stand!";
 
         const currentContinentText = userContinentalRank === 1
-            ? `<b>Central</b> (${continentName})`
+            ? `Central (${continentName})`
             : continentName;
         const stakeText = `Total Stake - $${territoryOwnerPlayerInfo?.investment_amount.toLocaleString()}`;
         const overallRankText = `Overall Rank - #${userOverallRank}`;

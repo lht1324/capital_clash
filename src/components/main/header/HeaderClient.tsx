@@ -13,6 +13,8 @@ import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
 import {useRouter} from "next/navigation";
+import {useComponentStateStore} from "@/store/componentStateStore";
+import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
 
 export interface HeaderClientProps {
 
@@ -28,13 +30,13 @@ function HeaderClient(props: HeaderClientProps) {
     const { isContinentsInitialized } = useContinentStore();
     const { isPlayersInitialized, playerList } = usePlayersStore();
     const { isUsersInitialized, user } = useUserStore();
+    const { setCheckoutSuccessStatus } = useComponentStateStore();
 
     const isInitialized = useMemo(() => {
         return isContinentsInitialized && isPlayersInitialized && isUsersInitialized;
     }, [isContinentsInitialized, isPlayersInitialized, isUsersInitialized]);
 
     const userPlayerInfo = useMemo(() => {
-        console.log("userHeader", user);
         return playerList.find((player) => {
             return player.user_id === user?.id;
         }) ?? null;
@@ -78,7 +80,8 @@ function HeaderClient(props: HeaderClientProps) {
                 {/* 중앙 네비게이션 버튼들 */}
                 <div className="flex items-center space-x-4">
                     <button
-                        onClick={() => setIsRankingModalOpen(true)}
+                        // onClick={() => setIsRankingModalOpen(true)}
+                        onClick={() => setCheckoutSuccessStatus(CheckoutSuccessStatus.CONTINENT_CHANGE)}
                         className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                     >
                         <span>🏆</span>
@@ -100,7 +103,7 @@ function HeaderClient(props: HeaderClientProps) {
                         className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors"
                     >
                         <span>💎</span>
-                        <span>{(!!userPlayerInfo) ? "Raise Stake" : "Drop the stake"}</span>
+                        <span>{(!!userPlayerInfo) ? "Raise Stake" : "Drop Stake"}</span>
                     </button>
                 </div>
 

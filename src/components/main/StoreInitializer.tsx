@@ -11,16 +11,24 @@ import {useUserStore} from "@/store/userStore";
 import {supabase} from "@/lib/supabase/supabaseClient";
 import {usersClientAPI} from "@/api/client/supabase/usersClientAPI";
 import {useCameraStateStore} from "@/store/cameraStateStore";
+import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
+import {useComponentStateStore} from "@/store/componentStateStore";
+import {useRouter} from "next/navigation";
 
 export interface StoreInitializerProps {
     continentList: Continent[],
     playerList: Player[],
     placementResultRecord: Record<string, PlacementResult>,
     continentPositionRecord: Record<string, Position>,
+
+    // params
     targetPlayerId: string | null,
+    checkoutSuccessStatus: CheckoutSuccessStatus | null,
 }
 
 function StoreInitializer(props: StoreInitializerProps) {
+    const router = useRouter();
+
     const { isContinentsInitialized, initializeContinents } = useContinentStore();
     const {
         isPlayersInitialized,
@@ -31,14 +39,17 @@ function StoreInitializer(props: StoreInitializerProps) {
         subscribeToPlayers
     } = usePlayersStore();
     const { initializeUser } = useUserStore();
+    const { setCheckoutSuccessStatus } = useComponentStateStore();
     const { setExternalCameraTarget } = useCameraStateStore();
 
+    // ContinentStore
     useEffect(() => {
         if (!isContinentsInitialized) {
             initializeContinents(props.continentList);
         }
     }, [props, isContinentsInitialized, initializeContinents]);
 
+    // PlayersStore
     useEffect(() => {
         if (!isPlayersInitialized) {
             initializePlayers(
@@ -58,6 +69,7 @@ function StoreInitializer(props: StoreInitializerProps) {
         }
     }, [props, isPlayersInitialized, initializePlayers, subscribeToPlayers]);
 
+    // UserStore
     useEffect(() => {
         // onAuthStateChange 리스너 설정
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
@@ -77,6 +89,18 @@ function StoreInitializer(props: StoreInitializerProps) {
         }
     }, [initializeUser]);
 
+    // ComponentStore
+    useEffect(() => {
+        if (props.checkoutSuccessStatus) {
+            setCheckoutSuccessStatus(props.checkoutSuccessStatus);
+
+            const url = new URL(window.location.href);
+            url.searchParams.delete("checkout_success_status");
+            window.history.replaceState(null, "", url);
+        }
+    }, [props.checkoutSuccessStatus, setCheckoutSuccessStatus, router]);
+
+    // CameraStore
     useEffect(() => {
         if (isPlayersInitialized) {
             if (props.targetPlayerId) {
@@ -96,11 +120,15 @@ function StoreInitializer(props: StoreInitializerProps) {
 
                     if (playerCoordinates) {
                         setExternalCameraTarget(playerCoordinates);
+
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete("user_identifier");
+                        window.history.replaceState(null, "", url);
                     }
                 }
             }
         }
-    }, [props.targetPlayerId, isPlayersInitialized, players, playerList, vipPlayerList, setExternalCameraTarget]);
+    }, [props.targetPlayerId, isPlayersInitialized, players, playerList, vipPlayerList, setExternalCameraTarget, router]);
 
     return null
 }
