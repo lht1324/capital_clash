@@ -16,7 +16,7 @@ export const storageClientAPI = {
         playerId: string
     ): Promise<{ imageData: ImageRow | null; error: Error | null }> {
         try {
-            // 1. 파일 경로 생성 (userId/investorId/파일명)
+            // 1. 파일 경로 생성 (userId/playerId/파일명)
             const filePath = `${userId}/${playerId}/${Date.now()}_${file.name}`
 
             // 2. Storage에 파일 업로드

@@ -20,8 +20,8 @@ function PurchaseTerritoryModal({
     const { user } = useUserStore();
 
     const [selectedContinentId, setSelectedContinentId] = useState<string | null>(null)
-    const [investmentAmount, setInvestmentAmount] = useState<number>(1)
-    const [investorName, setInvestorName] = useState<string>('')
+    const [stakeAmount, setStakeAmount] = useState<number>(1)
+    const [playerName, setPlayerName] = useState<string>('')
     const [isCalculating, setIsCalculating] = useState(false)
     const [validationError, setValidationError] = useState<string>('')
     const [showPreview, setShowPreview] = useState(false)
@@ -45,8 +45,8 @@ function PurchaseTerritoryModal({
     }, [playerList, selectedContinentId]);
 
     const continentalTotalStakeAmount = useMemo(() => {
-        return filteredPlayerListByContinent.reduce((acc, investor) => {
-            return acc + investor.stake_amount
+        return filteredPlayerListByContinent.reduce((acc, player) => {
+            return acc + player.stake_amount
         }, 0);
     }, [filteredPlayerListByContinent]);
     const isAdditionalStake = useMemo(() => {
@@ -75,12 +75,12 @@ function PurchaseTerritoryModal({
 
     // 실시간 계산 결과
     const expectedSharePercentage = useMemo(() => {
-        if (!investmentAmount || investmentAmount <= 0) return 0;
+        if (!stakeAmount || stakeAmount <= 0) return 0;
 
-        const newContinentalTotalInvestment = continentalTotalStakeAmount + investmentAmount;
+        const newContinentalTotalStake = continentalTotalStakeAmount + stakeAmount;
         const newSharePercentage = !isAdditionalStake
-            ? Number((investmentAmount / newContinentalTotalInvestment) * 100)
-            : Number(((userStakeAmount + investmentAmount) / newContinentalTotalInvestment) * 100);
+            ? Number((stakeAmount / newContinentalTotalStake) * 100)
+            : Number(((userStakeAmount + stakeAmount) / newContinentalTotalStake) * 100);
 
         if (selectedContinentId) {
             return newSharePercentage > 0.01
@@ -91,7 +91,7 @@ function PurchaseTerritoryModal({
                 ? newSharePercentage
                 : 0;
         }
-    }, [selectedContinentId, investmentAmount, userStakeAmount, continentalTotalStakeAmount])
+    }, [selectedContinentId, stakeAmount, userStakeAmount, continentalTotalStakeAmount])
 
     const expectedCellLength = useMemo(() => {
         const maxAreaSize = selectedContinentMaxUserCount * selectedContinentMaxUserCount
@@ -105,16 +105,16 @@ function PurchaseTerritoryModal({
 
     // 대륙별 현재 투자자 수 계산
     const getContinentUserCount = useCallback((continentId: string) => {
-        return playerList.filter((investor) => {
-            return investor.continent_id === continentId
+        return playerList.filter((player) => {
+            return player.continent_id === continentId
         }).length;
     }, [playerList]);
 
     // 투자 금액 유효성 검사
-    const validateInvestmentAmount = useCallback((value: string) => {
+    const validateStakeAmount = useCallback((value: string) => {
         const amount = parseFloat(value)
         if (!value) {
-            setValidationError('Please enter an investment amount.')
+            setValidationError('Please enter an stake amount.')
             return false
         }
         if (isNaN(amount)) {
@@ -124,7 +124,7 @@ function PurchaseTerritoryModal({
 
         // 최소 투자금액 체크
         if (amount < 1) {
-            setValidationError('The minimum investment amount is $1.')
+            setValidationError('The minimum stake amount is $1.')
             return false
         }
 
@@ -133,7 +133,7 @@ function PurchaseTerritoryModal({
     }, []);
 
     // 중복 투자 검증
-    const validateDuplicateInvestment = useCallback((continentId: string) => {
+    const validateDuplicateStake = useCallback((continentId: string) => {
         if (isAdditionalStake) return true
 
         // 선택한 대륙이 가득 찬 경우
@@ -148,24 +148,24 @@ function PurchaseTerritoryModal({
 
     // 입력 검증
     const isPurchasePossible = useMemo(() => {
-        const isValidAmount = investmentAmount >= 1;
-        const isValidContinent = isAdditionalStake || (selectedContinentId && validateDuplicateInvestment(selectedContinentId))
-        const isValidName = isAdditionalStake || (investorName.trim() !== '')
+        const isValidAmount = stakeAmount >= 1;
+        const isValidContinent = isAdditionalStake || (selectedContinentId && validateDuplicateStake(selectedContinentId))
+        const isValidName = isAdditionalStake || (playerName.trim() !== '')
         return isValidAmount && isValidContinent && isValidName && !validationError
-    }, [investmentAmount, investorName, isAdditionalStake, validationError])
+    }, [stakeAmount, playerName, isAdditionalStake, validationError])
 
     // 투자 금액 변경 핸들러
     const handleAmountChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         const updatedValue = e.target.value;
 
-        setInvestmentAmount(Number(updatedValue))
-        validateInvestmentAmount(updatedValue)
+        setStakeAmount(Number(updatedValue))
+        validateStakeAmount(updatedValue)
         setShowPreview(!!updatedValue && parseFloat(updatedValue) > 0)
-    }, [validateInvestmentAmount]);
+    }, [validateStakeAmount]);
 
     // 투자자 이름 변경 핸들러
     const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-        setInvestorName(e.target.value);
+        setPlayerName(e.target.value);
     }, []);
 
     // 이름, 설명 추가
@@ -190,9 +190,9 @@ function PurchaseTerritoryModal({
             const postCheckoutsResponse = await polarClientAPI.postCheckoutsStakeClient(
                 productId,
                 user.id,
-                investmentAmount,
+                stakeAmount,
                 user.email,
-                investorName.length !== 0 ? investorName : null,
+                playerName.length !== 0 ? playerName : null,
                 selectedContinentId,
             );
 
@@ -201,9 +201,9 @@ function PurchaseTerritoryModal({
         } catch (error) {
             console.error(error);
             setIsCalculating(false)
-            setValidationError('An error occurred while processing your investment. Please try again.')
+            setValidationError('An error occurred while processing your stake. Please try again.')
         }
-    }, [isPurchasePossible, selectedContinentId, investmentAmount, investorName]);
+    }, [isPurchasePossible, selectedContinentId, stakeAmount, playerName]);
 
 
     // 모달 열림/닫힘 시 초기화
@@ -275,7 +275,7 @@ function PurchaseTerritoryModal({
                     {/* 헤더 */}
                     <div className="flex items-center justify-between p-6 border-b border-gray-700">
                         <h2 className="text-2xl font-bold text-white">
-                            {isAdditionalStake ? '💰 Additional Investment' : '🎯 Purchase Territory'}
+                            {isAdditionalStake ? '💰 Additional Stake' : '🎯 Purchase Territory'}
                         </h2>
                         <button
                             onClick={onClose}
@@ -302,7 +302,7 @@ function PurchaseTerritoryModal({
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-lg">
-                                        <span className="text-gray-300">Investment Amount</span>
+                                        <span className="text-gray-300">Stake Amount</span>
                                         <span className="text-green-400 font-medium">
                                             ${userStakeAmount?.toLocaleString()}
                                         </span>
@@ -385,12 +385,12 @@ function PurchaseTerritoryModal({
                                 {isAdditionalStake ? (
                                     <>
                                         <span className="text-2xl">💵</span>
-                                        <span>Additional Investment Amount</span>
+                                        <span>Additional Stake Amount</span>
                                     </>
                                 ) : (
                                     <>
                                         <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-500 text-sm">2</span>
-                                        <span>Investment Amount</span>
+                                        <span>Stake Amount</span>
                                     </>
                                 )}
                             </h3>
@@ -400,7 +400,7 @@ function PurchaseTerritoryModal({
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-semibold text-gray-400">$</div>
                                         <input
                                             type="number"
-                                            value={investmentAmount}
+                                            value={stakeAmount}
                                             onChange={handleAmountChange}
                                             placeholder="Input contribution amount."
                                             className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border-2 border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-lg"
@@ -423,7 +423,7 @@ function PurchaseTerritoryModal({
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-semibold text-gray-400">👑</div>
                                         <input
                                             type="text"
-                                            value={investorName}
+                                            value={playerName}
                                             onChange={handleNameChange}
                                             placeholder="Input the name as territory owner."
                                             className="w-full pl-12 pr-4 py-3 bg-gray-800/50 border-2 border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all text-lg"
