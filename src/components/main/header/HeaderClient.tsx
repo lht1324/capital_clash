@@ -13,8 +13,6 @@ import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
 import {useRouter} from "next/navigation";
-import {useComponentStateStore} from "@/store/componentStateStore";
-import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
 
 export interface HeaderClientProps {
 
@@ -30,7 +28,6 @@ function HeaderClient(props: HeaderClientProps) {
     const { isContinentsInitialized } = useContinentStore();
     const { isPlayersInitialized, playerList } = usePlayersStore();
     const { isUsersInitialized, user } = useUserStore();
-    const { setCheckoutSuccessStatus } = useComponentStateStore();
 
     const isInitialized = useMemo(() => {
         return isContinentsInitialized && isPlayersInitialized && isUsersInitialized;
@@ -80,8 +77,7 @@ function HeaderClient(props: HeaderClientProps) {
                 {/* 중앙 네비게이션 버튼들 */}
                 <div className="flex items-center space-x-4">
                     <button
-                        // onClick={() => setIsRankingModalOpen(true)}
-                        onClick={() => setCheckoutSuccessStatus(CheckoutSuccessStatus.CONTINENT_CHANGE)}
+                        onClick={() => setIsRankingModalOpen(true)}
                         className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                     >
                         <span>🏆</span>

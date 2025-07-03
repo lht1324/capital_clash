@@ -6,7 +6,7 @@ import {usePlayersStore} from "@/store/playersStore";
 interface RankingData {
     id: string
     name?: string
-    investmentAmount: number
+    stakeAmount: number
     sharePercentage: number
     continentId: string
     continentName: string
@@ -31,7 +31,7 @@ function RankingModal({
                 {
                     name: continent.name,
                     color: continent.color,
-                    totalInvestment: playerList.filter((player: Player) => {
+                    totalStake: playerList.filter((player: Player) => {
                         return player.continent_id === continent.id
                     }).reduce((acc, player) => {
                         return acc + player.stake_amount
@@ -49,13 +49,13 @@ function RankingModal({
             const continentInfo = continentInfoMap.get(player.continent_id);
 
             const continentName = continentInfo?.name ?? "-"
-            const totalInvestment = continentInfo?.totalInvestment ?? 0;
+            const totalStake = continentInfo?.totalStake ?? 0;
 
             return {
                 id: player.id,
                 name: player.name,
-                investmentAmount: player.stake_amount,
-                sharePercentage: (player.stake_amount / totalInvestment) * 100,
+                stakeAmount: player.stake_amount,
+                sharePercentage: (player.stake_amount / totalStake) * 100,
                 continentId: !isVip ? player.continent_id : "central",
                 continentName: continentName,
                 dailyViews: player.daily_views || [0, 0, 0, 0, 0, 0, 0]
@@ -78,7 +78,7 @@ function RankingModal({
 
         return filteredRankingDataList.sort((a, b) => {
             return activeTab === "stake"
-                ? b.investmentAmount - a.investmentAmount
+                ? b.stakeAmount - a.stakeAmount
                 : getTotalViewCount(b.dailyViews) - getTotalViewCount(a.dailyViews);
         })
     }, [activeTab, filteredRankingDataList]);
@@ -150,7 +150,7 @@ function RankingModal({
                                             : 'text-gray-400 hover:text-white'
                                     }`}
                                 >
-                                    💰 Investment
+                                    💰 Stake
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('views')}
@@ -169,9 +169,9 @@ function RankingModal({
                     {/* 랭킹 목록 */}
                     <div className="p-6">
                         <div className="space-y-3">
-                            {rankingItemList.map((investor, index) => (
+                            {rankingItemList.map((rankingData, index) => (
                                 <div
-                                    key={investor.id}
+                                    key={rankingData.id}
                                     className="bg-gray-800 rounded-lg p-4 flex items-center space-x-4"
                                 >
                                     {/* 순위 */}
@@ -190,24 +190,24 @@ function RankingModal({
                                     {/* 투자자 정보 */}
                                     <div className="flex-1">
                                         <div className="flex items-center space-x-2">
-                                            <span className="font-medium text-white">{investor.name}</span>
+                                            <span className="font-medium text-white">{rankingData.name}</span>
                                             <div className="flex items-center space-x-1 text-sm">
                                                 <div
                                                     className="w-2 h-2 rounded-full"
-                                                    style={{ backgroundColor: continentInfoMap.get(investor.continentId)?.color }}
+                                                    style={{ backgroundColor: continentInfoMap.get(rankingData.continentId)?.color }}
                                                 />
-                                                <span className="text-gray-400">{investor.continentName}</span>
+                                                <span className="text-gray-400">{rankingData.continentName}</span>
                                             </div>
                                         </div>
                                         <div className="mt-1 flex items-center space-x-4 text-sm">
                                             <div className="text-green-400">
-                                                ${investor.investmentAmount.toLocaleString()}
+                                                ${rankingData.stakeAmount.toLocaleString()}
                                             </div>
                                             <div className="text-blue-400">
-                                                {investor.sharePercentage.toFixed(2)}%
+                                                {rankingData.sharePercentage.toFixed(2)}%
                                             </div>
                                             <div className="text-purple-400">
-                                                {investor.dailyViews.reduce((acc, dailyView) => {
+                                                {rankingData.dailyViews.reduce((acc, dailyView) => {
                                                     return acc + dailyView
                                                 }, 0).toLocaleString()} views
                                             </div>
@@ -216,8 +216,8 @@ function RankingModal({
 
                                     {/* 추세 */}
                                     <div className="hidden sm:flex items-end space-x-1 h-8">
-                                        {investor.dailyViews.map((views, i) => {
-                                            const maxViews = Math.max(...investor.dailyViews, 1)
+                                        {rankingData.dailyViews.map((views, i) => {
+                                            const maxViews = Math.max(...rankingData.dailyViews, 1)
                                             const height = (views / maxViews) * 100
 
                                             return (
