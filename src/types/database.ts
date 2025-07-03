@@ -166,45 +166,6 @@ export interface Database {
                 }
             }
 
-            // 투자 히스토리 테이블
-            investments: {
-                Row: {
-                    id: string
-                    user_id: string
-                    continent_id: string
-                    amount: number
-                    transaction_type: 'initial' | 'additional' | 'transfer'
-                    payment_status: 'pending' | 'completed' | 'failed' | 'refunded'
-                    payment_id?: string
-                    metadata?: Json
-                    created_at: string
-                    updated_at: string
-                }
-                Insert: {
-                    id?: string
-                    user_id: string
-                    continent_id: string
-                    amount: number
-                    transaction_type: 'initial' | 'additional' | 'transfer'
-                    payment_status?: 'pending' | 'completed' | 'failed' | 'refunded'
-                    payment_id?: string
-                    metadata?: Json
-                    created_at?: string
-                    updated_at?: string
-                }
-                Update: {
-                    id?: string
-                    user_id?: string
-                    continent_id?: string
-                    amount?: number
-                    transaction_type?: 'initial' | 'additional' | 'transfer'
-                    payment_status?: 'pending' | 'completed' | 'failed' | 'refunded'
-                    payment_id?: string
-                    metadata?: Json
-                    updated_at?: string
-                }
-            }
-
             // 이미지 관리 테이블
             images: {
                 Row: {
@@ -250,42 +211,6 @@ export interface Database {
                     reviewed_by?: string
                     reviewed_at?: string
                     updated_at?: string
-                }
-            }
-
-            // 알림 테이블
-            notifications: {
-                Row: {
-                    id: string
-                    user_id: string
-                    type: 'investment' | 'image_approval' | 'vip_promotion' | 'system'
-                    title: string
-                    message: string
-                    metadata?: Json
-                    is_read: boolean
-                    created_at: string
-                    expires_at?: string
-                }
-                Insert: {
-                    id?: string
-                    user_id: string
-                    type: 'investment' | 'image_approval' | 'vip_promotion' | 'system'
-                    title: string
-                    message: string
-                    metadata?: Json
-                    is_read?: boolean
-                    created_at?: string
-                    expires_at?: string
-                }
-                Update: {
-                    id?: string
-                    user_id?: string
-                    type?: 'investment' | 'image_approval' | 'vip_promotion' | 'system'
-                    title?: string
-                    message?: string
-                    metadata?: Json
-                    is_read?: boolean
-                    expires_at?: string
                 }
             }
         }
