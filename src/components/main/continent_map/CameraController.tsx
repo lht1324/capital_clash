@@ -20,10 +20,8 @@ function CameraController({
         setSelectedContinentId,
         setWorldView,
         cameraTarget,
-        setCameraTarget,
-        resetContinentSelection
+        setCameraTarget
     } = useCameraStateStore();
-
 
     const [isDragging, setIsDragging] = useState(false);
     const [currentCameraPosition, setCurrentCameraPosition] = useState({ x: 0, y: 0 });
@@ -112,8 +110,7 @@ function CameraController({
         targetPosition.current.set(x, y, z);
         cameraPosition.current.copy(targetPosition.current);
         camera.position.copy(targetPosition.current);
-        resetContinentSelection();
-    }, [initialPosition, camera, resetContinentSelection]);
+    }, [initialPosition, camera]);
 
     // 드롭다운 선택에 따른 카메라 이동 처리
     useEffect(() => {
