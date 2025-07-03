@@ -1,13 +1,14 @@
 import { useMemo, useState, memo } from 'react'
-import { useContinentStore, type ContinentId } from '@/store/continentStore'
-import { useInvestorStore, type Investor } from "@/store/investorsStore";
+import {Player} from "@/api/types/supabase/Players";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
 
 interface RankingData {
     id: string
     name?: string
     investmentAmount: number
     sharePercentage: number
-    continentId: ContinentId
+    continentId: string
     continentName: string
     dailyViews: number[]
 }
@@ -17,17 +18,11 @@ function RankingModal({
 }: {
     onClose: () => void
 }) {
-    const [activeTab, setActiveTab] = useState<'investment' | 'views'>('investment')
-    const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null)
-    const { continents } = useContinentStore()
-    const { investors } = useInvestorStore();
+    const [activeTab, setActiveTab] = useState<'stake' | 'views'>('stake');
+    const [selectedContinentId, setSelectedContinentId] = useState<string | null>(null);
 
-    const continentList = useMemo(() => {
-        return Object.values(continents).filter((continent) => continent.id !== "central");
-    }, [continents]);
-    const investorList = useMemo(() => {
-        return Object.values(investors);
-    }, [investors]);
+    const { continentList } = useContinentStore();
+    const { playerList, vipPlayerList } = usePlayersStore();
 
     const continentInfoMap = useMemo(() => {
         return new Map(continentList.map((continent) => {
@@ -36,38 +31,43 @@ function RankingModal({
                 {
                     name: continent.name,
                     color: continent.color,
-                    totalInvestment: investorList.filter((investor: Investor) => {
-                        return investor.continent_id === continent.id
-                    }).reduce((acc, investor) => {
-                        return acc + investor.investment_amount
+                    totalInvestment: playerList.filter((player: Player) => {
+                        return player.continent_id === continent.id
+                    }).reduce((acc, player) => {
+                        return acc + player.investment_amount
                     }, 0)
                 }
             ]
         }))
-    }, [continentList, investorList])
+    }, [continentList, playerList])
 
     const rankingDataList: RankingData[] = useMemo(() => {
-        return investorList.map((investor: Investor) => {
-            const continentInfo = continentInfoMap.get(investor.continent_id);
+        return playerList.map((player: Player) => {
+            const isVip = !!(vipPlayerList.find((vipPlayer) => {
+                return player.id === vipPlayer.id;
+            }));
+            const continentInfo = continentInfoMap.get(player.continent_id);
 
             const continentName = continentInfo?.name ?? "-"
             const totalInvestment = continentInfo?.totalInvestment ?? 0;
 
             return {
-                id: investor.id,
-                name: investor.name,
-                investmentAmount: investor.investment_amount,
-                sharePercentage: (investor.investment_amount / totalInvestment) * 100,
-                continentId: investor.continent_id,
+                id: player.id,
+                name: player.name,
+                investmentAmount: player.investment_amount,
+                sharePercentage: (player.investment_amount / totalInvestment) * 100,
+                continentId: !isVip ? player.continent_id : "central",
                 continentName: continentName,
-                dailyViews: investor.daily_views || [0, 0, 0, 0, 0, 0, 0]
+                dailyViews: player.daily_views || [0, 0, 0, 0, 0, 0, 0]
             }
         })
-    }, [investorList, continentInfoMap]);
+    }, [playerList, continentInfoMap]);
 
     const filteredRankingDataList = useMemo(() => {
         return selectedContinentId
-            ? rankingDataList.filter((rankingItem) => rankingItem.continentId === selectedContinentId)
+            ? rankingDataList.filter((rankingItem) => {
+                return rankingItem.continentId === selectedContinentId;
+            })
             : rankingDataList;
     }, [rankingDataList, selectedContinentId]);
 
@@ -77,7 +77,7 @@ function RankingModal({
         }
 
         return filteredRankingDataList.sort((a, b) => {
-            return activeTab === "investment"
+            return activeTab === "stake"
                 ? b.investmentAmount - a.investmentAmount
                 : getTotalViewCount(b.dailyViews) - getTotalViewCount(a.dailyViews);
         })
@@ -143,9 +143,9 @@ function RankingModal({
                             {/* 정렬 기준 탭 */}
                             <div className="flex bg-gray-800 p-1 rounded-lg">
                                 <button
-                                    onClick={() => setActiveTab('investment')}
+                                    onClick={() => setActiveTab('stake')}
                                     className={`px-4 py-1.5 rounded-md text-sm transition-colors ${
-                                        activeTab === 'investment'
+                                        activeTab === 'stake'
                                             ? 'bg-blue-600 text-white'
                                             : 'text-gray-400 hover:text-white'
                                     }`}

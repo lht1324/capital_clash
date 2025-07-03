@@ -1,32 +1,19 @@
-import { ContinentId } from '@/store/continentStore'
-import { Investor } from "@/store/investorsStore";
+import {User as SupabaseUser, UserResponse} from "@supabase/auth-js";
+import { createSupabaseServer } from "@/lib/supabase/supabaseServer";
+import { unstable_noStore as noStore } from 'next/cache';
 
-// 현재 사용자의 영역 정보 타입
-export interface UserTileInfo {
-    hasExistingTile: boolean
-    continentId?: ContinentId
-    investmentAmount?: number
-}
 
-// 현재 사용자의 영역 소유 상태 확인
-export const getCurrentUserTileInfo = (investorList: Investor[], userId?: string): UserTileInfo => {
-    let tileInfo = null;
+export async function getSupabaseUser(): Promise<SupabaseUser | null> {
+    noStore();
+    try {
+        const supabase = await createSupabaseServer();
+        const { data: { user }, error: userError }: UserResponse = await supabase.auth.getUser();
 
-    console.log(`userId = ${userId}`)
-    investorList.forEach((investor) => {
-        console.log(`investor.user_id = ${investor.user_id}, userId = ${userId}`)
-        if (userId && investor.user_id === userId) {
-            tileInfo = {
-                hasExistingTile: true,
-                continentId: investor.continent_id as ContinentId,
-                investmentAmount: investor.investment_amount,
-            }
-        }
-    })
+        if (userError) throw userError;
 
-    return tileInfo
-        ? tileInfo
-        : {
-            hasExistingTile: false
-        }
+        return user;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
 }

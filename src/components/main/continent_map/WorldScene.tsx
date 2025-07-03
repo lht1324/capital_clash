@@ -1,43 +1,18 @@
-// src/components/continent_map/WorldScene.tsx
-import { useContinentStore } from "@/store/continentStore";
-import {memo, useEffect, useMemo, useRef, useState} from "react";
+'use client'
+
+import {memo, useMemo} from "react";
 import SingleContinent from "@/components/main/continent_map/SingleContinent";
-import {Investor, useInvestorStore} from "@/store/investorsStore";
-import {
-    calculateSquareLayout,
-    getContinentPosition,
-    PlacementResult,
-    Position
-} from "@/lib/treemapAlgorithm";
 import * as THREE from "three";
-import {
-    CENTRAL_INCREASE_RATIO,
-    CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
-} from "@/components/main/continent_map/continent_map_public_variables";
-import {getFilteredPlayerList} from "@/utils/playerUtils";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
 
 function WorldScene({
     onTileClick,
 }: {
-    onTileClick: (investorId: string, dailyViews: number[]) => void;
+    onTileClick: (investorId: string) => void;
 }) {
-    const { continents } = useContinentStore();
-    const { investors, getFilteredInvestorListByContinent, getPlayerInfoChangedByContinent } = useInvestorStore();
-
-    const continentList = useMemo(() => {
-        return Object.values(continents);
-    }, [continents]);
-    const [investorList, setInvestorList] = useState<Investor[]>([]);
-    const [isPlayerInfoChangedByContinentRecord, setIsPlayerInfoChangedByContinentRecord] = useState<Record<string, boolean>>({ });
-    const [placementResults, setPlacementResults] = useState<Record<string, PlacementResult>>({});
-    const [continentPositions, setContinentPositions] = useState<Record<string, Position>>({});
-
-    const isPlacementResultsInitialized = useMemo(() => {
-        return Object.keys(continents).length === Object.keys(placementResults).length;
-    }, [continents, placementResults]);
-    const isContinentPositionsInitialized = useMemo(() => {
-        return Object.keys(continentPositions).length === Object.keys(continentList).length;
-    }, [continents, continentPositions]);
+    const { continentList } = useContinentStore();
+    const { placementResultRecord } = usePlayersStore();
 
     // 전체 화면을 커버하는 격자 무늬 생성
     const gridLines = useMemo(() => {
@@ -66,72 +41,6 @@ function WorldScene({
         return geometries;
     }, []);
 
-    useEffect(() => {
-        setInvestorList((prevInvestorList) => {
-            const isChangedRecord: Record<string, boolean> = { };
-
-            continentList.forEach((continent) => {
-                isChangedRecord[continent.id] = getPlayerInfoChangedByContinent(prevInvestorList, continent.id);
-            })
-
-            console.log("isChangedRecord", isChangedRecord);
-            setIsPlayerInfoChangedByContinentRecord(isChangedRecord);
-
-            return Object.values(investors);
-        })
-    }, [continentList, investors]);
-
-    // 모든 대륙의 placementResult 계산
-    useEffect(() => {
-        const isChanged = Object.values(isPlayerInfoChangedByContinentRecord).some((isChanged) => {
-            return isChanged;
-        })
-
-        console.log(`isChanged = ${isChanged}`)
-        console.log("isSharePercentageChangedByContinent", isPlayerInfoChangedByContinentRecord);
-
-        if (isChanged && investorList.length > 0) {
-            setPlacementResults(prevPlacementResults => {
-                const continentIdList = Object.keys(isPlayerInfoChangedByContinentRecord);
-                const placementResultRecord: Record<string, PlacementResult> = {};
-
-                if (continentIdList.length !== 0) {
-                    continentIdList.forEach((continentId) => {
-                        const filteredInvestorListByContinent = getFilteredPlayerList(investorList, continentId);
-
-                        if (filteredInvestorListByContinent.length > 0) {
-                            placementResultRecord[continentId] = isPlayerInfoChangedByContinentRecord[continentId]
-                                ? calculateSquareLayout(
-                                    filteredInvestorListByContinent,
-                                    continentId
-                                )
-                                : prevPlacementResults[continentId];
-                        }
-                    });
-                }
-
-                setContinentPositions((prevContinentPositions) => {
-                    const continentPositionRecord: Record<string, Position> = { };
-
-                    console.log("placementResultRecord", placementResultRecord);
-                    continentIdList.forEach((continentId) => {
-                        console.log(`[${continentId}]`, placementResultRecord[continentId]);
-                        continentPositionRecord[continentId] = isPlayerInfoChangedByContinentRecord[continentId]
-                            ? getContinentPosition(
-                                placementResultRecord[continentId],
-                                placementResultRecord["central"]
-                            )
-                            : prevContinentPositions[continentId]
-                    });
-
-                    return continentPositionRecord;
-                });
-
-                return placementResultRecord;
-            });
-        }
-    }, [investorList, isPlayerInfoChangedByContinentRecord]);
-
     return (
         <>
             {/* 전역 조명 */}
@@ -155,24 +64,16 @@ function WorldScene({
             ))}
 
             {/* 모든 대륙 렌더링 */}
-            {isPlacementResultsInitialized && isContinentPositionsInitialized && continentList.map((continent) => {
-                const placementResult = placementResults[continent.id];
-                const position = continentPositions[continent.id];
-                // cellLength 계산 방식을 treemapAlgorithm.ts의 getContinentSizes 함수와 통일
-                const cellLength = continent.id !== "central"
-                    ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT  // 일반 대륙은 max_users 대신 100 사용
-                    : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
-
-                return (
-                    <SingleContinent
-                        key={continent.id}
-                        continent={continent}
-                        placementResult={placementResult}
-                        position={position}
-                        cellLength={cellLength}
-                        onTileClick={onTileClick}
-                    />
-                );
+            {continentList.map((continent) => {
+                if (placementResultRecord[continent.id]) {
+                    return (
+                        <SingleContinent
+                            key={continent.id}
+                            continent={continent}
+                            onTileClick={onTileClick}
+                        />
+                    );
+                }
             })}
         </>
     );

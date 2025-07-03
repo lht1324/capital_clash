@@ -1,19 +1,25 @@
 'use client'
 
 import {memo, useState, useEffect, useCallback, useMemo, ChangeEvent} from 'react'
-import { useUserStore } from "@/store/userStore"
-import { useInvestorStore } from "@/store/investorsStore"
-import Image from 'next/image'
+import {Player} from "@/api/types/supabase/Players";
+import {User} from "@/api/types/supabase/Users";
+import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
+import {usePlayersStore} from "@/store/playersStore";
+import {useUserStore} from "@/store/userStore";
 
 function TerritoryInfoEditModal({
     onClose,
 }: {
-    onClose: () => void
+    onClose: () => void,
 }) {
+    const { playerList } = usePlayersStore();
     const { user } = useUserStore();
-    const { investors, updateInvestor } = useInvestorStore();
 
-    const [isInitialized, setIsInitialized] = useState(false);
+    const userPlayerInfo = useMemo(() => {
+        return playerList.find((player) => {
+            return player.user_id === user?.id;
+        }) ?? null;
+    }, [playerList, user?.id]);
 
     const [profileData, setProfileData] = useState({
         name: "",
@@ -28,22 +34,13 @@ function TerritoryInfoEditModal({
     const [hue, setHue] = useState(0)
     const [brightness, setBrightness] = useState(100)
 
-    const userInvestorInfo = useMemo(() => {
-        const userId = user?.id;
-        const investorList = Object.values(investors);
-
-        return userId
-            ? investorList.find((investor) => { return investor.user_id === userId })
-            : null;
-    }, [user?.id, investors]);
-
     const isProfileInfoChanged = useMemo(() => {
-        const isNameChanged = profileData.name !== userInvestorInfo?.name;
-        const isDescriptionChanged = profileData.description !== userInvestorInfo?.description;
-        const isXUrlChanged = profileData.xUrl !== userInvestorInfo?.x_url;
-        const isInstagramUrlChanged = profileData.instagramUrl !== userInvestorInfo?.instagram_url;
-        const isContactEmailChanged = profileData.contactEmail !== userInvestorInfo?.contact_email;
-        const isAreaColorChanged = profileData.areaColor !== userInvestorInfo?.area_color;
+        const isNameChanged = profileData.name !== userPlayerInfo?.name;
+        const isDescriptionChanged = profileData.description !== userPlayerInfo?.description;
+        const isXUrlChanged = profileData.xUrl !== userPlayerInfo?.x_url;
+        const isInstagramUrlChanged = profileData.instagramUrl !== userPlayerInfo?.instagram_url;
+        const isContactEmailChanged = profileData.contactEmail !== userPlayerInfo?.contact_email;
+        const isAreaColorChanged = profileData.areaColor !== userPlayerInfo?.area_color;
 
         return isNameChanged
             || isDescriptionChanged
@@ -166,6 +163,11 @@ function TerritoryInfoEditModal({
     }, [hue, hslToHex, profileData]);
 
     const handleSave = useCallback(async () => {
+        if (!userPlayerInfo) {
+            alert("Please try again.")
+            return;
+        }
+
         // 입력값 유효성 검사
         if (profileData.xUrl && (!isXUrlValid || !isInstagramUrlValid)) {
             alert('Please enter a valid website URL.');
@@ -177,50 +179,54 @@ function TerritoryInfoEditModal({
             return;
         }
 
-        if (isProfileInfoChanged) {
-            try {
-                const newInvestorInfo = {
-                    ...userInvestorInfo,
-                    name: profileData.name,
-                    description: profileData.description,
-                    x_url: profileData.xUrl,
-                    instagram_url: profileData.instagramUrl,
-                    contact_email: profileData.contactEmail,
-                    area_color: profileData.areaColor,
+        try {
+            if (isProfileInfoChanged) {
+                try {
+                    const newInvestorInfo = {
+                        name: profileData.name,
+                        description: profileData.description,
+                        x_url: profileData.xUrl,
+                        instagram_url: profileData.instagramUrl,
+                        contact_email: profileData.contactEmail,
+                        area_color: profileData.areaColor,
+                    }
+
+                    await playersClientAPI.patchPlayersById(userPlayerInfo.id, newInvestorInfo);
+                    alert('Profile information has been successfully saved.');
+                    onClose();
+                } catch (error) {
+                    console.error('Failed to save profile information:', error);
+                    alert('Failed to save profile information. Please try again.');
                 }
-                await updateInvestor(newInvestorInfo);
-                alert('Profile information has been successfully saved.');
-                onClose();
-            } catch (error) {
-                console.error('Failed to save profile information:', error);
-                alert('Failed to save profile information. Please try again.');
+            } else {
+                alert('No changes have been made.');
             }
-        } else {
-            alert('No changes have been made.');
+        } catch (error) {
+            alert("Please try again.");
         }
-    }, [isProfileInfoChanged, profileData, isXUrlValid, isInstagramUrlValid, isContactEmailValid, userInvestorInfo, updateInvestor, onClose]);
+    }, [isProfileInfoChanged, profileData, isXUrlValid, isInstagramUrlValid, isContactEmailValid, userPlayerInfo, onClose]);
 
     // 모달이 열릴 때 기존 데이터 로드
     useEffect(() => {
-        if (userInvestorInfo) {
-            const defaultColor = userInvestorInfo.area_color || '#FF0000';
+        if (userPlayerInfo) {
+            const defaultColor = userPlayerInfo.area_color || '#FF0000';
             const { h, l } = hexToHsl(defaultColor);
 
             setHue(h);
             setBrightness(l);
 
             setProfileData({
-                name: userInvestorInfo.name || '',
-                description: userInvestorInfo.description || '',
-                xUrl: userInvestorInfo.x_url || '',
-                instagramUrl: userInvestorInfo.instagram_url || '',
-                contactEmail: userInvestorInfo.contact_email || '',
+                name: userPlayerInfo.name || '',
+                description: userPlayerInfo.description || '',
+                xUrl: userPlayerInfo.x_url || '',
+                instagramUrl: userPlayerInfo.instagram_url || '',
+                contactEmail: userPlayerInfo.contact_email || '',
                 areaColor: defaultColor
             });
         }
-    }, [userInvestorInfo, hexToHsl]);
+    }, [userPlayerInfo, hexToHsl]);
 
-    if (!userInvestorInfo) {
+    if (!userPlayerInfo) {
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">

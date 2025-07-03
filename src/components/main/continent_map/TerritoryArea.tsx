@@ -1,23 +1,32 @@
+'use client'
+
 import * as THREE from "three";
-import {memo, useEffect, useMemo, useRef, useState} from "react";
+import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Placement} from "@/lib/treemapAlgorithm";
+import {PlayersStore, selectPlayerById, usePlayersStore} from "@/store/playersStore";
 
 // 🌳 NEW: 개별 영역 컴포넌트 (직사각형) - 최적화된 버전
-function TerritoryArea(
-    {
-        placement,
-        cellLength,
-        onTileClick
-    }: {
-        placement: Placement,
-        cellLength: number,
-        onTileClick: (investorId: string, dailyViews: number[]) => void
-    }
-) {
+function TerritoryArea({
+    placement,
+    cellLength,
+    onTileClick
+}: {
+    placement: Placement,
+    cellLength: number,
+    onTileClick: () => void
+}) {
     const meshRef = useRef<THREE.Mesh>(null)
     const imageMeshRef = useRef<THREE.Mesh>(null)
     const [hovered, setHovered] = useState(false)
     const [imageTexture, setImageTexture] = useState<THREE.Texture | null>(null)
+
+    const selectPlayer = useCallback((state: PlayersStore) => {
+        return state.players[placement.playerId];
+    }, [placement.playerId])
+
+    const player = usePlayersStore(selectPlayer);
+
+    if (!player) return null;
 
     const width = useMemo(() => {
         return placement.width * cellLength;
@@ -44,11 +53,11 @@ function TerritoryArea(
     }, [hovered]);
 
     useEffect(() => {
-        console.log(`[${placement.investor.image_status}] (${placement.investor.image_url})`)
-        if (placement.investor.image_url && placement.investor.image_status === "approved") {
+        // console.log(`[${placement.investor.image_status}] (${placement.investor.image_url})`)
+        if (player.image_url && player.image_status === "approved") {
             const loader = new THREE.TextureLoader()
             loader.load(
-                placement.investor.image_url,
+                player.image_url,
                 (loadedTexture) => {
                     loadedTexture.flipY = true
                     setImageTexture(loadedTexture)
@@ -61,7 +70,7 @@ function TerritoryArea(
         } else {
             setImageTexture(null);
         }
-    }, [placement.investor.image_url, placement.investor.image_status]);
+    }, [player.image_url, player.image_status]);
 
     return (
         <group position={[x, y, 1.1]}>
@@ -74,14 +83,14 @@ function TerritoryArea(
                 onPointerOut={() => setHovered(false)}
                 onClick={() => {
                     if (!imageTexture) {
-                        console.log(`(Calc) name = ${placement.investor.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
-                        onTileClick(placement.investor.id, placement.investor.daily_views)
+                        console.log(`(Calc) name = ${player.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
+                        onTileClick();
                     }
                 }}
             >
                 <boxGeometry args={[width, height, 0.2]} />
                 <meshStandardMaterial
-                    color={placement.investor.area_color}
+                    color={player.area_color}
                     opacity={hovered ? 1.0 : 0.9}
                     transparent={!hovered}
                     // roughness={0.3}
@@ -98,8 +107,8 @@ function TerritoryArea(
                     onPointerOver={() => setHovered(true)}
                     onPointerOut={() => setHovered(false)}
                     onClick={() => {
-                        console.log(`(Calc) name = ${placement.investor.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
-                        onTileClick(placement.investor.id, placement.investor.daily_views)
+                        console.log(`(Calc) name = ${player.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
+                        onTileClick();
                     }}
                 >
                     <planeGeometry args={[width, height]} />
@@ -112,7 +121,7 @@ function TerritoryArea(
             )}
 
             {/* 🌳 NEW: 호버 시 투자자 정보 표시 (큰 직사각형에만) */}
-            {hovered && placement.investor.name && (
+            {hovered && (
                 <group position={[0, height / 4, 0.5]}>
                     <mesh>
                         <planeGeometry args={[width * 0.8, height * 0.3]} />
@@ -120,7 +129,7 @@ function TerritoryArea(
                     </mesh>
                     {/* 투자자 이름 텍스트 렌더링 */}
                     <TextPlane 
-                        text={placement.investor.name} 
+                        text={player.name}
                         width={width * 0.8}
                         height={height * 0.3}
                         position={[0, 0, 0.01]} 

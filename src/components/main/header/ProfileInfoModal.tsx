@@ -1,8 +1,9 @@
 'use client'
 
 import {memo, useMemo} from 'react'
-import { useUserStore } from "@/store/userStore"
 import Image from 'next/image'
+import {User} from "@/api/types/supabase/Users";
+import {useUserStore} from "@/store/userStore";
 
 function ProfileInfoModal({
     onClose,

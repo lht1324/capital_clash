@@ -1,18 +1,31 @@
 'use client'
 
-import {ChangeEvent, DragEvent, useCallback, useRef, useState} from 'react'
+import {ChangeEvent, DragEvent, useCallback, useMemo, useRef, useState} from 'react'
 import {AlertCircle, Check, Image as ImageIcon, Upload, X} from 'lucide-react'
-import {ImageStatus} from "@/store/investorsStore";
+import {ImageStatus} from "@/api/types/supabase/Players";
+import {usePlayersStore} from "@/store/playersStore";
+import {useUserStore} from "@/store/userStore";
 
 export default function ImageUploadModal({
     onClose,
     onUpload,
-    currentImageStatus = ImageStatus.PENDING
 }: {
     onClose: () => void
     onUpload: (file: File) => void
-    currentImageStatus?: ImageStatus
 }) {
+    const { playerList } = usePlayersStore();
+    const { user } = useUserStore();
+
+    const userPlayerInfo = useMemo(() => {
+        return playerList.find((player) => {
+            return player.user_id === user?.id;
+        });
+    }, [playerList, user?.id]);
+
+    const currentImageStatus = useMemo(() => {
+        return userPlayerInfo?.image_status ?? ImageStatus.PENDING;
+    }, [userPlayerInfo?.image_status]);
+
     const [dragActive, setDragActive] = useState(false)
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [preview, setPreview] = useState<string | null>(null)
