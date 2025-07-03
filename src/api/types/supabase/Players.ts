@@ -7,7 +7,7 @@ export interface Player {
     x_url?: string
     instagram_url?: string
     contact_email?: string
-    investment_amount: number
+    stake_amount: number
     image_url?: string
     image_status?: ImageStatus
     created_at: string

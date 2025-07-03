@@ -80,7 +80,7 @@ function TerritoryInfoViewModal({
         const currentContinentText = userContinentalRank === 1
             ? `Central (${continentName})`
             : continentName;
-        const stakeText = `Total Stake - $${territoryOwnerPlayerInfo?.investment_amount.toLocaleString()}`;
+        const stakeText = `Total Stake - $${territoryOwnerPlayerInfo?.stake_amount.toLocaleString()}`;
         const overallRankText = `Overall Rank - #${userOverallRank}`;
         const continentalRankText = `Continental Rank - #${userContinentalRank}`;
         const intent = new URL("https://x.com/intent/post");
@@ -193,7 +193,7 @@ function TerritoryInfoViewModal({
                                     <div className="min-w-6 mr-2">💰</div>
                                     <span className="text-gray-600">Investment Amount</span>
                                 </div>
-                                <span className="font-medium">${territoryOwnerPlayerInfo.investment_amount.toLocaleString()}</span>
+                                <span className="font-medium">${territoryOwnerPlayerInfo.stake_amount.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between">
                                 <div className="flex flex-row w-fit">

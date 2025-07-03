@@ -35,8 +35,8 @@ function OverviewTab({
     }, [vipPlayerList, user?.id]);
 
     const userInvestmentAmount = useMemo(() => {
-        return userPlayerInfo?.investment_amount ?? 0;
-    }, [userPlayerInfo?.investment_amount]);
+        return userPlayerInfo?.stake_amount ?? 0;
+    }, [userPlayerInfo?.stake_amount]);
 
     const userSharePercentage = useMemo(() => {
         return userPlayerInfo

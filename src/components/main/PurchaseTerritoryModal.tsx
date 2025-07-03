@@ -46,7 +46,7 @@ function PurchaseTerritoryModal({
 
     const continentalTotalStakeAmount = useMemo(() => {
         return filteredPlayerListByContinent.reduce((acc, investor) => {
-            return acc + investor.investment_amount
+            return acc + investor.stake_amount
         }, 0);
     }, [filteredPlayerListByContinent]);
     const isAdditionalStake = useMemo(() => {
@@ -61,7 +61,7 @@ function PurchaseTerritoryModal({
         return continentItemList.find(c => c.id === userContinentId)?.name
     }, [continentItemList, userContinentId]);
     const userStakeAmount = useMemo(() => {
-        return userPlayerInfo?.investment_amount ?? 0
+        return userPlayerInfo?.stake_amount ?? 0
     }, [userPlayerInfo]);
     const userSharePercentage = useMemo(() => {
         return userStakeAmount

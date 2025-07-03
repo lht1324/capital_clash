@@ -110,7 +110,7 @@ export interface Database {
                     x_url?: string
                     instagram_url?: string
                     contact_email?: string
-                    investment_amount: number
+                    stake_amount: number
                     share_percentage: number
                     image_url?: string
                     image_status?: 'pending' | 'approved' | 'rejected'
@@ -131,7 +131,7 @@ export interface Database {
                     x_url?: string
                     instagram_url?: string
                     contact_email?: string
-                    investment_amount: number
+                    stake_amount: number
                     share_percentage: number
                     image_url?: string
                     image_status?: 'pending' | 'approved' | 'rejected'
@@ -152,7 +152,7 @@ export interface Database {
                     x_url?: string
                     instagram_url?: string
                     contact_email?: string
-                    investment_amount?: number
+                    stake_amount?: number
                     share_percentage?: number
                     image_url?: string
                     image_status?: 'pending' | 'approved' | 'rejected'

@@ -18,7 +18,6 @@
 *   **데이터베이스 스키마**
     * DB 스키마는 `src/types/database.ts`에 저장돼.
     * `investors` 테이블은 이후 `players`로 이름을 바꿀 예정이야. 작업 중 player가 보인다면 investor라고 생각하면 돼.
-        * `investors`의 `investment_amount` 컬럼은 `stake_amount`로 이름을 바꿀 거야. Stake는 Investment라고 생각해.
 *   **중요한 제약사항**
     * 클라이언트에서 API를 호출해야 할 일이 있을 경우, 무조건 서버의 라우터에서 요청을 받은 뒤 대신 한다고 생각해. 흐름을 따지자면<br>
     `~ClientAPI.requestSomething()`<br>

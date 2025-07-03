@@ -94,8 +94,8 @@ function NotificationManager({
             const { player: updatedPlayer, updateType, previousStake } = updatedPlayerInfo;
 
             const additionalStakeAmount = updateType === UpdateType.STAKE_CHANGE && previousStake !== undefined
-                ? updatedPlayer.investment_amount - previousStake
-                : updatedPlayer.investment_amount;
+                ? updatedPlayer.stake_amount - previousStake
+                : updatedPlayer.stake_amount;
 
             const continent = continentList.find((continent) => {
                 return continent.id === updatedPlayer.continent_id;
@@ -129,7 +129,7 @@ function NotificationManager({
                     continentName: continentName,
                     continentColor: continentColor,
                     additionalStakeAmount: additionalStakeAmount,
-                    totalStakeAmount: updatedPlayer.investment_amount,
+                    totalStakeAmount: updatedPlayer.stake_amount,
                     timestamp: new Date(),
                     notificationType: notificationType
                 }

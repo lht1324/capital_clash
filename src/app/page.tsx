@@ -48,7 +48,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         }
 
         const title = `${player.name}'s Territory | Capital Clash`;
-        const description = `Total Stake: ${player.investment_amount.toLocaleString()}`;
+        const description = `Total Stake: ${player.stake_amount.toLocaleString()}`;
         const imageUrl = player.image_url; // 바로 이 부분이 유저의 고유 이미지 URL입니다.
 
         // 조회된 플레이어 정보로 동적 메타데이터를 생성하여 반환합니다.
@@ -87,7 +87,7 @@ export default async function Page({ searchParams }: Props) {
         playerList.reduce((acc, player) => {
             const id = player.continent_id;
 
-            if (!acc[id] || player.investment_amount > acc[id].investment_amount) {
+            if (!acc[id] || player.stake_amount > acc[id].stake_amount) {
                 acc[id] = player; // 최고 투자금액 기준
             }
 

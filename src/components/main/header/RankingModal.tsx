@@ -34,7 +34,7 @@ function RankingModal({
                     totalInvestment: playerList.filter((player: Player) => {
                         return player.continent_id === continent.id
                     }).reduce((acc, player) => {
-                        return acc + player.investment_amount
+                        return acc + player.stake_amount
                     }, 0)
                 }
             ]
@@ -54,8 +54,8 @@ function RankingModal({
             return {
                 id: player.id,
                 name: player.name,
-                investmentAmount: player.investment_amount,
-                sharePercentage: (player.investment_amount / totalInvestment) * 100,
+                investmentAmount: player.stake_amount,
+                sharePercentage: (player.stake_amount / totalInvestment) * 100,
                 continentId: !isVip ? player.continent_id : "central",
                 continentName: continentName,
                 dailyViews: player.daily_views || [0, 0, 0, 0, 0, 0, 0]

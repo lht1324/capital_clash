@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
             await playersServerAPI.postPlayers({
                 user_id: userId,
                 continent_id: continentId,
-                investment_amount: parseInt(stakeAmount),
+                stake_amount: parseInt(stakeAmount),
                 name: name,
                 contact_email: email
             })
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
 
             await playersServerAPI.patchPlayersById(prevPlayerInfo.id, {
                 user_id: userId,
-                investment_amount: prevPlayerInfo.investment_amount + parseInt(stakeAmount),
+                stake_amount: prevPlayerInfo.stake_amount + parseInt(stakeAmount),
                 contact_email: email
             })
         }

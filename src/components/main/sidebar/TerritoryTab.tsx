@@ -28,8 +28,8 @@ function TerritoryTab({
     }, [playerList, user?.id]);
 
     const investmentAmount = useMemo(() => {
-        return userPlayerInfo?.investment_amount ?? 0;
-    }, [userPlayerInfo?.investment_amount]);
+        return userPlayerInfo?.stake_amount ?? 0;
+    }, [userPlayerInfo?.stake_amount]);
 
     const sharePercentage = useMemo(() => {
         return userPlayerInfo
