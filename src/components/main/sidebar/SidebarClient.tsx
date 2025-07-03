@@ -136,7 +136,7 @@ function SidebarClient(props: SidebarClientProps) {
 
                     // 1. 기존 이미지의 images 테이블 레코드 찾기
                     // const imageList = await storageAPI.getImagesByInvestorId(userPlayerInfo.id);
-                    const imageList = await storageClientAPI.getImagesByInvestorId(userPlayerInfo.id);
+                    const imageList = await storageClientAPI.getImagesByPlayerId(userPlayerInfo.id);
                     const existingImage = imageList.find((imageInfo) => {
                         return imageInfo.original_url === userImageUrl;
                     });

@@ -171,7 +171,7 @@ export interface Database {
                 Row: {
                     id: string
                     user_id: string
-                    investor_id: string
+                    player_id: string
                     original_url: string
                     optimized_url?: string
                     file_size: number
@@ -186,7 +186,7 @@ export interface Database {
                 Insert: {
                     id?: string
                     user_id: string
-                    investor_id: string
+                    player_id: string
                     original_url: string
                     optimized_url?: string
                     file_size: number
@@ -201,7 +201,7 @@ export interface Database {
                 Update: {
                     id?: string
                     user_id?: string
-                    investor_id?: string
+                    player_id?: string
                     original_url?: string
                     optimized_url?: string
                     file_size?: number

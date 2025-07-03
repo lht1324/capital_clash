@@ -24,7 +24,6 @@ export type PlacementResult = {
 }
 
 export type Placement = {
-    // investor: Investor,
     playerId: string,
     x: number,  // 중심 기준으로 좌표 조정
     y: number,
@@ -74,8 +73,6 @@ export function calculateSquareLayout(filteredPlayerListByContinent: Player[], c
     }
 
     try {
-        // Billboard 알고리즘 사용
-        // const result = calculateBillboardLayout(investorList, maxUserCount)
         const result = calculateRectangularSquareLayout(filteredPlayerListByContinent);
         console.log(`✅ Billboard 배치 완료: ${result.placements.length}개 정사방형`)
         return {
