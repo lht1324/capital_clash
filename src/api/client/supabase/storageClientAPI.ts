@@ -56,7 +56,7 @@ export const storageClientAPI = {
 
             // 5. 투자자 테이블의 이미지 URL 및 상태 업데이트
             await supabase
-                .from('investors')
+                .from('players')
                 .update({
                     image_url: publicUrl,
                     image_status: 'pending',

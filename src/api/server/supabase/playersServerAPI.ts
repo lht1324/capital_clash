@@ -8,7 +8,7 @@ export const playersServerAPI = {
         const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase
-            .from('investors')
+            .from('players')
             .select('*')
             .order('created_at', { ascending: true })
 
@@ -21,7 +21,7 @@ export const playersServerAPI = {
         const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase
-            .from('investors')
+            .from('players')
             .insert([player])
             .select()
 
@@ -34,7 +34,7 @@ export const playersServerAPI = {
         const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase
-            .from('investors')
+            .from('players')
             .select('*')
             .eq('id', playerId)
             .single();
@@ -48,7 +48,7 @@ export const playersServerAPI = {
         const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase
-            .from('investors')
+            .from('players')
             .select('*')
             .eq('user_id', userId)
             .single();
@@ -62,7 +62,7 @@ export const playersServerAPI = {
         const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase
-            .from('investors')
+            .from('players')
             .update(player)
             .eq('id', playerId)
             .select()

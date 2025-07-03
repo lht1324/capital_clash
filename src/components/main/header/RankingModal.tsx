@@ -239,7 +239,7 @@ function RankingModal({
                                 <div className="text-center py-8">
                                     <div className="text-4xl mb-3">🏆</div>
                                     <h3 className="text-lg font-medium text-white mb-2">No Data Available</h3>
-                                    <p className="text-gray-400">There are no investors in the selected continent yet.</p>
+                                    <p className="text-gray-400">There are no players in the selected continent yet.</p>
                                 </div>
                             )}
                         </div>

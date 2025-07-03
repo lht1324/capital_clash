@@ -100,7 +100,7 @@ export interface Database {
             }
 
             // 투자자 테이블
-            investors: {
+            players: {
                 Row: {
                     id: string
                     user_id: string

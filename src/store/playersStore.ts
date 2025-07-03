@@ -148,7 +148,7 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                 {
                     event: '*',
                     schema: 'public',
-                    table: 'investors'
+                    table: 'players'
                 },
                 (payload) => {
                     console.log("payload received", payload)

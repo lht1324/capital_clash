@@ -20,13 +20,13 @@ class SupabaseChannelManager {
         console.log("🔄 투자자 실시간 구독 시작");
 
         this.channel = supabase
-            .channel("investors_changes")
+            .channel("players_changes")
             .on(
                 "postgres_changes",
                 {
                     event: "*",
                     schema: "public",
-                    table: "investors"
+                    table: "players"
                 },
                 (payload) => {
                     console.log("📡 실시간 투자자 데이터 변경:", payload);

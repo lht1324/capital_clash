@@ -21,7 +21,7 @@ export async function POST(nextReq: NextRequest) {
         }
 
         const { data, error } = await supabase
-            .from('investors')
+            .from('players')
             .insert([newPlayerInfo])
             .select();
 
@@ -42,7 +42,7 @@ export async function GET() {
         const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase
-            .from('investors')
+            .from('players')
             .select('*');
 
         if (error) throw error
