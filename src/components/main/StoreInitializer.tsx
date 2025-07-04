@@ -22,8 +22,8 @@ export interface StoreInitializerProps {
     continentPositionRecord: Record<string, Position>,
 
     // params
-    targetPlayerId: string | null,
-    checkoutSuccessStatus: CheckoutSuccessStatus | null,
+    targetPlayerId?: string | null,
+    checkoutSuccessStatus?: CheckoutSuccessStatus | null,
 }
 
 function StoreInitializer(props: StoreInitializerProps) {
