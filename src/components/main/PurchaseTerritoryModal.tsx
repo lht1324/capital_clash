@@ -26,6 +26,8 @@ function PurchaseTerritoryModal({
     const [validationError, setValidationError] = useState<string>('')
     const [showPreview, setShowPreview] = useState(false)
 
+    const MAX_STAKE_AMOUNT = 999999.99;
+
     const userPlayerInfo = useMemo(() => {
         return playerList.find((player) => {
             return player.user_id === user?.id;
@@ -128,9 +130,15 @@ function PurchaseTerritoryModal({
             return false
         }
 
+        // 최대 투자금액 체크
+        if (amount > MAX_STAKE_AMOUNT) {
+            setValidationError(`The maximum amount for a single payment is $${MAX_STAKE_AMOUNT.toLocaleString()}.`)
+            return false
+        }
+
         setValidationError('')
         return true
-    }, []);
+    }, [MAX_STAKE_AMOUNT]);
 
     // 중복 투자 검증
     const validateDuplicateStake = useCallback((continentId: string) => {
@@ -157,11 +165,18 @@ function PurchaseTerritoryModal({
     // 투자 금액 변경 핸들러
     const handleAmountChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         const updatedValue = e.target.value;
+        const numericValue = Number(updatedValue);
 
-        setStakeAmount(Number(updatedValue))
-        validateStakeAmount(updatedValue)
-        setShowPreview(!!updatedValue && parseFloat(updatedValue) > 0)
-    }, [validateStakeAmount]);
+        if (numericValue > MAX_STAKE_AMOUNT) {
+            setStakeAmount(MAX_STAKE_AMOUNT);
+            setValidationError(`The maximum amount for a single payment is $${MAX_STAKE_AMOUNT.toLocaleString()}.`);
+            setShowPreview(true);
+        } else {
+            setStakeAmount(numericValue);
+            validateStakeAmount(updatedValue);
+            setShowPreview(!!updatedValue && parseFloat(updatedValue) > 0);
+        }
+    }, [validateStakeAmount, MAX_STAKE_AMOUNT]);
 
     // 투자자 이름 변경 핸들러
     const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
