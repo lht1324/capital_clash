@@ -5,7 +5,7 @@ type Tables = Database['public']['Tables']
 type ImageRow = Tables['images']['Row']
 
 // 버킷 이름 상수
-const BUCKET_NAME = 'investor-images'
+const BUCKET_NAME = 'player-images'
 
 // 🖼️ 이미지 스토리지 관련 함수들
 export const storageClientAPI = {
@@ -13,11 +13,11 @@ export const storageClientAPI = {
     async uploadImage(
         file: File,
         userId: string,
-        investorId: string
+        playerId: string
     ): Promise<{ imageData: ImageRow | null; error: Error | null }> {
         try {
-            // 1. 파일 경로 생성 (userId/investorId/파일명)
-            const filePath = `${userId}/${investorId}/${Date.now()}_${file.name}`
+            // 1. 파일 경로 생성 (userId/playerId/파일명)
+            const filePath = `${userId}/${playerId}/${Date.now()}_${file.name}`
 
             // 2. Storage에 파일 업로드
             const { data: storageData, error: storageError } = await supabase
@@ -28,7 +28,10 @@ export const storageClientAPI = {
                     upsert: false
                 })
 
-            if (storageError) throw storageError
+            if (storageError) {
+                console.log("storageError");
+                throw storageError;
+            }
 
             // 3. 파일의 공개 URL 가져오기
             const { data: { publicUrl } } = supabase
@@ -39,7 +42,7 @@ export const storageClientAPI = {
             // 4. 이미지 메타데이터를 데이터베이스에 저장
             const imageData = {
                 user_id: userId,
-                investor_id: investorId,
+                player_id: playerId,
                 original_url: publicUrl,
                 file_size: file.size,
                 file_type: file.type,
@@ -52,17 +55,20 @@ export const storageClientAPI = {
                 .select()
                 .single()
 
-            if (dbError) throw dbError
+            if (dbError) {
+                console.log("dbError");
+                throw dbError
+            }
 
             // 5. 투자자 테이블의 이미지 URL 및 상태 업데이트
             await supabase
-                .from('investors')
+                .from('players')
                 .update({
                     image_url: publicUrl,
                     image_status: 'pending',
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', investorId)
+                .eq('id', playerId)
 
             return { imageData: dbData, error: null }
         } catch (error) {
@@ -72,11 +78,11 @@ export const storageClientAPI = {
     },
 
     // 이미지 조회
-    async getImagesByInvestorId(investorId: string): Promise<ImageRow[]> {
+    async getImagesByPlayerId(playerId: string): Promise<ImageRow[]> {
         const { data, error } = await supabase
             .from('images')
             .select('*')
-            .eq('investor_id', investorId)
+            .eq('player_id', playerId)
             .order('created_at', { ascending: false })
 
         if (error) throw error

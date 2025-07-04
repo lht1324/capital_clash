@@ -22,8 +22,8 @@ export interface StoreInitializerProps {
     continentPositionRecord: Record<string, Position>,
 
     // params
-    targetPlayerId: string | null,
-    checkoutSuccessStatus: CheckoutSuccessStatus | null,
+    targetPlayerId?: string | null,
+    checkoutSuccessStatus?: CheckoutSuccessStatus | null,
 }
 
 function StoreInitializer(props: StoreInitializerProps) {
@@ -49,7 +49,6 @@ function StoreInitializer(props: StoreInitializerProps) {
         }
     }, [props, isContinentsInitialized, initializeContinents]);
 
-    // PlayersStore
     useEffect(() => {
         if (!isPlayersInitialized) {
             initializePlayers(
@@ -59,15 +58,46 @@ function StoreInitializer(props: StoreInitializerProps) {
                 props.continentList
             );
         }
+    }, [isPlayersInitialized, initializePlayers, props.playerList, props.placementResultRecord, props.continentPositionRecord, props.continentList]);
 
-        if (isPlayersInitialized) {
-            const unsubscribePlayers = subscribeToPlayers();
+    // PlayersStore - Subscription
+    useEffect(() => {
+        if (!isPlayersInitialized) return;
 
-            return () => {
+        let unsubscribePlayers: (() => Promise<"ok" | "timed out" | "error">) | null = subscribeToPlayers();
+
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible') {
+                console.log('🔄 페이지 포커스 감지, 실시간 연결 재설정 중...');
+                if (unsubscribePlayers) await unsubscribePlayers();
+                unsubscribePlayers = subscribeToPlayers();
+                console.log('🔄 실시간 연결 재설정 완료');
+            }
+        };
+
+        const handleNetworkChange = async () => {
+            if (navigator.onLine) {
+                console.log('🌐 네트워크 연결 감지, 실시간 연결 재설정 중...');
+                if (unsubscribePlayers) await unsubscribePlayers();
+                unsubscribePlayers = subscribeToPlayers();
+            } else {
+                console.log('🔌 네트워크 연결 끊김');
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('online', handleNetworkChange);
+        window.addEventListener('offline', handleNetworkChange);
+
+        return () => {
+            if (unsubscribePlayers) {
                 unsubscribePlayers();
             }
-        }
-    }, [props, isPlayersInitialized, initializePlayers, subscribeToPlayers]);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('online', handleNetworkChange);
+            window.removeEventListener('offline', handleNetworkChange);
+        };
+    }, [isPlayersInitialized, subscribeToPlayers]);
 
     // UserStore
     useEffect(() => {

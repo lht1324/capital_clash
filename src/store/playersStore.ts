@@ -24,7 +24,7 @@ export interface PlayersStore {
         initialContinentPositionRecord: Record<string, Position>,
         continentList: Continent[]
     ) => void;
-    subscribeToPlayers: () => () => void; // 구독 해제 함수를 반환
+    subscribeToPlayers: () => () => Promise<'ok' | 'timed out' | 'error'>; // 구독 해제 함수를 반환
 
     getSharePercentageByContinent: (playerId: string, continentId: string) => number;
     getContinentalRankByContinent: (playerId: string, continentId: string) => number;
@@ -44,7 +44,7 @@ const _calculateVipPlayerList = (players: Record<string, Player>): Player[] => {
         const playerContinentId = player.continent_id;
         const currentContinentVip = vipsByContinent[playerContinentId];
 
-        if (!currentContinentVip || (currentContinentVip && currentContinentVip.investment_amount < player.investment_amount)) {
+        if (!currentContinentVip || (currentContinentVip && currentContinentVip.stake_amount < player.stake_amount)) {
             vipsByContinent[playerContinentId] = player;
         }
     })
@@ -148,7 +148,7 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                 {
                     event: '*',
                     schema: 'public',
-                    table: 'investors'
+                    table: 'players'
                 },
                 (payload) => {
                     console.log("payload received", payload)
@@ -178,13 +178,14 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
 
                             // 2. 알림을 위해 어떤 정보가 변경되었는지 별도로 확인합니다.
                             if (oldPlayer) {
-                                const isStakeAmountChanged = oldPlayer.investment_amount !== updatedPlayer.investment_amount;
+                                const isStakeAmountChanged = oldPlayer.stake_amount !== updatedPlayer.stake_amount;
                                 const isImageStatusChanged = oldPlayer.image_status !== updatedPlayer.image_status;
                                 const isContinentChanged = oldPlayer.continent_id !== updatedPlayer.continent_id;
+                                const isAreaColorChanged = oldPlayer.area_color !== updatedPlayer.area_color;
 
                                 if (isStakeAmountChanged || isImageStatusChanged || isContinentChanged) {
                                     if (isStakeAmountChanged) {
-                                        updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.STAKE_CHANGE, previousStake: oldPlayer.investment_amount });
+                                        updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.STAKE_CHANGE, previousStake: oldPlayer.stake_amount });
                                     } else if (isImageStatusChanged) {
                                         switch(updatedPlayer.image_status) {
                                             case ImageStatus.APPROVED: {
@@ -203,8 +204,10 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                                                 break;
                                             }
                                         }
-                                    } else {
+                                    } else if (isContinentChanged) {
                                         updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.CONTINENT_CHANGE })
+                                    } else {
+                                        updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.AREA_COLOR_CHANGE })
                                     }
                                 } else {
                                     updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.NONE_UI_UPDATE });
@@ -303,9 +306,9 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
             )
             .subscribe();
 
-        const unsubscribe = () => {
+        const unsubscribe = async () => {
             console.log('🚫 Players 실시간 구독을 해제합니다.');
-            supabase.removeChannel(channel);
+            return await supabase.removeChannel(channel);
         };
 
         return unsubscribe;
@@ -319,10 +322,10 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
             return player.continent_id === continentId;
         });
 
-        const continentalTotalInvestment = filteredPlayerListByContinent.reduce((acc, player) => {
-            return acc + player.investment_amount;
+        const continentalTotalStake = filteredPlayerListByContinent.reduce((acc, player) => {
+            return acc + player.stake_amount;
         }, 0);
-        const newSharePercentage = (player.investment_amount / continentalTotalInvestment) * 100;
+        const newSharePercentage = (player.stake_amount / continentalTotalStake) * 100;
 
         return newSharePercentage > 0.01
             ? newSharePercentage
@@ -336,7 +339,7 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
         return playerList.filter((player) => {
             return player.continent_id === continentId;
         }).sort((a, b) => {
-            return b.investment_amount - a.investment_amount;
+            return b.stake_amount - a.stake_amount;
         }).findIndex((player) => {
             return player.id === playerId;
         }) + 1;
@@ -346,7 +349,7 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
         const { playerList } = get();
 
         return playerList.sort((a, b) => {
-            return b.investment_amount - a.investment_amount;
+            return b.stake_amount - a.stake_amount;
         }).findIndex((player) => {
             return player.id === playerId;
         }) + 1;

@@ -5,50 +5,39 @@ import ImageReviewModal from "@/components/admin/image_review_modal/ImageReviewM
 import {useRouter} from "next/navigation";
 import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
+import {usePlayersStore} from "@/store/playersStore";
+import {useUserStore} from "@/store/userStore";
+import {useContinentStore} from "@/store/continentStore";
 
 export interface AdminPageClientProps {
-    playerList: Player[],
-    isUserAdmin: boolean;
+
 }
 
 function AdminPageClient(props: AdminPageClientProps) {
     const router = useRouter();
 
-    const {
-        playerList,
-        isUserAdmin
-    } = useMemo(() => {
-        return props;
-    }, [props]);
+    const { isContinentsInitialized } = useContinentStore();
+    const { isPlayersInitialized, playerList } = usePlayersStore();
+    const { isUsersInitialized, user } = useUserStore();
 
-    const [isInitialized, setIsInitialized] = useState(false)
+    const isStoreInitialized = useMemo(() => {
+        return isContinentsInitialized && isPlayersInitialized && isUsersInitialized;
+    }, [isContinentsInitialized, isPlayersInitialized, isUsersInitialized]);
+
     const [isLoading, setIsLoading] = useState(true)
     const [isImageReviewModalOpen, setIsImageReviewModalOpen] = useState(false);
 
     useEffect(() => {
-        // const timer = setTimeout(() => {
-        //     if (isInitialized) {
-        //         if (!isUserAdmin) {
-        //             // 로그인하지 않은 경우, 관리자가 아닌 경우 홈으로 리다이렉트
-        //             router.push('/');
-        //         }
-        //
-        //         setIsLoading(false);
-        //     }
-        // }, 3000);
-        if (!isUserAdmin) {
+        if (user && user.role !== 'admin') {
             // 로그인하지 않은 경우, 관리자가 아닌 경우 홈으로 리다이렉트
             router.push('/');
         }
 
         setIsLoading(false);
-
-        // return () => clearTimeout(timer);
-    // }, [isInitialized, isUserAdmin, router]);
-    }, [isUserAdmin, router]);
+    }, [user, router]);
 
     return (
-        !isLoading ? (<div className="min-h-screen pt-16">
+        (!isLoading && isStoreInitialized) ? (<div className="min-h-screen pt-16">
             {/*<Header/>*/}
             <div className="p-12">
                 <h1 className="text-3xl font-bold mb-8 text-gray-800">관리자 대시보드</h1>

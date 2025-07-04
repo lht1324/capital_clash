@@ -63,10 +63,10 @@ function ContinentDropdown() {
         const filteredPlayerListByContinent = getFilteredPlayerListByContinent(selectedContinentId);
         const totalStakeAmountByContinent = selectedContinentId !== "central"
             ? filteredPlayerListByContinent.reduce((acc, player) => {
-                return acc + player.investment_amount;
+                return acc + player.stake_amount;
             }, 0)
             : vipPlayerList.reduce((acc, player) => {
-                return acc + player.investment_amount;
+                return acc + player.stake_amount;
             }, 0)
 
         return selectedContinentId && selectedContinentData

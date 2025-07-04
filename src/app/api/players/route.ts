@@ -16,12 +16,12 @@ export async function POST(nextReq: NextRequest) {
             user_id: req.userId,
             continent_id: req.continentId,
             name: req.name,
-            investment_amount: req.investmentAmount,
+            stake_amount: req.stakeAmount,
             area_color: `#${Math.floor(Math.random() * 16777215).toString(16)}`
         }
 
         const { data, error } = await supabase
-            .from('investors')
+            .from('players')
             .insert([newPlayerInfo])
             .select();
 
@@ -42,7 +42,7 @@ export async function GET() {
         const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase
-            .from('investors')
+            .from('players')
             .select('*');
 
         if (error) throw error

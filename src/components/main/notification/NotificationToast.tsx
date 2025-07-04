@@ -94,7 +94,7 @@ function NotificationToast({ notification, onClose }: NotificationToastProps) {
                             >
                                 [{notification.continentName}]
                             </span>
-                            <span className="font-medium text-[16px] text-blue-400">{notification.investorName}</span>
+                            <span className="font-medium text-[16px] text-blue-400">{notification.playerName}</span>
                         </div>
 
                         <div className="flex text-lg mt-2 mb-2 border-t border-gray-700"/>

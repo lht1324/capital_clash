@@ -27,9 +27,9 @@ function TerritoryTab({
         }) ?? null;
     }, [playerList, user?.id]);
 
-    const investmentAmount = useMemo(() => {
-        return userPlayerInfo?.investment_amount ?? 0;
-    }, [userPlayerInfo?.investment_amount]);
+    const stakeAmount = useMemo(() => {
+        return userPlayerInfo?.stake_amount ?? 0;
+    }, [userPlayerInfo?.stake_amount]);
 
     const sharePercentage = useMemo(() => {
         return userPlayerInfo
@@ -88,7 +88,7 @@ function TerritoryTab({
                             <h4 className="font-medium text-white text-lg">{continentName}</h4>
                             <div className="text-right">
                                 <div
-                                    className="text-green-400 font-medium text-lg">${investmentAmount.toLocaleString()}</div>
+                                    className="text-green-400 font-medium text-lg">${stakeAmount.toLocaleString()}</div>
                                 <div className="text-blue-400 text-sm">{sharePercentage.toFixed(2)}% Share</div>
                             </div>
                         </div>
@@ -130,12 +130,12 @@ function TerritoryTab({
                     <div className="bg-gray-800 rounded-lg p-4">
                         <h4 className="text-md font-semibold text-white mb-3">Territory Upgrade</h4>
                         <p className="text-sm text-gray-400 mb-3">
-                            Increase your territory size and secure higher share percentage with additional investment.
+                            Increase your territory size with additional stake.
                         </p>
                         <button
                             onClick={() => onClickOpenPurchaseModal()}
                             className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors font-medium">
-                            + Add Investment
+                            + Add Stake
                         </button>
                     </div>
 

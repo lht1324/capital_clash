@@ -1,9 +1,7 @@
 'use server'
 // 부분 컬럼 업데이트는 PATCH로 처리
 
-import {createSupabaseServer} from "@/lib/supabase/supabaseServer";
-import {NextRequest, NextResponse} from "next/server";
-import {PostPlayersReq} from "@/api/types/supabase/players/PostPlayersReq";
+import {createSupabaseServer} from "@/lib/supabase/supabaseServer";;
 
 export async function GET() {
     try {

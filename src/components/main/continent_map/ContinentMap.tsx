@@ -14,6 +14,7 @@ import {useComponentStateStore} from "@/store/componentStateStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import CheckoutSuccessModal from "@/components/main/continent_map/CheckoutSuccessModal";
 import {Position} from "@/lib/treemapAlgorithm";
+import { SRGBColorSpace, NoToneMapping } from "three";
 
 function ContinentMap() {
     const { continentList } = useContinentStore();
@@ -73,15 +74,19 @@ function ContinentMap() {
                     position: [defaultPosition.x, defaultPosition.y, defaultPosition.z], // 초기 카메라 Z 위치 조정
                     fov: CONTINENT_MAP_FOV  // FOV 감소로 원근감 조정
                 }}
+                onCreated={(state) => {
+                    state.gl.outputColorSpace = SRGBColorSpace;
+                    state.gl.toneMapping = NoToneMapping;
+                }}
                 className="w-full h-full"
                 style={{ cursor: 'grab' }}
             >
                 {initialPosition && <CameraController initialPosition={initialPosition}/>}
                 <WorldScene
-                    onTileClick={async (investorId: string) => {
-                        setTerritoryOwnerId(investorId);
+                    onTileClick={async (playerId: string) => {
+                        setTerritoryOwnerId(playerId);
                         setIsTerritoryInfoModalOpen(true);
-                        await updateDailyViews(investorId);
+                        await updateDailyViews(playerId);
                     }}
                 />
             </Canvas>
