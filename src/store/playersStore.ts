@@ -24,7 +24,7 @@ export interface PlayersStore {
         initialContinentPositionRecord: Record<string, Position>,
         continentList: Continent[]
     ) => void;
-    subscribeToPlayers: () => () => void; // 구독 해제 함수를 반환
+    subscribeToPlayers: () => () => Promise<'ok' | 'timed out' | 'error'>; // 구독 해제 함수를 반환
 
     getSharePercentageByContinent: (playerId: string, continentId: string) => number;
     getContinentalRankByContinent: (playerId: string, continentId: string) => number;
@@ -306,9 +306,9 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
             )
             .subscribe();
 
-        const unsubscribe = () => {
+        const unsubscribe = async () => {
             console.log('🚫 Players 실시간 구독을 해제합니다.');
-            supabase.removeChannel(channel);
+            return await supabase.removeChannel(channel);
         };
 
         return unsubscribe;
