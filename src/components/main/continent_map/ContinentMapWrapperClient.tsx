@@ -6,7 +6,7 @@ import { usePlayersStore } from "@/store/playersStore";
 import { useUserStore } from "@/store/userStore";
 import ContinentDropdown from "@/components/main/continent_map/ContinentDropdown";
 import ContinentMap from "@/components/main/continent_map/ContinentMap";
-import InvestmentNotificationManager from "@/components/main/notification/NotificationManager";
+import NotificationManager from "@/components/main/notification/NotificationManager";
 
 export interface ContinentMapWrapperClientProps {
 
@@ -30,7 +30,7 @@ function ContinentMapWrapperClient(props: ContinentMapWrapperClientProps) {
         <main className="flex w-full pt-16">
             <ContinentDropdown/>
             <ContinentMap/>
-            <InvestmentNotificationManager
+            <NotificationManager
                 isEnabled={true}
             />
         </main>

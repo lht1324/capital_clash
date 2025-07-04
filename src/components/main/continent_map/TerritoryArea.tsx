@@ -3,7 +3,7 @@
 import * as THREE from "three";
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {Placement} from "@/lib/treemapAlgorithm";
-import {PlayersStore, selectPlayerById, usePlayersStore} from "@/store/playersStore";
+import {PlayersStore, usePlayersStore} from "@/store/playersStore";
 
 // 🌳 NEW: 개별 영역 컴포넌트 (직사각형) - 최적화된 버전
 function TerritoryArea({
@@ -52,8 +52,11 @@ function TerritoryArea({
         return hovered ? 0.35 : 0.3;
     }, [hovered]);
 
+    const linearColor = useMemo(() => {
+        return new THREE.Color(player.area_color).convertSRGBToLinear();
+    }, [player.area_color]);
+
     useEffect(() => {
-        // console.log(`[${placement.investor.image_status}] (${placement.investor.image_url})`)
         if (player.image_url && player.image_status === "approved") {
             const loader = new THREE.TextureLoader()
             loader.load(
@@ -83,18 +86,17 @@ function TerritoryArea({
                 onPointerOut={() => setHovered(false)}
                 onClick={() => {
                     if (!imageTexture) {
-                        console.log(`(Calc) name = ${player.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
                         onTileClick();
                     }
                 }}
             >
                 <boxGeometry args={[width, height, 0.2]} />
+                {/* 그림 색이 이상하다. TerritoryInfoEditModal과 비교하면서 살펴보기. */}
                 <meshStandardMaterial
-                    color={player.area_color}
+                    // color={player.area_color}
+                    color={linearColor}
                     opacity={hovered ? 1.0 : 0.9}
                     transparent={!hovered}
-                    // roughness={0.3}
-                    // metalness={0.1}
                 />
             </mesh>}
 
@@ -107,7 +109,6 @@ function TerritoryArea({
                     onPointerOver={() => setHovered(true)}
                     onPointerOut={() => setHovered(false)}
                     onClick={() => {
-                        console.log(`(Calc) name = ${player.name}, (x, y) = (${placement.x}, ${placement.y}), size = ${placement.width}x${placement.height}, cellLength = ${cellLength}`)
                         onTileClick();
                     }}
                 >

@@ -16,7 +16,7 @@ export async function POST(nextReq: NextRequest) {
             user_id: req.userId,
             continent_id: req.continentId,
             name: req.name,
-            stake_amount: req.investmentAmount,
+            stake_amount: req.stakeAmount,
             area_color: `#${Math.floor(Math.random() * 16777215).toString(16)}`
         }
 

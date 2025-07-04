@@ -181,6 +181,7 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                                 const isStakeAmountChanged = oldPlayer.stake_amount !== updatedPlayer.stake_amount;
                                 const isImageStatusChanged = oldPlayer.image_status !== updatedPlayer.image_status;
                                 const isContinentChanged = oldPlayer.continent_id !== updatedPlayer.continent_id;
+                                const isAreaColorChanged = oldPlayer.area_color !== updatedPlayer.area_color;
 
                                 if (isStakeAmountChanged || isImageStatusChanged || isContinentChanged) {
                                     if (isStakeAmountChanged) {
@@ -203,8 +204,10 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                                                 break;
                                             }
                                         }
-                                    } else {
+                                    } else if (isContinentChanged) {
                                         updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.CONTINENT_CHANGE })
+                                    } else {
+                                        updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.AREA_COLOR_CHANGE })
                                     }
                                 } else {
                                     updatedInfos.push({ player: updatedPlayer, updateType: UpdateType.NONE_UI_UPDATE });
@@ -319,10 +322,10 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
             return player.continent_id === continentId;
         });
 
-        const continentalTotalInvestment = filteredPlayerListByContinent.reduce((acc, player) => {
+        const continentalTotalStake = filteredPlayerListByContinent.reduce((acc, player) => {
             return acc + player.stake_amount;
         }, 0);
-        const newSharePercentage = (player.stake_amount / continentalTotalInvestment) * 100;
+        const newSharePercentage = (player.stake_amount / continentalTotalStake) * 100;
 
         return newSharePercentage > 0.01
             ? newSharePercentage

@@ -104,7 +104,7 @@ function TerritoryInfoViewModal({
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
                     <div className="text-center">
-                        <p className="text-red-600 mb-4">Can't find investor's information.</p>
+                        <p className="text-red-600 mb-4">Can't find player's information.</p>
                         <button
                             onClick={onClose}
                             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
@@ -191,7 +191,7 @@ function TerritoryInfoViewModal({
                             <div className="flex justify-between">
                                 <div className="flex flex-row w-fit">
                                     <div className="min-w-6 mr-2">💰</div>
-                                    <span className="text-gray-600">Investment Amount</span>
+                                    <span className="text-gray-600">Stake Amount</span>
                                 </div>
                                 <span className="font-medium">${territoryOwnerPlayerInfo.stake_amount.toLocaleString()}</span>
                             </div>
@@ -257,7 +257,7 @@ function TerritoryInfoViewModal({
                                     </button>
                                 </div>
                             )}
-                            {/*{investorInfo.instagram_url && (*/}
+                            {/*{territoryOwnerPlayerInfo.instagram_url && (*/}
                             {/*    <div className="flex flex-col mb-4">*/}
                             {/*        <div className="w-fit h-fit p-1 bg-transparent mb-1">*/}
                             {/*            <img*/}
@@ -270,7 +270,7 @@ function TerritoryInfoViewModal({
                             {/*            onClick={() => openExternalLink(territoryOwnerPlayerInfo?.instagram_url!)}*/}
                             {/*            className="text-blue-600 hover:text-blue-800 underline text-sm bg-white px-3 py-2 rounded border hover:bg-blue-50 transition-colors"*/}
                             {/*        >*/}
-                            {/*            {investorInfo.instagram_url} ↗*/}
+                            {/*            {territoryOwnerPlayerInfo.instagram_url} ↗*/}
                             {/*        </button>*/}
                             {/*    </div>*/}
                             {/*)}*/}

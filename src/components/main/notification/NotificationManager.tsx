@@ -10,7 +10,7 @@ import NotificationToast from "@/components/main/notification/NotificationToast"
 
 export interface NotificationData {
     id: string
-    investorName: string
+    playerName: string
     continentName: string
     continentColor: string
     additionalStakeAmount: number
@@ -26,17 +26,7 @@ export enum NotificationType {
     NO_NEED_TO_NOTIFY = 'NO_NEED_TO_NOTIFY'
 }
 
-interface NotificationManagerProps {
-    // continentList: Continent[],
-    // playerList: Player[],
-    isEnabled: boolean
-}
-
-function NotificationManager({
-    // continentList,
-    // playerList,
-    isEnabled
-}: NotificationManagerProps) {
+function NotificationManager() {
     const { continentList } = useContinentStore();
     const { lastUpdatedPlayerList } = usePlayersStore();
     const { isSidebarOpen } = useComponentStateStore();
@@ -70,22 +60,6 @@ function NotificationManager({
             ? { right: '336px' } // 320px(사이드바) + 16px(여유)
             : { }
     }, [isSidebarOpen]);
-
-    // 전역 알림 함수로 등록 (실제 투자 시 호출됨)
-    useEffect(() => {
-        if (!isEnabled) return
-
-        // 전역 window 객체에 알림 함수 등록
-        if (typeof window !== 'undefined') {
-            (window as any).addInvestmentNotification = addNotification
-        }
-
-        return () => {
-            if (typeof window !== 'undefined') {
-                delete (window as any).addInvestmentNotification
-            }
-        }
-    }, [isEnabled]);
 
     useEffect(() => {
         if (lastUpdatedPlayerList.length === 0) return;
@@ -125,7 +99,7 @@ function NotificationManager({
             return notificationType !== NotificationType.NO_NEED_TO_NOTIFY
                 ? {
                     id: updatedPlayer.id,
-                    investorName: updatedPlayer.name,
+                    playerName: updatedPlayer.name,
                     continentName: continentName,
                     continentColor: continentColor,
                     additionalStakeAmount: additionalStakeAmount,
@@ -141,7 +115,7 @@ function NotificationManager({
         setNotifications(notificationList);
     }, [lastUpdatedPlayerList, continentList]);
 
-    if (!isEnabled || notifications.length === 0) return null
+    if (notifications.length === 0) return null
 
     return (
         <div

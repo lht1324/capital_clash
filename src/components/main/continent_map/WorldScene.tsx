@@ -9,10 +9,10 @@ import {usePlayersStore} from "@/store/playersStore";
 function WorldScene({
     onTileClick,
 }: {
-    onTileClick: (investorId: string) => void;
+    onTileClick: (playerId: string) => void;
 }) {
     const { continentList } = useContinentStore();
-    const { placementResultRecord } = usePlayersStore();
+    const { placementResultRecord, continentPositionRecord } = usePlayersStore();
 
     // 전체 화면을 커버하는 격자 무늬 생성
     const gridLines = useMemo(() => {
@@ -44,10 +44,19 @@ function WorldScene({
     return (
         <>
             {/* 전역 조명 */}
-            <ambientLight intensity={0.8} />
-            <pointLight position={[20, 20, 20]} intensity={1} />
-            <pointLight position={[-20, -20, 20]} intensity={0.5} />
+            <ambientLight intensity={1}/>
+            {/* 메모리 좀 많이 먹으면 이걸로 수정 */}
+            {/*<directionalLight position={[-20, -20, 20]} intensity={1} />*/}
+            {/*<directionalLight position={[-20, 20, 20]} intensity={1} />*/}
+            {/*<directionalLight position={[20, -20, 20]} intensity={1} />*/}
+            {/*<directionalLight position={[20, 20, 20]} intensity={1} />*/}
+            {continentList.map((continent) => {
+                const continentPosition = continentPositionRecord[continent.id];
 
+                if (continentPosition) {
+                    return <directionalLight key={continent.id} position={[continentPosition.x, continentPosition.y, 20]} intensity={1.2} />
+                }
+            })}
             {/* 전체 화면 격자 무늬 */}
             {gridLines.map((geometry, index) => (
                 <primitive

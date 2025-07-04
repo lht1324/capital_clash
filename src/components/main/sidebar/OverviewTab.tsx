@@ -34,7 +34,7 @@ function OverviewTab({
         }));
     }, [vipPlayerList, user?.id]);
 
-    const userInvestmentAmount = useMemo(() => {
+    const userStakeAmount = useMemo(() => {
         return userPlayerInfo?.stake_amount ?? 0;
     }, [userPlayerInfo?.stake_amount]);
 
@@ -90,16 +90,16 @@ function OverviewTab({
 
     return (
         <div className="space-y-4">
-            <h3 className="text-lg font-bold text-white mb-4">Investment Status</h3>
+            <h3 className="text-lg font-bold text-white mb-4">Overview</h3>
 
             {userPlayerInfo ? (
                 <>
                     {/* 전체 요약 */}
                     <div className="bg-gray-800 rounded-lg p-4 space-y-3">
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-400">Investment</span>
+                            <span className="text-gray-400">Stake</span>
                             <span
-                                className="text-xl font-bold text-green-400">${userInvestmentAmount.toLocaleString()}</span>
+                                className="text-xl font-bold text-green-400">${userStakeAmount.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-gray-400">Continental Share</span>
@@ -180,7 +180,7 @@ function OverviewTab({
                 <div className="bg-gray-800 rounded-lg p-6 text-center">
                     <div className="text-4xl mb-4">🎯</div>
                     <h4 className="text-lg font-semibold text-white mb-2">No territory</h4>
-                    <p className="text-gray-400 mb-4">Start your investment by purchasing your territory!</p>
+                    <p className="text-gray-400 mb-4">Get into the battle by purchasing your territory!</p>
                     <button
                         onClick={() => onClickOpenPurchaseModal()}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"

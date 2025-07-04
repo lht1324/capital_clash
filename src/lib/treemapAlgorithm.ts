@@ -99,13 +99,13 @@ export function calculateSquareLayout(filteredPlayerListByContinent: Player[], c
     }
 }
 
-function calculateRectangularSquareLayout(playerList: Player[]) {
+function calculateRectangularSquareLayout(filteredPlayerListByContinent: Player[]) {
     // 1. 각 투자자의 지분율에 따라 정사각형 크기 계산
-    const totalInvestmentAmount = playerList.reduce((acc, player) => {
+    const totalStakeAmount = filteredPlayerListByContinent.reduce((acc, player) => {
         return acc + player.stake_amount;
     }, 0);
-    const squares = playerList.map((player) => {
-        const sharePercentage = player.stake_amount / totalInvestmentAmount;
+    const squares = filteredPlayerListByContinent.map((player) => {
+        const sharePercentage = player.stake_amount / totalStakeAmount;
         const area = sharePercentage * CONTINENT_MAX_USER_COUNT * CONTINENT_MAX_USER_COUNT;
         const sideLength = Math.floor(Math.sqrt(area));
 

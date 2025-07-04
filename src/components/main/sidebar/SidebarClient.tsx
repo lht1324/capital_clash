@@ -71,7 +71,7 @@ function SidebarClient(props: SidebarClientProps) {
 
     const onClickSwitchContinent = useCallback(async (selectedContinentId: string) => {
         if (!userPlayerInfo) {
-            console.error('User or investment info not found');
+            console.error('User or territory info not found');
             return;
         }
 
@@ -124,7 +124,7 @@ function SidebarClient(props: SidebarClientProps) {
         console.log(`🖼️ Image uploaded: ${file.name}, Size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`)
 
         if (!user || !userPlayerInfo) {
-            alert('❌ Unable to verify login status or investment information.')
+            alert('❌ Unable to verify login status or stake information.')
             return
         }
 
@@ -135,7 +135,6 @@ function SidebarClient(props: SidebarClientProps) {
                     console.log('🗑️ 기존 이미지 삭제 시작...')
 
                     // 1. 기존 이미지의 images 테이블 레코드 찾기
-                    // const imageList = await storageAPI.getImagesByInvestorId(userPlayerInfo.id);
                     const imageList = await storageClientAPI.getImagesByPlayerId(userPlayerInfo.id);
                     const existingImage = imageList.find((imageInfo) => {
                         return imageInfo.original_url === userImageUrl;
@@ -143,12 +142,10 @@ function SidebarClient(props: SidebarClientProps) {
 
                     if (existingImage) {
                         // 2. 파일 경로 추출
-                        // const filePath = storageAPI.getFilePathFromUrl(existingImage.original_url);
                         const filePath = storageClientAPI.getFilePathFromUrl(existingImage.original_url);
 
                         if (filePath) {
                             // 3. 기존 이미지 삭제
-                            // const deleteSuccess = await storageAPI.deleteImage(existingImage.id, filePath);
                             const deleteSuccess = await storageClientAPI.deleteImage(existingImage.id, filePath);
                             if (deleteSuccess) {
                                 console.log('✅ 기존 이미지 삭제 완료');
