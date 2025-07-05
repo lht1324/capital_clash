@@ -27,11 +27,11 @@ function ContinentMapWrapperClient(props: ContinentMapWrapperClientProps) {
     }
 
     return (
-        <main className="flex w-full pt-16">
+        (isInitialized && <main className="flex w-full pt-16">
             <ContinentDropdown/>
             <ContinentMap/>
             <NotificationManager/>
-        </main>
+        </main>)
     )
 }
 

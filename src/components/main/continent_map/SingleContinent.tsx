@@ -40,7 +40,7 @@ function SingleContinent({
     }, [continent.id]);
 
     return (
-        <group position={[position.x, position.y, position.z]}>
+        (position && <group position={[position.x, position.y, position.z]}>
             {/* 대륙 기본 모양 */}
             {!placementResult && (
                 <mesh>
@@ -69,7 +69,7 @@ function SingleContinent({
                     />
                 })}
             </group>)}
-        </group>
+        </group>)
     );
 }
 
