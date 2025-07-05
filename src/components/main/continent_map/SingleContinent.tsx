@@ -39,7 +39,7 @@ function SingleContinent({
         <group position={
             position
                 ? [position.x, position.y, position.z]
-                : [continent.position_x, continent.position_y, continent.position_z]
+                : [continent.position_x, continent.position_y, 10]
         }>
             {/* 대륙 기본 모양 */}
             {!placementResult && (

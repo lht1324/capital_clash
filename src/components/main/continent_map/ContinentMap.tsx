@@ -33,7 +33,7 @@ function ContinentMap() {
     }, [continentList, placementResultRecord, continentPositionRecord]);
 
     const defaultPosition = useMemo(() => {
-        return { x: 0, y: 0, z: initialCameraPositionZ ?? 60 };
+        return { x: 0, y: 0, z: 40 };
     }, [initialCameraPositionZ]);
 
     const updateDailyViews = useCallback(async (playerId: string) => {
