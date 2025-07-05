@@ -27,6 +27,8 @@ function ContinentMap() {
     const [territoryOwnerId, setTerritoryOwnerId] = useState<string | null>(null);
 
     const initialCameraPositionZ = useMemo(() => {
+        console.log("placementResultRecord", placementResultRecord);
+        console.log("continentPositionRecord", continentPositionRecord);
         return getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord);
     }, [continentList, placementResultRecord, continentPositionRecord]);
 
