@@ -36,11 +36,7 @@ function SingleContinent({
     }, [continent.id]);
 
     return (
-        <group position={
-            position
-                ? [position.x, position.y, position.z]
-                : [continent.position_x, continent.position_y, 10]
-        }>
+        <group position={[position.x, position.y, position.z]}>
             {/* 대륙 기본 모양 */}
             {!placementResult && (
                 <mesh>
@@ -59,14 +55,14 @@ function SingleContinent({
             {/* 투자자 영역 */}
             {placementResult && (<group>
                 {placementResult.placements.map((placement) => {
-                        return <TerritoryArea
-                            key={placement.playerId}
-                            placement={placement}
-                            cellLength={cellLength}
-                            onTileClick={() => {
-                                onTileClick(placement.playerId);
-                            }}
-                        />
+                    return <TerritoryArea
+                        key={placement.playerId}
+                        placement={placement}
+                        cellLength={cellLength}
+                        onTileClick={() => {
+                            onTileClick(placement.playerId);
+                        }}
+                    />
                 })}
             </group>)}
         </group>

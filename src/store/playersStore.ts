@@ -88,6 +88,12 @@ function _calculateContinentalLayoutInfo(
                     placementResultRecord["central"]
                 )
                 : prevContinentPositionRecord[continent.id];
+        } else {
+            continentPositionRecord[continent.id] = {
+                x: continent.position_x,
+                y: continent.position_y,
+                z: 10
+            }
         }
     });
 

@@ -27,13 +27,11 @@ function ContinentMap() {
     const [territoryOwnerId, setTerritoryOwnerId] = useState<string | null>(null);
 
     const initialCameraPositionZ = useMemo(() => {
-        console.log("placementResultRecord", placementResultRecord);
-        console.log("continentPositionRecord", continentPositionRecord);
         return getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord);
     }, [continentList, placementResultRecord, continentPositionRecord]);
 
     const defaultPosition = useMemo(() => {
-        return { x: 0, y: 0, z: 40 };
+        return { x: 0, y: 0, z: 60 };
     }, [initialCameraPositionZ]);
 
     const updateDailyViews = useCallback(async (playerId: string) => {
