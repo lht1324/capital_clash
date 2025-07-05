@@ -97,6 +97,8 @@ function _calculateContinentalLayoutInfo(
         }
     });
 
+    console.log("continentPositionRecord", continentPositionRecord);
+
     return {
         newPlacementResultRecord: placementResultRecord,
         newContinentPositionRecord: continentPositionRecord,
