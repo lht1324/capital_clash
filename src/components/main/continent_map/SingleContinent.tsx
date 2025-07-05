@@ -30,7 +30,11 @@ function SingleContinent({
     }, [continent.id]);
 
     return (
-        <group position={[position.x, position.y, position.z]}>
+        <group position={
+            position
+                ? [position.x, position.y, position.z]
+                : [continent.position_x, continent.position_y, continent.position_z]
+        }>
             {/* 대륙 기본 모양 */}
             {!placementResult && (
                 <mesh>
