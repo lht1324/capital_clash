@@ -6,10 +6,11 @@ import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
 
 export async function GET(
     _req: NextRequest,
-    { params: { id } }: { params: { id: string } }
+    { params }: { params: Promise<{ playerId: string }> }
 ) {
     try {
-        const player = await playersServerAPI.getPlayersByUserId(id);
+        const { playerId } = await params;
+        const player = await playersServerAPI.getPlayersByUserId(playerId);
 
         return NextResponse.json({ ...player }, { status: 201 });
     } catch (error) {
@@ -29,7 +30,6 @@ export async function PATCH(
     try {
         const { playerId } = await params;
         const updatePlayerInfo: Partial<Player> = await request.json();
-        console.log(`updatePlayerInfo[${playerId}]`, updatePlayerInfo)
 
         const result = await playersServerAPI.patchPlayersById(playerId, updatePlayerInfo);
 
