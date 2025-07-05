@@ -29,6 +29,12 @@ function SingleContinent({
             : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
     }, [continent.id]);
 
+    const continentDefaultLength = useMemo(() => {
+        return continent.id !== "central"
+            ? CONTINENT_DEFAULT_LENGTH
+            : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO;
+    }, [continent.id]);
+
     return (
         <group position={
             position
@@ -38,7 +44,8 @@ function SingleContinent({
             {/* 대륙 기본 모양 */}
             {!placementResult && (
                 <mesh>
-                    <boxGeometry args={[cellLength * CONTINENT_MAX_USER_COUNT, cellLength * CONTINENT_MAX_USER_COUNT, 1]} />
+                    {/*<boxGeometry args={[cellLength * CONTINENT_MAX_USER_COUNT, cellLength * CONTINENT_MAX_USER_COUNT, 1]} />*/}
+                    <boxGeometry args={[continentDefaultLength, continentDefaultLength, 1]} />
                     <meshStandardMaterial
                         color={continent.color}
                         opacity={0.9}
