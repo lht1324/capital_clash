@@ -47,3 +47,4 @@ next-env.d.ts
 # tmp files
 /tmp
 /out-tsc
+.env.local
