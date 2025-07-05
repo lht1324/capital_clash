@@ -226,7 +226,7 @@ function PurchaseTerritoryModal({
 
     // 이름, 설명 추가
 
-    // 구매/추가투자 처리
+    // 구매 / 추가 투자 처리
     const handlePurchase = useCallback(async () => {
         if (!isPurchasePossible || !user) return;
 
