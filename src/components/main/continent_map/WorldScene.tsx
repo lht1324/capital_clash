@@ -74,15 +74,13 @@ function WorldScene({
 
             {/* 모든 대륙 렌더링 */}
             {continentList.map((continent) => {
-                if (placementResultRecord[continent.id]) {
-                    return (
-                        <SingleContinent
-                            key={continent.id}
-                            continent={continent}
-                            onTileClick={onTileClick}
-                        />
-                    );
-                }
+                return (
+                    <SingleContinent
+                        key={continent.id}
+                        continent={continent}
+                        onTileClick={onTileClick}
+                    />
+                );
             })}
         </>
     );

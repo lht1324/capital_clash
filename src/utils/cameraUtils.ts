@@ -36,7 +36,7 @@ function getWorldBoundary(
     // 1) 실제로 존재하는 대륙들만으로 1차 박스
     continentList.forEach((continent) => {
         const placementResult = placementResultRecord[continent.id];
-        if (!placementResult) return;                // 인구 0 → skip
+        if (!placementResult) return; // 인구 0 → skip
 
         const boundary = placementResult.boundary;
         const { x = 0, y = 0, z = 0 } = continentPositionRecord[continent.id] ?? {};
