@@ -33,12 +33,12 @@ function SingleContinent({
         <group position={
             position
                 ? [position.x, position.y, position.z]
-                : [continent.position_x, continent.position_y, continent.position_z]
+                : [continent.position_x, continent.position_y, 60]
         }>
             {/* 대륙 기본 모양 */}
             {!placementResult && (
                 <mesh>
-                    <boxGeometry args={[cellLength * continent.max_users, cellLength * continent.max_users, 1]} />
+                    <boxGeometry args={[cellLength * CONTINENT_MAX_USER_COUNT, cellLength * CONTINENT_MAX_USER_COUNT, 1]} />
                     <meshStandardMaterial
                         color={continent.color}
                         opacity={0.9}
