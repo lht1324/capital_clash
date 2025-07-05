@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
     title: 'Capital Clash',
-    description: 'Real money war game',
+    description: "No gacha, no random chance. Just the purest form of 'pay-to-win' where your wallet size directly translates to the size of your empire. Claim your dominance.",
     icons: {
         icon: [
             { url: '/favicon/favicon_16.png', sizes: '16x16' },
