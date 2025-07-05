@@ -35,10 +35,12 @@ export async function GET() {
     try {
         const data = await playersServerAPI.getPlayers();
 
-        return data || [];
+        return NextResponse.json({ data }, { status: 201 });
     } catch (error) {
         console.log(error);
-
-        return [];
+        return NextResponse.json(
+            { error: (error as Error).message },
+            { status: 500 },
+        );
     }
 }
