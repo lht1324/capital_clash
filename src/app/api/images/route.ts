@@ -11,9 +11,9 @@ export async function POST(req: NextRequest) {
 
         if (!file || !userId || !playerId) throw Error("Invalid form data");
 
-        const result = await imagesServerAPI.uploadImage(file, userId, playerId);
+        const data = await imagesServerAPI.uploadImage(file, userId, playerId);
 
-        return NextResponse.json({ data: result }, { status: 201 })
+        return NextResponse.json(data ? { ...data } : null, { status: 201 })
     } catch (error) {
         console.error(error)
         return NextResponse.json(

@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         console.log(error);
 
-        return null;
+        return NextResponse.json(
+            { error: (error as Error).message },
+            { status: 500 },
+        )
     }
 }
 
