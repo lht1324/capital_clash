@@ -1,6 +1,6 @@
 'use client'
 
-import {memo, useMemo} from "react";
+import {memo, useEffect, useMemo} from "react";
 import TerritoryArea from "@/components/main/continent_map/TerritoryArea";
 import {Continent} from "@/api/types/supabase/Continents";
 import {usePlayersStore, PlayersStore} from "@/store/playersStore";
@@ -22,6 +22,10 @@ function SingleContinent({
         placementResult: state.placementResultRecord[continent.id],
         position: state.continentPositionRecord[continent.id],
     }), shallow);
+
+    useEffect(() => {
+        console.log(`[${continent.name}] position`, position)
+    }, [continent.name, position]);
 
     const cellLength = useMemo(() => {
         return continent.id !== "central"
