@@ -7,6 +7,16 @@ import {useUserStore} from "@/store/userStore";
 import {polarClientAPI} from "@/api/client/polar/polarClientAPI";
 import {CONTINENT_MAX_USER_COUNT} from "@/components/main/continent_map/continent_map_public_variables";
 
+enum ValidationErrorType {
+    INPUT_STAKE_EMPTY = 'INPUT_STAKE_EMPTY',
+    INPUT_INVALID_NUMBER = 'INPUT_INVALID_NUMBER',
+    INPUT_UNDER_MINIMUM_STAKE = 'INPUT_UNDER_MINIMUM_STAKE',
+    INPUT_OVER_MAXIMUM_STAKE = 'INPUT_OVER_MAXIMUM_STAKE',
+    CONTINENT_FULL = 'CONTINENT_FULL',
+    ERROR_OCCURRED = 'ERROR_OCCURRED',
+    NONE = 'NONE'
+}
+
 function PurchaseTerritoryModal({
     onClose
 }: {
@@ -19,11 +29,11 @@ function PurchaseTerritoryModal({
     const { playerList } = usePlayersStore();
     const { user } = useUserStore();
 
-    const [selectedContinentId, setSelectedContinentId] = useState<string | null>(null)
-    const [stakeAmount, setStakeAmount] = useState<number>(1)
-    const [playerName, setPlayerName] = useState<string>('')
-    const [isCalculating, setIsCalculating] = useState(false)
-    const [validationError, setValidationError] = useState<string>('')
+    const [selectedContinentId, setSelectedContinentId] = useState<string | null>(null);
+    const [stakeAmount, setStakeAmount] = useState<number>(1);
+    const [playerName, setPlayerName] = useState<string>('');
+    const [isCalculating, setIsCalculating] = useState(false);
+    const [validationErrorState, setValidationErrorState] = useState<ValidationErrorType>(ValidationErrorType.NONE)
     const [showPreview, setShowPreview] = useState(false)
 
     const MAX_STAKE_AMOUNT = 999999.99;
@@ -116,51 +126,68 @@ function PurchaseTerritoryModal({
     const validateStakeAmount = useCallback((value: string) => {
         const amount = parseFloat(value)
         if (!value) {
-            setValidationError('Please enter an stake amount.')
+            setValidationErrorState(ValidationErrorType.INPUT_STAKE_EMPTY);
             return false
         }
         if (isNaN(amount)) {
-            setValidationError('Please enter a valid number.')
+            setValidationErrorState(ValidationErrorType.INPUT_INVALID_NUMBER);
             return false
         }
 
         // 최소 투자금액 체크
         if (amount < 1) {
-            setValidationError('The minimum stake amount is $1.')
+            setValidationErrorState(ValidationErrorType.INPUT_UNDER_MINIMUM_STAKE);
             return false
         }
 
         // 최대 투자금액 체크
         if (amount > MAX_STAKE_AMOUNT) {
-            setValidationError(`The maximum amount for a single payment is $${MAX_STAKE_AMOUNT.toLocaleString()}.`)
+            setValidationErrorState(ValidationErrorType.INPUT_OVER_MAXIMUM_STAKE);
             return false
         }
 
-        setValidationError('')
+        setValidationErrorState(ValidationErrorType.NONE);
         return true
     }, [MAX_STAKE_AMOUNT]);
-
-    // 중복 투자 검증
-    const validateDuplicateStake = useCallback((continentId: string) => {
-        if (isAdditionalStake) return true
-
-        // 선택한 대륙이 가득 찬 경우
-        const userCount = getContinentUserCount(continentId)
-        if (userCount >= selectedContinentMaxUserCount) {
-            setValidationError('The selected continent is full. Please select another continent.')
-            return false
-        }
-
-        return true
-    }, [isAdditionalStake, selectedContinentMaxUserCount]);
 
     // 입력 검증
     const isPurchasePossible = useMemo(() => {
         const isValidAmount = stakeAmount >= 1;
-        const isValidContinent = isAdditionalStake || (selectedContinentId && validateDuplicateStake(selectedContinentId))
-        const isValidName = isAdditionalStake || (playerName.trim() !== '')
-        return isValidAmount && isValidContinent && isValidName && !validationError
-    }, [stakeAmount, playerName, isAdditionalStake, validationError])
+        const isValidContinent = (isAdditionalStake && !selectedContinentId) || (!isAdditionalStake && selectedContinentId);
+        const isValidName = isAdditionalStake || (playerName.trim() !== '');
+
+        return isValidAmount
+            && isValidContinent
+            && isValidName
+            && ((validationErrorState === ValidationErrorType.NONE)
+                || (validationErrorState === ValidationErrorType.INPUT_OVER_MAXIMUM_STAKE && stakeAmount <= MAX_STAKE_AMOUNT));
+    }, [stakeAmount, isAdditionalStake, selectedContinentId, playerName, validationErrorState, MAX_STAKE_AMOUNT]);
+
+    const validationErrorText = useMemo(() => {
+        switch (validationErrorState) {
+            case ValidationErrorType.INPUT_STAKE_EMPTY: {
+                return "Please enter an stake amount.";
+            }
+            case ValidationErrorType.INPUT_INVALID_NUMBER: {
+                return "Please enter a valid number.";
+            }
+            case ValidationErrorType.INPUT_UNDER_MINIMUM_STAKE: {
+                return "The minimum stake amount is $1.";
+            }
+            case ValidationErrorType.INPUT_OVER_MAXIMUM_STAKE: {
+                return `The maximum amount for a single payment is $${MAX_STAKE_AMOUNT.toLocaleString()}.`;
+            }
+            case ValidationErrorType.CONTINENT_FULL: {
+                return "The selected continent is full. Please select another continent.";
+            }
+            case ValidationErrorType.ERROR_OCCURRED: {
+                return "An error occurred while processing your stake. Please try again.";
+            }
+            default: {
+                return "";
+            }
+        }
+    }, [validationErrorState]);
 
     // 투자 금액 변경 핸들러
     const handleAmountChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -169,7 +196,7 @@ function PurchaseTerritoryModal({
 
         if (numericValue > MAX_STAKE_AMOUNT) {
             setStakeAmount(MAX_STAKE_AMOUNT);
-            setValidationError(`The maximum amount for a single payment is $${MAX_STAKE_AMOUNT.toLocaleString()}.`);
+            setValidationErrorState(ValidationErrorType.INPUT_OVER_MAXIMUM_STAKE);
             setShowPreview(true);
         } else {
             setStakeAmount(numericValue);
@@ -181,6 +208,20 @@ function PurchaseTerritoryModal({
     // 투자자 이름 변경 핸들러
     const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         setPlayerName(e.target.value);
+    }, []);
+
+    const handleSelectContinent = useCallback((isNewContinentFull: boolean, newContinentId: string) => {
+        setSelectedContinentId((prevSelectedContinentId) => {
+            if (isNewContinentFull && (prevSelectedContinentId !== newContinentId)) {
+                setValidationErrorState(ValidationErrorType.CONTINENT_FULL);
+
+                return prevSelectedContinentId;
+            }
+
+            return prevSelectedContinentId !== newContinentId
+                ? newContinentId
+                : null;
+        });
     }, []);
 
     // 이름, 설명 추가
@@ -216,7 +257,7 @@ function PurchaseTerritoryModal({
         } catch (error) {
             console.error(error);
             setIsCalculating(false)
-            setValidationError('An error occurred while processing your stake. Please try again.')
+            setValidationErrorState(ValidationErrorType.ERROR_OCCURRED);
         }
     }, [isPurchasePossible, selectedContinentId, stakeAmount, playerName]);
 
@@ -349,7 +390,9 @@ function PurchaseTerritoryModal({
                                         return (
                                             <button
                                                 key={continent.id}
-                                                onClick={() => !isFull && setSelectedContinentId(continent.id)}
+                                                onClick={() => {
+                                                    handleSelectContinent(isFull, continent.id);
+                                                }}
                                                 disabled={isFull}
                                                 className={`p-5 rounded-xl border-2 transition-all duration-200 ${
                                                     isSelected
@@ -424,10 +467,10 @@ function PurchaseTerritoryModal({
                                             onWheel={(e) => e.currentTarget.blur()}
                                         />
                                     </div>
-                                    {validationError && (
+                                    {validationErrorText && (
                                         <p className="mt-3 text-red-400 text-sm flex items-center gap-2">
                                             <span>⚠️</span>
-                                            <span>{validationError}</span>
+                                            <span>{validationErrorText}</span>
                                         </p>
                                     )}
                                 </div>

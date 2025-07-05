@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { playersServerAPI } from "@/api/server/supabase/playersServerAPI";
-import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
+import { CheckoutSuccessStatus } from "@/api/types/polar/CheckoutSuccessStatus";
 
 export async function GET(req: NextRequest) {
     try {
@@ -30,13 +30,15 @@ export async function GET(req: NextRequest) {
         if (!userId || !stakeAmount || !email) throw Error("Invalid meta_data from Polar checkout success");
 
         if (continentId && name) {
-            await playersServerAPI.postPlayers({
+            const result = await playersServerAPI.postPlayers({
                 user_id: userId,
                 continent_id: continentId,
                 stake_amount: parseInt(stakeAmount),
                 name: name,
                 contact_email: email
             })
+
+            if (!result) throw Error("Failed insert player.");
         } else {
             const prevPlayerInfo = await playersServerAPI.getPlayersByUserId(userId);
 

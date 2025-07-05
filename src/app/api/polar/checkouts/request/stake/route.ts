@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
         const data = await polarServerAPI.postCheckoutsStakeServer(
             productId,
             amount,
-            metadata,
             customer_email,
+            metadata,
         );
 
         return NextResponse.json(data, { status: 200 });

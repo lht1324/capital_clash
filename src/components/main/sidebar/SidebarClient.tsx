@@ -15,8 +15,8 @@ import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
 import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
-import {storageClientAPI} from "@/api/client/supabase/storageClientAPI";
 import {polarClientAPI} from "@/api/client/polar/polarClientAPI";
+import {imagesClientAPI} from "@/api/client/supabase/imagesClientAPI";
 
 export interface SidebarClientProps {
 
@@ -134,27 +134,12 @@ function SidebarClient(props: SidebarClientProps) {
                 try {
                     console.log('🗑️ 기존 이미지 삭제 시작...')
 
-                    // 1. 기존 이미지의 images 테이블 레코드 찾기
-                    const imageList = await storageClientAPI.getImagesByPlayerId(userPlayerInfo.id);
-                    const existingImage = imageList.find((imageInfo) => {
-                        return imageInfo.original_url === userImageUrl;
-                    });
+                    const { isDeleteSuccess } = await imagesClientAPI.deleteImage(userImageUrl);
 
-                    if (existingImage) {
-                        // 2. 파일 경로 추출
-                        const filePath = storageClientAPI.getFilePathFromUrl(existingImage.original_url);
-
-                        if (filePath) {
-                            // 3. 기존 이미지 삭제
-                            const deleteSuccess = await storageClientAPI.deleteImage(existingImage.id, filePath);
-                            if (deleteSuccess) {
-                                console.log('✅ 기존 이미지 삭제 완료');
-                            } else {
-                                console.warn('⚠️ 기존 이미지 삭제에 실패했지만 새 이미지 업로드를 계속 진행합니다.');
-                            }
-                        } else {
-                            console.log('✅ 기존 이미지 경로가 존재하지 않습니다.');
-                        }
+                    if (isDeleteSuccess) {
+                        console.log('✅ 기존 이미지 삭제 완료');
+                    } else {
+                        console.warn('⚠️ 기존 이미지 삭제에 실패했지만 새 이미지 업로드를 계속 진행합니다.');
                     }
                 } catch (deleteError) {
                     console.error('❌ 기존 이미지 삭제 실패:', deleteError);
@@ -167,23 +152,17 @@ function SidebarClient(props: SidebarClientProps) {
             console.log(loadingMessage)
 
             // Supabase Storage에 이미지 업로드
-            const { imageData, error } = await storageClientAPI.uploadImage(
-                file,
-                user.id,
-                userPlayerInfo.id
-            )
-
-            console.log("imageData", imageData);
-            console.log("error", error);
-            if (error) {
-                throw error
-            }
+            const result = await imagesClientAPI.postImage(file, user.id, userPlayerInfo.id);
 
             // 성공 메시지 표시
-            alert(
-                `✅ Image successfully ${userImageStatus === ImageStatus.APPROVED ? "replaced" : "uploaded"}! Image is currently under review.`
-            )
-            console.log('업로드 성공:', imageData)
+            if (result) {
+                alert(
+                    `✅ Image successfully ${userImageStatus === ImageStatus.APPROVED ? "replaced" : "uploaded"}! Image is currently under review.`
+                )
+            } else {
+                throw Error('Image upload failed.');
+            }
+            // console.log('업로드 성공:', imageData)
         } catch (error) {
             console.error('이미지 업로드 실패:', error)
             alert('❌ Image upload failed. Please try again.')

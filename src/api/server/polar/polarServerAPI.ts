@@ -9,6 +9,7 @@ export const polarServerAPI = {
     async postCheckoutsStakeServer(
         productId: string,
         amount: number,
+        email: string,
         metadata: {
             user_id: string,
             stake_amount: number,
@@ -16,7 +17,6 @@ export const polarServerAPI = {
             name?: string,
             continent_id?: string,
         },
-        email: string,
     ): Promise<PostCheckoutResponse> {
         return await postFetch("checkouts", {
             products: [productId],
@@ -31,7 +31,7 @@ export const polarServerAPI = {
                 `&stake_amount=${metadata.stake_amount}` +
                 `&email=${metadata.email}` +
                 (metadata.name ? `&name=${metadata.name}` : ``) +
-                (metadata.continent_id ? `&name=${metadata.continent_id}` : ``),
+                (metadata.continent_id ? `&continent_id=${metadata.continent_id}` : ``),
             metadata: metadata,
         })
     },

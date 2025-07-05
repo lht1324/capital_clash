@@ -3,6 +3,26 @@ import { createSupabaseServer } from "@/lib/supabase/supabaseServer";
 
 // 🧑‍💼 투자자 관련 함수들
 export const playersServerAPI = {
+    // 새 투자자 추가
+    async postPlayers(player: Partial<Player>): Promise<Player | null> {
+        try {
+            const supabase = await createSupabaseServer();
+
+            const { data, error } = await supabase
+                .from('players')
+                .insert([player])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            return data || null
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
+    },
+
     // 모든 투자자 조회
     async getPlayers(): Promise<Player[]> {
         const supabase = await createSupabaseServer();
@@ -14,19 +34,6 @@ export const playersServerAPI = {
 
         if (error) throw error
         return data || []
-    },
-
-    // 새 투자자 추가
-    async postPlayers(player: Partial<Player>): Promise<Player> {
-        const supabase = await createSupabaseServer();
-
-        const { data, error } = await supabase
-            .from('players')
-            .insert([player])
-            .select()
-
-        if (error) throw error
-        return data?.[0] || null
     },
 
     // 특정 사용자의 투자자 정보 조회

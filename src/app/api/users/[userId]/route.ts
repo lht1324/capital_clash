@@ -1,9 +1,7 @@
 'use server'
 
-import {createSupabaseServer} from "@/lib/supabase/supabaseServer";
 import {NextRequest, NextResponse} from "next/server";
-import {Player} from "@/api/types/supabase/Players";
-import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
+import {usersServerAPI} from "@/api/server/supabase/usersServerAPI";
 
 export async function GET(
     _req: NextRequest,
@@ -11,16 +9,10 @@ export async function GET(
 ) {
     try {
         const { userId } = await params;
-        const supabase = await createSupabaseServer();
 
-        const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq("id", userId);
+        const data = await usersServerAPI.getUsersByUserid(userId);
 
-        if (error) throw error
-
-        return NextResponse.json({ ...(data?.[0]) }, { status: 201 });
+        return NextResponse.json(data ? { ...data } : null, { status: 201 });
     } catch (error) {
         console.log(error);
 

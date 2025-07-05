@@ -1,6 +1,5 @@
 'use server'
 
-import {createSupabaseServer} from "@/lib/supabase/supabaseServer";
 import {NextRequest, NextResponse} from "next/server";
 import {Player} from "@/api/types/supabase/Players";
 import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";

@@ -196,37 +196,12 @@ function TerritoryTab({
                         <p className="text-gray-400 mb-4">
                             Choose a continent and purchase your first territory to begin!
                         </p>
-                    </div>
-
-                    {/* 대륙 선택 옵션 */}
-                    <div className="space-y-2">
-                        {continentList.filter((continent) => {
-                            return continent.id !== "central";
-                        }).map((continent) => {
-                            const currentCount = getContinentPlayerCount(continent.id);
-                            const isFull = currentCount >= continent.max_users
-
-                            return (
-                                <button
-                                    key={continent.id}
-                                    onClick={() => !isFull && onClickOpenPurchaseModal()}
-                                    disabled={isFull}
-                                    className={`w-full ${
-                                        isFull ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
-                                    } text-white p-3 rounded-lg transition-all`}
-                                    style={{ backgroundColor: `${continent.color}` }}
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-medium">{continent.name}</span>
-                                        <div className="text-right">
-                                            <div className={`text-xs ${isFull ? 'text-red-200' : 'text-white/80'}`}>
-                                                {currentCount}/{continent.max_users}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </button>
-                            )
-                        })}
+                        <button
+                            onClick={() => onClickOpenPurchaseModal()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                        >
+                            Purchase Territory
+                        </button>
                     </div>
                 </div>
             )}

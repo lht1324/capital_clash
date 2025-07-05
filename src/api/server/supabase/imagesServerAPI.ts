@@ -1,5 +1,6 @@
-import { supabase } from '@/lib/supabase/supabaseClient'
-import { Database } from '@/types/database'
+import { createSupabaseSecureServer } from "@/lib/supabase/supabaseServer";
+import { Database } from "@/types/database";
+import {Image} from "@/api/types/supabase/Images";
 
 type Tables = Database['public']['Tables']
 type ImageRow = Tables['images']['Row']
@@ -7,15 +8,16 @@ type ImageRow = Tables['images']['Row']
 // 버킷 이름 상수
 const BUCKET_NAME = 'player-images'
 
-// 🖼️ 이미지 스토리지 관련 함수들
-export const storageClientAPI = {
+export const imagesServerAPI = {
     // 이미지 업로드
     async uploadImage(
         file: File,
         userId: string,
         playerId: string
-    ): Promise<{ imageData: ImageRow | null; error: Error | null }> {
+    ): Promise<Image | null> {
         try {
+            const supabase = await createSupabaseSecureServer();
+
             // 1. 파일 경로 생성 (userId/playerId/파일명)
             const filePath = `${userId}/${playerId}/${Date.now()}_${file.name}`
 
@@ -70,35 +72,63 @@ export const storageClientAPI = {
                 })
                 .eq('id', playerId)
 
-            return { imageData: dbData, error: null }
+            return dbData || null;
         } catch (error) {
             console.error('이미지 업로드 오류:', error)
-            return { imageData: null, error: error as Error }
+            return null;
         }
     },
 
     // 이미지 조회
-    async getImagesByPlayerId(playerId: string): Promise<ImageRow[]> {
-        const { data, error } = await supabase
-            .from('images')
-            .select('*')
-            .eq('player_id', playerId)
-            .order('created_at', { ascending: false })
+    async selectImagesByPlayerId(playerId: string): Promise<Image | null> {
+        try {
+            const supabase = await createSupabaseSecureServer();
 
-        if (error) throw error
-        return data || []
+            const { data, error } = await supabase
+                .from('images')
+                .select('*')
+                .eq('player_id', playerId)
+                .single();
+
+            if (error) throw error
+
+            return data || null;
+        } catch (error) {
+            console.error('이미지 갖고 오기 오류:', error)
+            return null;
+        }
+    },
+
+    async selectImagesByImageUrl(imageUrl: string): Promise<Image | null> {
+        try {
+            const supabase = await createSupabaseSecureServer();
+
+            const { data, error } = await supabase
+                .from('images')
+                .select('*')
+                .eq('original_url', imageUrl)
+                .single();
+
+            if (error) throw error
+
+            return data || null;
+        } catch (error) {
+            console.error('이미지 갖고 오기 오류:', error)
+            return null;
+        }
     },
 
     // 이미지 삭제
     async deleteImage(imageId: string, filePath: string): Promise<boolean> {
         try {
+            const supabase = await createSupabaseSecureServer();
+
             // 1. 스토리지에서 파일 삭제
             const { error: storageError } = await supabase
                 .storage
                 .from(BUCKET_NAME)
                 .remove([filePath])
 
-            console.log("storageError", storageError)
             if (storageError) throw storageError
 
             // 2. 데이터베이스에서 이미지 레코드 삭제
@@ -107,7 +137,6 @@ export const storageClientAPI = {
                 .delete()
                 .eq('id', imageId)
 
-            console.log("dbError", dbError)
             if (dbError) throw dbError
 
             return true
@@ -118,10 +147,16 @@ export const storageClientAPI = {
     },
 
     // 이미지 URL에서 파일 경로 추출
-    getFilePathFromUrl(url: string): string | null {
+    async getFilePathFromUrl(url: string): Promise<string | null> {
         try {
-            const storageUrl = supabase.storage.from(BUCKET_NAME).getPublicUrl('').data.publicUrl
-            return url.replace(storageUrl, '')
+            const supabase = await createSupabaseSecureServer();
+
+            const { data } = supabase
+                .storage
+                .from(BUCKET_NAME)
+                .getPublicUrl('');
+
+            return url.replace(data.publicUrl, '')
         } catch (error) {
             console.error('URL에서 파일 경로 추출 오류:', error)
             return null
