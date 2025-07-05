@@ -30,9 +30,7 @@ function ContinentMapWrapperClient(props: ContinentMapWrapperClientProps) {
         <main className="flex w-full pt-16">
             <ContinentDropdown/>
             <ContinentMap/>
-            <NotificationManager
-                isEnabled={true}
-            />
+            <NotificationManager/>
         </main>
     )
 }
