@@ -47,7 +47,18 @@ function getWorldBoundary(
         maxY = Math.max(maxY, boundary.maxY * cellLength + y);
     });
 
-    if (minX === Infinity) throw new Error('No active continents');
+    if (minX === Infinity) {
+        return {
+            minX: 0,
+            maxX: 0,
+            minY: 0,
+            maxY: 0,
+            centerX: 0,
+            centerY: 0,
+            width: 0,
+            height: 0,
+        };
+    }
 
     // 2) 중심 계산
     const cx = (minX + maxX) / 2;
