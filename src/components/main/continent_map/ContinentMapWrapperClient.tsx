@@ -22,18 +22,15 @@ function ContinentMapWrapperClient(props: ContinentMapWrapperClientProps) {
         return isContinentsInitialized && isPlayersInitialized && isUsersInitialized;
     }, [isContinentsInitialized, isPlayersInitialized, isUsersInitialized]);
 
-    if (!isInitialized) {
-        return <main className="flex w-full pt-16">Loading players...</main>;
-    }
-
     return (
         (isInitialized ? <main className="flex w-full pt-16">
             <ContinentDropdown/>
             <ContinentMap/>
             <NotificationManager/>
-        </main> : <main className="flex w-full pt-16">
-            {/* 깔쌈하게 적당히 */}
-            Loading players...
+        </main> : <main className="flex flex-col w-full h-screen justify-center items-center bg-gray-50 dark:bg-gray-900">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+            <p className="text-xl font-semibold text-gray-800 dark:text-gray-200">Loading data...</p>
+            <p className="text-gray-600 dark:text-gray-400">Please wait a moment.</p>
         </main>)
     )
 }

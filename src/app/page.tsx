@@ -48,8 +48,6 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     try {
         // URL에서 받은 userIdentifier를 디코딩하여 플레이어 ID를 얻습니다.
         const playerId = decodeBase64(decodeURIComponent(userIdentifier));
-
-        console.log("playerIdParam", playerId);
         
         // 해당 ID로 특정 플레이어의 정보를 서버에서 조회합니다.
         // playersServerAPI에 getPlayerById와 같은 함수가 필요합니다.
@@ -74,8 +72,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
                 images: imageUrl ? [imageUrl] : [], // 유저 이미지가 있으면 그걸 사용
             },
             twitter: { // X (트위터)
-                // card: 'summary_large_image',
-                card: 'summary',
+                card: 'summary_large_image',
                 title: title,
                 description: description,
                 images: imageUrl ? [imageUrl] : [], // 유저 이미지가 있으면 그걸 사용
