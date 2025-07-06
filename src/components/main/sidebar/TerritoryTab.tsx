@@ -60,7 +60,7 @@ function TerritoryTab({
             case ImageStatus.REJECTED: return '❌ Rejected'
             default: return '📷 Not uploaded'
         }
-    }, [userPlayerInfo?.image_status]);
+    }, [userPlayerInfo?.image_status, userPlayerInfo?.image_url]);
 
     const continentName = useMemo(() => {
         return userPlayerInfo?.continent_id

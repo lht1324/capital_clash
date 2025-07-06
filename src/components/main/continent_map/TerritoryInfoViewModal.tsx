@@ -65,7 +65,7 @@ function TerritoryInfoViewModal({
         const userIdentifier = encodeBase64(territoryOwnerPlayerInfo.id);
 
         // const targetUrl = new URL("https://capital-clash.vercel.app");
-        const targetUrl = new URL("http://localhost:3000/");
+        const targetUrl = new URL(window.location.origin);
         targetUrl.searchParams.set("user_identifier", encodeURIComponent(userIdentifier));
 
         const continentName = continentList.find((continent) => {
@@ -93,7 +93,7 @@ function TerritoryInfoViewModal({
             `${overallRankText}\n` +
             `${continentalRankText}\n\n` +
             `${targetUrl}\n\n` +
-            "#CapitalClash"
+            "#CapitalClash by @0verEazy"
         );
 
         window.open(intent.toString(), "_blank", "noopener,noreferrer");

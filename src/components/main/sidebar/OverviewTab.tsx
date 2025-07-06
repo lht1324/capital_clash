@@ -86,7 +86,7 @@ function OverviewTab({
             case ImageStatus.REJECTED: return '❌ Rejected'
             default: return '📷 Not uploaded'
         }
-    }, [userPlayerInfo?.image_status]);
+    }, [userPlayerInfo?.image_status, userPlayerInfo?.image_url]);
 
     const continentName = useMemo(() => {
         return continents[userPlayerInfo?.continent_id ?? ""]?.name ?? null
