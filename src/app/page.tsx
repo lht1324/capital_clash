@@ -23,13 +23,20 @@ type Props = {
 export const dynamic = 'force-dynamic'
 export const revalidate = 0;
 
+const FALLBACK_IMAGE = '/favicon/favicon_512.png';
+const SITE_ORIGIN = window.location.origin;
+
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
     const defaultMetaData = {
         title: 'Capital Clash',
         description: 'Dominate the world with your capital.',
-        // 필요하다면 기본 OG 이미지도 설정할 수 있습니다.
-        // openGraph: { images: ['/default-preview-image.png'] },
+        openGraph: { images: [`${SITE_ORIGIN}${FALLBACK_IMAGE}`] },
+        twitter: {
+            card: 'summary_large_image',
+            images: [`${SITE_ORIGIN}${FALLBACK_IMAGE}`]
+        }
     }
+
     const awaitedParams = await searchParams;
     const userIdentifier = awaitedParams?.user_identifier as string;
 
