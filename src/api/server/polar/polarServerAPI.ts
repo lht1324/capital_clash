@@ -3,7 +3,8 @@ import {GetProductsResponse} from "@/api/types/polar/GetProductsTypes";
 import {PostCheckoutResponse} from "@/api/types/polar/PostCheckoutTypes";
 import {GetCheckoutsResponse} from "@/api/types/polar/GetCheckoutsResponse";
 
-const BASE_URL = "https://sandbox-api.polar.sh/v1/"
+// const BASE_URL = "https://sandbox-api.polar.sh/v1/"
+const BASE_URL = "https://api.polar.sh/v1/"
 const API_KEY = process.env.POLAR_ACCESS_TOKEN!
 
 export const polarServerAPI = {
