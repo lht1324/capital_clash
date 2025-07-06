@@ -78,7 +78,11 @@ function OverviewTab({
     const imageStatusText = useMemo(() => {
         switch (userPlayerInfo?.image_status) {
             case ImageStatus.APPROVED: return '✅ Approved'
-            case ImageStatus.PENDING: return '⏳ Under Review'
+            case ImageStatus.PENDING: {
+                return userPlayerInfo?.image_url
+                    ? '⏳ Under Review'
+                    : "📷 No Image"
+            }
             case ImageStatus.REJECTED: return '❌ Rejected'
             default: return '📷 Not uploaded'
         }
