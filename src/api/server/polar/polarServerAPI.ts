@@ -1,12 +1,14 @@
 import {baseDeleteFetch, baseGetFetch, basePostFetch, basePutFetch} from "@/api/baseFetch";
 import {GetProductsResponse} from "@/api/types/polar/GetProductsTypes";
 import {PostCheckoutResponse} from "@/api/types/polar/PostCheckoutTypes";
+import {GetCheckoutsResponse} from "@/api/types/polar/GetCheckoutsResponse";
 
 const BASE_URL = "https://sandbox-api.polar.sh/v1/"
 const API_KEY = process.env.POLAR_ACCESS_TOKEN!
 
 export const polarServerAPI = {
     async postCheckoutsStakeServer(
+        originUrl: string,
         productId: string,
         amount: number,
         email: string,
@@ -25,10 +27,10 @@ export const polarServerAPI = {
             amount: amount * 100,
             customer_email: email,
             // success_url: "https://capital-clash.vercel.app/polar/checkout/success"
-            success_url: `http://localhost:3000/api/polar/checkouts/success/stake` +
+            // success_url: `http://localhost:3000/api/polar/checkouts/success/stake` +
+            success_url: `${originUrl}/api/polar/checkouts/success/stake` +
                 `?checkout_id={CHECKOUT_ID}` +
                 `&user_id=${metadata.user_id}` +
-                `&stake_amount=${metadata.stake_amount}` +
                 `&email=${metadata.email}` +
                 (metadata.name ? `&name=${metadata.name}` : ``) +
                 (metadata.continent_id ? `&continent_id=${metadata.continent_id}` : ``),
@@ -37,6 +39,7 @@ export const polarServerAPI = {
     },
 
     async postCheckoutsChangeContinentServer(
+        originUrl: string,
         productId: string,
         playerId: string,
         targetContinentId: string,
@@ -48,7 +51,8 @@ export const polarServerAPI = {
             require_billing_address: false,
             customer_email: email,
             // success_url: "https://capital-clash.vercel.app/polar/checkout/success"
-            success_url: `http://localhost:3000/api/polar/checkouts/success/change-continent` +
+            // success_url: `http://localhost:3000/api/polar/checkouts/success/change-continent` +
+            success_url: `${originUrl}/api/polar/checkouts/success/change-continent` +
                 `?checkout_id={CHECKOUT_ID}` +
                 `&player_id=${playerId}` +
                 `&target_continent_id=${targetContinentId}`,
@@ -57,6 +61,10 @@ export const polarServerAPI = {
 
     async getProductsServer(): Promise<GetProductsResponse> {
         return await getFetch("products");
+    },
+
+    async getCheckout(checkoutId: string): Promise<GetCheckoutsResponse> {
+        return await getFetch(`checkouts/${checkoutId}`);
     }
 }
 

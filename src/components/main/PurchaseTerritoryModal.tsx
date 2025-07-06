@@ -153,7 +153,7 @@ function PurchaseTerritoryModal({
     // 입력 검증
     const isPurchasePossible = useMemo(() => {
         const isValidAmount = stakeAmount >= 1;
-        const isValidContinent = (isAdditionalStake && !selectedContinentId) || (!isAdditionalStake && selectedContinentId);
+        const isValidContinent = isAdditionalStake || (!isAdditionalStake && selectedContinentId);
         const isValidName = isAdditionalStake || (playerName.trim() !== '');
 
         return isValidAmount
