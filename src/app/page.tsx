@@ -74,7 +74,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
                 images: imageUrl ? [imageUrl] : [], // 유저 이미지가 있으면 그걸 사용
             },
             twitter: { // X (트위터)
-                card: 'summary_large_image',
+                // card: 'summary_large_image',
+                card: 'summary',
                 title: title,
                 description: description,
                 images: imageUrl ? [imageUrl] : [], // 유저 이미지가 있으면 그걸 사용

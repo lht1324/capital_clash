@@ -27,10 +27,13 @@ function ContinentMapWrapperClient(props: ContinentMapWrapperClientProps) {
     }
 
     return (
-        (isInitialized && <main className="flex w-full pt-16">
+        (isInitialized ? <main className="flex w-full pt-16">
             <ContinentDropdown/>
             <ContinentMap/>
             <NotificationManager/>
+        </main> : <main className="flex w-full pt-16">
+            {/* 깔쌈하게 적당히 */}
+            Loading players...
         </main>)
     )
 }
