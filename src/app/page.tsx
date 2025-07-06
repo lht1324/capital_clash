@@ -1,5 +1,3 @@
-'use server'
-
 import { Metadata } from 'next'
 import { decodeBase64 } from "@/utils/base64Utils";
 import SidebarServer from "@/components/main/sidebar/SidebarServer";
@@ -14,13 +12,16 @@ import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} 
 import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
 import {
     CENTRAL_INCREASE_RATIO,
-    CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
+    CONTINENT_MAX_USER_COUNT
 } from "@/components/main/continent_map/continent_map_public_variables";
 
 type Props = {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
     // searchParams: Promise<URLSearchParams>
 }
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0;
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
     const defaultMetaData = {
@@ -54,6 +55,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         const title = `${player.name}'s Territory | Capital Clash`;
         const description = `Total Stake: ${player.stake_amount.toLocaleString()}`;
         const imageUrl = player.image_url; // 바로 이 부분이 유저의 고유 이미지 URL입니다.
+        console.log("Generated imageUrl for metadata:", imageUrl);
 
         // 조회된 플레이어 정보로 동적 메타데이터를 생성하여 반환합니다.
         return {
