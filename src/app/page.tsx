@@ -60,7 +60,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         }
 
         const title = `${player.name}'s Territory | Capital Clash`;
-        const description = `Total Stake: ${player.stake_amount.toLocaleString()}`;
+        const description = `Total Stake: $${player.stake_amount.toLocaleString()}`;
         const imageUrl = player.image_url; // 바로 이 부분이 유저의 고유 이미지 URL입니다.
         console.log("Generated imageUrl for metadata:", imageUrl);
 
