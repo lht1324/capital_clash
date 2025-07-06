@@ -18,8 +18,8 @@ import { SRGBColorSpace, NoToneMapping } from "three";
 
 function ContinentMap() {
     const { continentList } = useContinentStore();
-    const { players, placementResultRecord, continentPositionRecord } = usePlayersStore();
-    const { externalCameraTarget, setCameraTarget, setExternalCameraTarget } = useCameraStateStore();
+    const { isPlayersInitialized, players, placementResultRecord, continentPositionRecord } = usePlayersStore();
+    const { externalCameraTarget, setExternalCameraTarget } = useCameraStateStore();
     const { checkoutSuccessStatus } = useComponentStateStore();
 
     const [initialPosition, setInitialPosition] = useState<Position | null>(null);
@@ -27,11 +27,13 @@ function ContinentMap() {
     const [territoryOwnerId, setTerritoryOwnerId] = useState<string | null>(null);
 
     const initialCameraPositionZ = useMemo(() => {
-        return getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord);
-    }, [continentList, placementResultRecord, continentPositionRecord]);
+        return isPlayersInitialized
+            ? getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord)
+            : 60;
+    }, [isPlayersInitialized, continentList, placementResultRecord, continentPositionRecord]);
 
     const defaultPosition = useMemo(() => {
-        return { x: 0, y: 0, z: 60 };
+        return { x: 0, y: 0, z: initialCameraPositionZ };
     }, [initialCameraPositionZ]);
 
     const updateDailyViews = useCallback(async (playerId: string) => {

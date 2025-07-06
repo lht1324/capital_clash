@@ -4,6 +4,10 @@ import {PlayerUpdateInfo, UpdateType} from "@/api/types/supabase/players/PlayerU
 import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
 import {Continent} from '@/api/types/supabase/Continents';
 import {createWithEqualityFn} from "zustand/traditional";
+import {
+    CENTRAL_INCREASE_RATIO,
+    CONTINENT_MAX_USER_COUNT
+} from "@/components/main/continent_map/continent_map_public_variables";
 
 export interface PlayersStore {
     // --- 상태 (State) ---
@@ -79,6 +83,23 @@ function _calculateContinentalLayoutInfo(
                     continent.id
                 )
                 : prevPlacementResultRecord[continent.id]
+        } else {
+            const defaultLength = continent.id !== "central"
+                ? CONTINENT_MAX_USER_COUNT
+                : CONTINENT_MAX_USER_COUNT * CENTRAL_INCREASE_RATIO;
+
+            placementResultRecord[continent.id] = {
+                placements: [],
+                boundary: {
+                    minX: 0,
+                    maxX: defaultLength,
+                    minY: 0,
+                    maxY: defaultLength,
+                    width: defaultLength,
+                    height: defaultLength
+                },
+                continentId: continent.id
+            }
         }
 
         if (placementResultRecord[continent.id]) {
@@ -96,8 +117,6 @@ function _calculateContinentalLayoutInfo(
             }
         }
     });
-
-    console.log("continentPositionRecord", continentPositionRecord);
 
     return {
         newPlacementResultRecord: placementResultRecord,

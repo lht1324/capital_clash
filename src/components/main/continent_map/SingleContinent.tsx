@@ -1,6 +1,6 @@
 'use client'
 
-import {memo, useEffect, useMemo} from "react";
+import {memo, useMemo} from "react";
 import TerritoryArea from "@/components/main/continent_map/TerritoryArea";
 import {Continent} from "@/api/types/supabase/Continents";
 import {usePlayersStore, PlayersStore} from "@/store/playersStore";
@@ -23,10 +23,6 @@ function SingleContinent({
         position: state.continentPositionRecord[continent.id],
     }), shallow);
 
-    useEffect(() => {
-        console.log(`[${continent.name}] position`, position)
-    }, [continent.name, position]);
-
     const cellLength = useMemo(() => {
         return continent.id !== "central"
             ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT  // 일반 대륙은 max_users 대신 100 사용
@@ -40,11 +36,10 @@ function SingleContinent({
     }, [continent.id]);
 
     return (
-        (position && <group position={[position.x, position.y, position.z]}>
+        <group position={[position.x, position.y, position.z]}>
             {/* 대륙 기본 모양 */}
-            {!placementResult && (
+            {placementResult.placements.length === 0 && (
                 <mesh>
-                    {/*<boxGeometry args={[cellLength * CONTINENT_MAX_USER_COUNT, cellLength * CONTINENT_MAX_USER_COUNT, 1]} />*/}
                     <boxGeometry args={[continentDefaultLength, continentDefaultLength, 1]} />
                     <meshStandardMaterial
                         color={continent.color}
@@ -57,7 +52,7 @@ function SingleContinent({
             )}
 
             {/* 투자자 영역 */}
-            {placementResult && (<group>
+            {placementResult.placements.length !== 0 && (<group>
                 {placementResult.placements.map((placement) => {
                     return <TerritoryArea
                         key={placement.playerId}
@@ -69,7 +64,7 @@ function SingleContinent({
                     />
                 })}
             </group>)}
-        </group>)
+        </group>
     );
 }
 

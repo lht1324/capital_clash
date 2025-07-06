@@ -12,6 +12,10 @@ import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
 import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
 import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
 import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
+import {
+    CENTRAL_INCREASE_RATIO,
+    CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
+} from "@/components/main/continent_map/continent_map_public_variables";
 
 type Props = {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -113,15 +117,38 @@ export default async function Page({ searchParams }: Props) {
                 filteredPlayerListByContinent,
                 continent.id
             )
+        } else {
+            const defaultLength = continent.id !== "central"
+                ? CONTINENT_MAX_USER_COUNT
+                : CONTINENT_MAX_USER_COUNT * CENTRAL_INCREASE_RATIO;
+
+            placementResultRecord[continent.id] = {
+                placements: [],
+                boundary: {
+                    minX: 0,
+                    maxX: defaultLength,
+                    minY: 0,
+                    maxY: defaultLength,
+                    width: defaultLength,
+                    height: defaultLength
+                },
+                continentId: continent.id
+            }
         }
     });
 
     continentList.forEach((continent) => {
-        if (placementResultRecord[continent.id]) {
+        if (placementResultRecord[continent.id].placements.length !== 0) {
             continentPositionRecord[continent.id] = getContinentPosition(
                 placementResultRecord[continent.id],
                 placementResultRecord["central"]
             );
+        } else {
+            continentPositionRecord[continent.id] = {
+                x: continent.position_x,
+                y: continent.position_y,
+                z: 1
+            }
         }
     });
 
