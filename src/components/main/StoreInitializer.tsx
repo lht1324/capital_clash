@@ -30,7 +30,7 @@ export interface StoreInitializerProps {
 function StoreInitializer(props: StoreInitializerProps) {
     const router = useRouter();
 
-    const { isContinentsInitialized, initializeContinents } = useContinentStore();
+    const { isContinentsInitialized, initializeContinents, continents } = useContinentStore();
     const {
         isPlayersInitialized,
         players,

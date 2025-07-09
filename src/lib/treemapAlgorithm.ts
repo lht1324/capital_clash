@@ -16,6 +16,7 @@ import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAX_USER_COUNT
 } from "@/components/main/continent_map/continent_map_public_variables";
+import {Continent} from "@/api/types/supabase/Continents";
 
 export type PlacementResult = {
     placements: Placement[],
@@ -49,6 +50,13 @@ export type Position = {
     x: number,
     y: number,
     z: number
+}
+
+enum SpiralDirection {
+    EAST = "EAST",
+    SOUTH = "SOUTH",
+    WEST = "WEST",
+    NORTH = "NORTH",
 }
 
 /**---------------------------------------------------------------------------*
@@ -100,101 +108,358 @@ export function calculateSquareLayout(filteredPlayerListByContinent: Player[], c
 }
 
 function calculateRectangularSquareLayout(filteredPlayerListByContinent: Player[]) {
-    // 1. 각 투자자의 지분율에 따라 정사각형 크기 계산
-    const totalStakeAmount = filteredPlayerListByContinent.reduce((acc, player) => {
-        return acc + player.stake_amount;
-    }, 0);
-    const squares = filteredPlayerListByContinent.map((player) => {
-        const sharePercentage = player.stake_amount / totalStakeAmount;
+    // 1. 전처리
+    const squares = preprocessPlayers(filteredPlayerListByContinent);
+    
+    // 2. 중심 기반 나선형 배치
+    return placeSpiralLayout(squares);
+}
+
+function preprocessPlayers(players: Player[]): Square[] {
+    const totalStakeAmount = players.reduce((acc, player) => acc + player.stake_amount, 0);
+    
+    return players.map((player) => {
+        const sharePercentage = Math.max(0.01, player.stake_amount / totalStakeAmount);
         const area = sharePercentage * CONTINENT_MAX_USER_COUNT * CONTINENT_MAX_USER_COUNT;
         const sideLength = Math.floor(Math.sqrt(area));
-
+        
         return {
             playerId: player.id,
             sideLength: Math.max(1, sideLength)
         };
-    });
-
-    // 2. 정사각형을 크기 기준 내림차순 정렬
-    squares.sort((a, b) => b.sideLength - a.sideLength);
-
-    // 3. 직사각형 영역 내에 정사각형 배치 (가로 직사각형 형태)
-    return placeSquaresInHorizontalRectangle(squares);
+    }).sort((a, b) => b.sideLength - a.sideLength);
 }
 
-/**
- * 가로 직사각형 형태로 정사각형을 배치하는 함수
- * 세로 방향으로 먼저 채우고, 세로 공간이 부족하면 가로로 확장
- */
-function placeSquaresInHorizontalRectangle(squares: Square[]) {
-    // 초기 직사각형 영역 설정 (가로:세로 = 1:1 시작)
-    let maxLength = CONTINENT_MAX_USER_COUNT;
-
-    // 배치된 정사각형 정보
-    const placements: Placement[] = [];
-
-    // 현재 열과 행의 위치 (세로 방향 우선)
-    let currentX = 0;
-    let currentY = 0;
-    let columnWidth = 0;
-
-    for (const square of squares) {
-        // 현재 열에 배치 가능한지 확인
-        if (currentY + square.sideLength <= maxLength) {
-            // 현재 열에 배치
-            placements.push({
-                playerId: square.playerId,
-                x: currentX,
-                y: currentY,
-                width: square.sideLength,
-                height: square.sideLength
-            });
-
-            // 현재 열의 너비 업데이트
-            columnWidth = Math.max(columnWidth, square.sideLength);
-
-            // Y 위치 업데이트 (세로 방향으로 이동)
-            currentY += square.sideLength;
-        } else {
-            // 새 열로 이동
-            currentY = 0;
-            currentX += columnWidth;
-            columnWidth = square.sideLength;
-
-            // 새 열에 배치
-            placements.push({
-                playerId: square.playerId,
-                x: currentX,
-                y: currentY,
-                width: square.sideLength,
-                height: square.sideLength
-            });
-
-            // Y 위치 업데이트
-            currentY += square.sideLength;
-        }
+function placeSpiralLayout(squares: Square[]): { placements: Placement[], boundary: Boundary } {
+    if (squares.length === 0) {
+        return {
+            placements: [],
+            boundary: {
+                minX: 0,
+                maxX: 99,
+                minY: 0,
+                maxY: 99,
+                width: CONTINENT_MAX_USER_COUNT,
+                height: CONTINENT_MAX_USER_COUNT
+            }
+        };
     }
 
-    // 전체 경계 계산
-    const boundary = calculateBoundary(placements);
+    if (squares.length === 1) {
+        const square = squares[0];
+        const boundary =  {
+            placements: [{
+                playerId: square.playerId,
+                x: -(square.sideLength / 2),
+                y: -(square.sideLength / 2),
+                width: square.sideLength,
+                height: square.sideLength
+            }],
+            boundary: {
+                minX: 0,
+                minY: 0,
+                maxX: 99,
+                maxY: 99,
+                width: CONTINENT_MAX_USER_COUNT,
+                height: CONTINENT_MAX_USER_COUNT,
+            }
+        }
+        return boundary
+    }
+    
+    const placements: Placement[] = [];
+    
+    // 1. 중앙 배치
+    const centerSquare = squares[0];
+    const centerPlacement = {
+        playerId: centerSquare.playerId,
+        x: 48.5 - (centerSquare.sideLength / 2),
+        y: 48.5 - (centerSquare.sideLength / 2),
+        width: centerSquare.sideLength,
+        height: centerSquare.sideLength
+    };
+    placements.push(centerPlacement);
+    
+    // 2. 4방향 나선형 배치
+    let remainingSquares = squares.slice(1);
+    const firstPlacementSquare = remainingSquares[0];
+    let currentDirection = SpiralDirection.EAST;
+    let currentBoundary = {
+        minX: centerPlacement.x,
+        maxX: centerPlacement.x + centerPlacement.width,
+        minY: centerPlacement.y,
+        maxY: centerPlacement.y + centerPlacement.height,
+    }
+    let lastCycleBoundary = {
+        minX: centerPlacement.x,
+        maxX: centerPlacement.x + centerPlacement.width,
+        minY: centerPlacement.y,
+        maxY: centerPlacement.y + centerPlacement.height,
+    }
+    let lastPlacementInfo = {
+        lastDirection: SpiralDirection.EAST,
+        lastPlacement: centerPlacement,
+    }
 
-    // 중앙 정렬을 위한 좌표 조정
-    const centeredPlacements = centerPlacements(placements, boundary);
+    while (remainingSquares.length > 0) {
+        const nextSquare = remainingSquares[0];
+        const nextSquarePosition = calculateNextPosition(nextSquare, currentDirection, lastCycleBoundary, lastPlacementInfo);
 
+        const newPlacement = createPlacement(nextSquare, nextSquarePosition);
+        placements.push(newPlacement);
+        lastPlacementInfo = {
+            lastDirection: currentDirection,
+            lastPlacement: newPlacement
+        }
+        remainingSquares.shift();
+
+        const { isSlightDifference, isExceeded } = exceedsBoundary(nextSquarePosition, nextSquare, currentBoundary, currentDirection)
+
+        if (isExceeded) {
+            // 첫 번째 경계 초과: 한 번 허용하고 동적 확장
+            currentBoundary = expandBoundary(currentBoundary, nextSquare, nextSquarePosition, currentDirection, isSlightDifference);
+
+            const prevDirection: SpiralDirection = currentDirection;
+            const newDirection = changeDirection(prevDirection);
+
+            if (prevDirection !== newDirection) {
+                switch (prevDirection) {
+                    case SpiralDirection.EAST: {
+                        lastCycleBoundary = {
+                            ...lastCycleBoundary,
+                            minY: lastPlacementInfo.lastPlacement.y,
+                        }
+                        if (lastCycleBoundary.minY < currentBoundary.minY) {
+                            currentBoundary = {
+                                ...currentBoundary,
+                                minY: lastCycleBoundary.minY,
+                            }
+                        }
+                        break;
+                    }
+                    case SpiralDirection.SOUTH: {
+                        lastCycleBoundary = {
+                            ...lastCycleBoundary,
+                            maxX: lastPlacementInfo.lastPlacement.x + lastPlacementInfo.lastPlacement.width,
+                        }
+                        if (currentBoundary.maxX < lastCycleBoundary.maxX) {
+                            currentBoundary = {
+                                ...currentBoundary,
+                                maxX: lastCycleBoundary.maxX,
+                            }
+                        }
+                        break;
+                    }
+                    case SpiralDirection.WEST: {
+                        lastCycleBoundary = {
+                            ...lastCycleBoundary,
+                            maxY: lastPlacementInfo.lastPlacement.y + lastPlacementInfo.lastPlacement.height,
+                        }
+                        if (currentBoundary.maxY < lastCycleBoundary.maxY) {
+                            currentBoundary = {
+                                ...currentBoundary,
+                                maxY: lastCycleBoundary.maxY,
+                            }
+                        }
+                        break;
+                    }
+                    case SpiralDirection.NORTH: {
+                        lastCycleBoundary = {
+                            ...lastCycleBoundary,
+                            minX: lastPlacementInfo.lastPlacement.x,
+                        }
+                        if (lastCycleBoundary.minX < currentBoundary.minX) {
+                            currentBoundary = {
+                                ...currentBoundary,
+                                minX: lastCycleBoundary.minX,
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            currentDirection = newDirection;
+        }
+    }
+    
+    // 3. 후처리
+    const continentBoundary = calculateContinentBoundary(placements);
+    const centeredPlacements = centerPlacements(placements, continentBoundary);
+    
     return {
         placements: centeredPlacements,
-        boundary
+        boundary: continentBoundary,
     };
 }
 
-function calculateBoundary(placements: Placement[]) {
+function changeDirection(currentDirection: SpiralDirection) {
+    switch (currentDirection) {
+        case SpiralDirection.EAST: return SpiralDirection.SOUTH;
+        case SpiralDirection.SOUTH: return SpiralDirection.WEST;
+        case SpiralDirection.WEST: return SpiralDirection.NORTH;
+        case SpiralDirection.NORTH: return SpiralDirection.EAST;
+    }
+}
+
+function calculateNextPosition(
+    nextSquare: Square,
+    currentDirection: SpiralDirection,
+    lastCycleBoundary: { minX: number, maxX: number, minY: number, maxY: number },
+    // centerPlacement: Placement,
+    lastPlacementInfo: { lastDirection: SpiralDirection, lastPlacement: Placement },
+): { x: number, y: number } {
+    const { lastDirection, lastPlacement } = lastPlacementInfo;
+
+    console.log("direction", currentDirection)
+    switch (currentDirection) {
+        case SpiralDirection.EAST: {
+            const baselineY = lastPlacement.y;
+            const isOverlapped = baselineY + nextSquare.sideLength > lastCycleBoundary.minY;
+
+            return {
+                x: lastPlacement.x + lastPlacement.width,
+                y: !isOverlapped || (lastDirection === currentDirection)
+                    ? baselineY
+                    : lastCycleBoundary.minY - nextSquare.sideLength,
+            }
+        }
+        case SpiralDirection.SOUTH: {
+            const baselineX = lastPlacement.x + lastPlacement.width;
+            const isOverlapped = baselineX - nextSquare.sideLength < lastCycleBoundary.maxX;
+
+            return {
+                x: !isOverlapped
+                    ? baselineX - nextSquare.sideLength
+                    : lastCycleBoundary.maxX,
+                y: lastPlacement.y + lastPlacement.height,
+            }
+        }
+        case SpiralDirection.WEST: {
+            const baselineY = lastPlacement.y + lastPlacement.height;
+            const isOverlapped = baselineY - nextSquare.sideLength < lastCycleBoundary.maxY;
+
+            return {
+                x: lastPlacement.x - nextSquare.sideLength,
+                y: !isOverlapped
+                    ? baselineY - nextSquare.sideLength
+                    : lastCycleBoundary.maxY,
+            }
+        }
+        case SpiralDirection.NORTH: {
+            const baselineX = lastPlacement.x;
+            const isOverlapped = baselineX + nextSquare.sideLength > lastCycleBoundary.minX;
+
+            return {
+                x: !isOverlapped
+                    ? baselineX
+                    : lastCycleBoundary.minX - nextSquare.sideLength,
+                y: lastPlacement.y - nextSquare.sideLength,
+            }
+        }
+    }
+}
+
+function createPlacement(square: Square, position: { x: number, y: number }): Placement {
+    return {
+        playerId: square.playerId,
+        x: position.x,
+        y: position.y,
+        width: square.sideLength,
+        height: square.sideLength
+    };
+}
+
+function exceedsBoundary(
+    position: { x: number, y: number },
+    newSquare: Square,
+    currentBoundary: { minX: number, maxX: number, minY: number, maxY: number }, 
+    direction: SpiralDirection
+): { isSlightDifference: boolean, isExceeded: boolean } {
+    const squareLeft = position.x;
+    const squareRight = position.x + newSquare.sideLength;
+    const squareTop = position.y;
+    const squareBottom = position.y + newSquare.sideLength;
+
+    let isSlightDifference: boolean;
+    let isExceeded: boolean;
+    
+    switch (direction) {
+        case SpiralDirection.EAST: {
+            // isSlightDifference = Math.abs(squareRight - currentBoundary.maxX) <= 10
+            isSlightDifference = squareRight <= currentBoundary.maxX && (currentBoundary.maxX - squareRight) <= 10
+            isExceeded = squareRight >= currentBoundary.maxX;
+            break;
+
+            // return isSlightDifference || isExceeded;
+        }
+        case SpiralDirection.SOUTH: {
+            // isSlightDifference = Math.abs(squareBottom - currentBoundary.maxY) <= 10
+            isSlightDifference = squareBottom <= currentBoundary.maxY && (currentBoundary.maxY - squareBottom) <= 10
+            isExceeded = squareBottom >= currentBoundary.maxY;
+            break;
+
+            // return isSlightDifference || isExceeded;
+        }
+        case SpiralDirection.WEST: {
+            // isSlightDifference = Math.abs(squareLeft - currentBoundary.minX) <= 10
+            isSlightDifference = squareLeft >= currentBoundary.minX && (squareLeft - currentBoundary.minX) <= 10
+            isExceeded = squareLeft <= currentBoundary.minX;
+            break;
+
+            // return isSlightDifference || isExceeded;
+        }
+        case SpiralDirection.NORTH: {
+            // isSlightDifference = Math.abs(squareTop - currentBoundary.minY) <= 10
+            isSlightDifference = squareTop >= currentBoundary.minY && (squareTop - currentBoundary.minY) <= 10
+            isExceeded = squareTop <= currentBoundary.minY;
+            break;
+            // return isSlightDifference || isExceeded;
+        }
+    }
+
+    return { isSlightDifference, isExceeded }
+}
+
+function expandBoundary(
+    currentBoundary: { minX: number, maxX: number, minY: number, maxY: number },
+    nextSquare: Square,
+    nextSquarePosition: { x: number, y: number },
+    lastDirection: SpiralDirection,
+    isSlightDifference: boolean,
+) {
+    const newBoundary = { ...currentBoundary };
+    
+    switch (lastDirection) {
+        case SpiralDirection.EAST: {
+            newBoundary.maxX = nextSquarePosition.x + nextSquare.sideLength;
+            break;
+        }
+        case SpiralDirection.SOUTH: {
+            newBoundary.maxY = nextSquarePosition.y + nextSquare.sideLength;
+            break;
+        }
+        case SpiralDirection.WEST: {
+            newBoundary.minX = nextSquarePosition.x;
+            break;
+        }
+        case SpiralDirection.NORTH: {
+            newBoundary.minY = nextSquarePosition.y;
+            break;
+        }
+    }
+    
+    return newBoundary;
+}
+
+function calculateContinentBoundary(placementList: Placement[]) {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
-    placements.forEach(p => {
-        minX = Math.min(minX, p.x);
-        maxX = Math.max(maxX, p.x + p.width);
-        minY = Math.min(minY, p.y);
-        maxY = Math.max(maxY, p.y + p.height);
+    placementList.forEach((placement) => {
+        minX = Math.min(minX, placement.x);
+        maxX = Math.max(maxX, placement.x + placement.width);
+        minY = Math.min(minY, placement.y);
+        maxY = Math.max(maxY, placement.y + placement.height);
     });
 
     return {
@@ -204,14 +469,15 @@ function calculateBoundary(placements: Placement[]) {
     };
 }
 
-function centerPlacements(placements: Placement[], boundary: Boundary) {
-    const offsetX = Math.floor(boundary.width / 2);
-    const offsetY = Math.floor(boundary.height / 2);
+function centerPlacements(placementList: Placement[], continentBoundary: Boundary) {
+    const continentMidpointX = continentBoundary.minX + continentBoundary.width / 2;
+    const continentMidpointY = continentBoundary.minY + continentBoundary.height / 2;
 
-    return placements.map(p => ({
-        ...p,
-        x: p.x - offsetX,
-        y: p.y - offsetY
+
+    return placementList.map((placement) => ({
+        ...placement,
+        x: placement.x - continentMidpointX,
+        y: placement.y - continentMidpointY,
     }));
 }
 
@@ -219,7 +485,7 @@ function centerPlacements(placements: Placement[], boundary: Boundary) {
 export function calculatePlayerCoordinates(
     vipPlayerList: Player[],
     filteredPlayerListByUserContinent: Player[],
-    userContinentId: string,
+    continentId: string,
     userPlayerInfoId: string,
 ): Position | null {
     const isVip = !!(vipPlayerList.find((player) => {
@@ -234,7 +500,7 @@ export function calculatePlayerCoordinates(
     const centralPlacementResult = calculateSquareLayout(vipPlayerList, "central");
     const userPlacementResult = isVip
         ? centralPlacementResult
-        : calculateSquareLayout(filteredPlayerListByUserContinent, userContinentId);
+        : calculateSquareLayout(filteredPlayerListByUserContinent, continentId);
 
     const userPlacementInfo = userPlacementResult.placements.find((placement) => {
         return placement.playerId === userPlayerInfoId;
@@ -245,9 +511,9 @@ export function calculatePlayerCoordinates(
     if (!isVip) {
         const placementResultRecord: Record<string, PlacementResult> = {
             "central": centralPlacementResult,
-            [userContinentId]: userPlacementResult
+            [continentId]: userPlacementResult
         };
-        const userContinentPosition = getContinentPositions(placementResultRecord)[userContinentId];
+        const userContinentPosition = getContinentPositions(placementResultRecord)[continentId];
 
         return getPositionByUserPlacementInfo(
             userPlacementInfo,
@@ -307,28 +573,28 @@ export function getContinentPositions(placementResultsByContinent: Record<string
         switch(continentId) {
             case "northwest":
                 // 북서쪽 대륙: 오른쪽 아래 모서리가 중앙 대륙의 북서쪽 꼭짓점에 닿도록
-                x = cornerCoordinate.x - (continentSize.width / 2) - (continentSize.width * 0.2);
-                y = cornerCoordinate.y + (continentSize.height / 2) - (continentSize.height * 0.4);
+                x = cornerCoordinate.x - (continentSize.realWidth / 2) - (continentSize.realWidth * 0.2);
+                y = cornerCoordinate.y + (continentSize.realHeight / 2) - (continentSize.realHeight * 0.4);
                 break;
             case "northeast":
                 // 북동쪽 대륙: 왼쪽 아래 모서리가 중앙 대륙의 북동쪽 꼭짓점에 닿도록
-                x = cornerCoordinate.x + (continentSize.width / 2) + (continentSize.width * 0.2);
-                y = cornerCoordinate.y + (continentSize.height / 2) - (continentSize.height * 0.4);
+                x = cornerCoordinate.x + (continentSize.realWidth / 2) + (continentSize.realWidth * 0.2);
+                y = cornerCoordinate.y + (continentSize.realHeight / 2) - (continentSize.realHeight * 0.4);
                 break;
             case "southwest":
                 // 남서쪽 대륙: 오른쪽 위 모서리가 중앙 대륙의 남서쪽 꼭짓점에 닿도록
-                x = cornerCoordinate.x - (continentSize.width / 2) - (continentSize.width * 0.2);
-                y = cornerCoordinate.y - (continentSize.height / 2) + (continentSize.height * 0.4);
+                x = cornerCoordinate.x - (continentSize.realWidth / 2) - (continentSize.realWidth * 0.2);
+                y = cornerCoordinate.y - (continentSize.realHeight / 2) + (continentSize.realHeight * 0.4);
                 break;
             case "southeast":
                 // 남동쪽 대륙: 왼쪽 위 모서리가 중앙 대륙의 남동쪽 꼭짓점에 닿도록
-                x = cornerCoordinate.x + (continentSize.width / 2) + (continentSize.width * 0.2);
-                y = cornerCoordinate.y - (continentSize.height / 2) + (continentSize.height * 0.4);
+                x = cornerCoordinate.x + (continentSize.realWidth / 2) + (continentSize.realWidth * 0.2);
+                y = cornerCoordinate.y - (continentSize.realHeight / 2) + (continentSize.realHeight * 0.4);
                 break;
             default:
                 // 기본 계산 방식 (기존 코드와 동일)
-                x = cornerCoordinate.x - continentSize.width / 2;
-                y = cornerCoordinate.y - continentSize.height / 2;
+                x = cornerCoordinate.x - continentSize.realWidth / 2;
+                y = cornerCoordinate.y - continentSize.realHeight / 2;
         }
 
         positions[continentId] = {
@@ -352,27 +618,29 @@ export function getContinentPosition(
     // 대륙 배치 방식 수정: 각 대륙이 중앙 대륙의 꼭짓점에 닿도록 조정
     // 대륙 ID에 따라 위치 조정 방식을 다르게 적용
     let x = 0, y = 0;
+    const horizontalGap = continentSize.width * 0.2;
+    const verticalGap = continentSize.height * 0.4;
 
     switch(placementResult.continentId) {
         case "northwest":
             // 북서쪽 대륙: 오른쪽 아래 모서리가 중앙 대륙의 북서쪽 꼭짓점에 닿도록
-            x = cornerCoordinate.x - (continentSize.width / 2) - (continentSize.width * 0.2);
-            y = cornerCoordinate.y + (continentSize.height / 2) - (continentSize.height * 0.4);
+            x = cornerCoordinate.x - (continentSize.width / 2) - horizontalGap;
+            y = cornerCoordinate.y + (continentSize.height / 2) - verticalGap;
             break;
         case "northeast":
             // 북동쪽 대륙: 왼쪽 아래 모서리가 중앙 대륙의 북동쪽 꼭짓점에 닿도록
-            x = cornerCoordinate.x + (continentSize.width / 2) + (continentSize.width * 0.2);
-            y = cornerCoordinate.y + (continentSize.height / 2) - (continentSize.height * 0.4);
+            x = cornerCoordinate.x + (continentSize.width / 2) + horizontalGap;
+            y = cornerCoordinate.y + (continentSize.height / 2) - verticalGap;
             break;
         case "southwest":
             // 남서쪽 대륙: 오른쪽 위 모서리가 중앙 대륙의 남서쪽 꼭짓점에 닿도록
-            x = cornerCoordinate.x - (continentSize.width / 2) - (continentSize.width * 0.2);
-            y = cornerCoordinate.y - (continentSize.height / 2) + (continentSize.height * 0.4);
+            x = cornerCoordinate.x - (continentSize.width / 2) - horizontalGap;
+            y = cornerCoordinate.y - (continentSize.height / 2) + verticalGap;
             break;
         case "southeast":
             // 남동쪽 대륙: 왼쪽 위 모서리가 중앙 대륙의 남동쪽 꼭짓점에 닿도록
-            x = cornerCoordinate.x + (continentSize.width / 2) + (continentSize.width * 0.2);
-            y = cornerCoordinate.y - (continentSize.height / 2) + (continentSize.height * 0.4);
+            x = cornerCoordinate.x + (continentSize.width / 2) + horizontalGap;
+            y = cornerCoordinate.y - (continentSize.height / 2) + verticalGap;
             break;
         case "central":
             // 남동쪽 대륙: 왼쪽 위 모서리가 중앙 대륙의 남동쪽 꼭짓점에 닿도록
@@ -394,7 +662,7 @@ export function getContinentPosition(
 
 function getContinentSize(placementResult: PlacementResult) {
     const cellLength = placementResult.continentId !== "central"
-        ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT  // 일반 대륙은 max_users 대신 100 사용
+        ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT
         : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
 
     return {
@@ -412,19 +680,35 @@ function getContinentCornerCoordinate(
 
     switch(continentId) {
         case "northwest": {
-            coordinate = { x: -(width / 2), y: height / 2, z: 0 };
+            coordinate = {
+                x: -(width / 2),
+                y: height / 2,
+                z: 0
+            };
             break;
         }
         case "northeast": {
-            coordinate = { x: width / 2, y: height / 2, z: 0 };
+            coordinate = {
+                x: width / 2,
+                y: height / 2,
+                z: 0
+            };
             break;
         }
         case "southwest": {
-            coordinate = { x: -(width / 2), y: -(height / 2), z: 0 };
+            coordinate = {
+                x: -(width / 2),
+                y: -(height / 2),
+                z: 0
+            };
             break;
         }
         case "southeast": {
-            coordinate = { x: width / 2, y: -(height / 2), z: 0 };
+            coordinate = {
+                x: width / 2,
+                y: -(height / 2),
+                z: 0
+            };
             break;
         }
         default: {
@@ -437,32 +721,31 @@ function getContinentCornerCoordinate(
 
 // 중앙 대륙 꼭짓점 계산
 function getCentralCornerCoordinatesRecord(
-    centralContinentSize: { width: number, height: number },
+    centralContinentSize: { realWidth: number, realHeight: number },
 ) {
     const cornerCoordinatesRecord: Record<string, Position> = { };
-    console.log("centralContinentSize", centralContinentSize)
-    const { width, height } = centralContinentSize;
+    const { realWidth, realHeight } = centralContinentSize;
 
-    cornerCoordinatesRecord["northwest"] = { x: -(width / 2), y: height / 2, z: 0 };
-    cornerCoordinatesRecord["northeast"] = { x: width / 2, y: height / 2, z: 0 };
-    cornerCoordinatesRecord["southwest"] = { x: -(width / 2), y: -(height / 2), z: 0 };
-    cornerCoordinatesRecord["southeast"] = { x: width / 2, y: -(height / 2), z: 0 };
+    cornerCoordinatesRecord["northwest"] = { x: -(realWidth / 2), y: realHeight / 2, z: 0 };
+    cornerCoordinatesRecord["northeast"] = { x: realWidth / 2, y: realHeight / 2, z: 0 };
+    cornerCoordinatesRecord["southwest"] = { x: -(realWidth / 2), y: -(realHeight / 2), z: 0 };
+    cornerCoordinatesRecord["southeast"] = { x: realWidth / 2, y: -(realHeight / 2), z: 0 };
 
     return cornerCoordinatesRecord;
 }
 
 function getContinentSizes(placementResultByContinent: Record<string, PlacementResult>) {
-    const sizes: Record<string, { width: number, height: number }> = {};
+    const sizes: Record<string, { realWidth: number, realHeight: number }> = {};
 
     Object.values(placementResultByContinent).forEach((placementResult) => {
         // cellLength 계산 방식을 WorldScene.tsx와 통일
         const cellLength = placementResult.continentId !== "central"
-            ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT  // 일반 대륙은 max_users 대신 100 사용
+            ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT
             : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
 
         sizes[placementResult.continentId] = {
-            width: placementResult.boundary.width * cellLength,
-            height: placementResult.boundary.height * cellLength
+            realWidth: placementResult.boundary.width * cellLength,
+            realHeight: placementResult.boundary.height * cellLength
         };
     });
 
