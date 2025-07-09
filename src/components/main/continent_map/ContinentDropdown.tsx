@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, memo } from 'react'
 import { useCameraStateStore } from "@/store/cameraStateStore";
 import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
-import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
 import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH,

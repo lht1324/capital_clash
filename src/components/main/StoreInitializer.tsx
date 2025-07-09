@@ -6,7 +6,7 @@ import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
 import {User as AuthUser} from "@supabase/auth-js";
 import {User} from "@/api/types/supabase/Users";
-import {calculatePlayerCoordinates, PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {calculatePlayerCoordinates, PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
 import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";

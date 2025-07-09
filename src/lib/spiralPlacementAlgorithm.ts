@@ -311,7 +311,6 @@ function calculateNextPosition(
 ): { x: number, y: number } {
     const { lastDirection, lastPlacement } = lastPlacementInfo;
 
-    console.log("direction", currentDirection)
     switch (currentDirection) {
         case SpiralDirection.EAST: {
             const baselineY = lastPlacement.y;

@@ -1,7 +1,7 @@
 'use client'
 
 import {memo, useCallback, useEffect, useMemo, useState} from 'react'
-import {calculatePlayerCoordinates} from "@/lib/treemapAlgorithm";
+import {calculatePlayerCoordinates} from "@/lib/spiralPlacementAlgorithm";
 import {useComponentStateStore} from "@/store/componentStateStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import TerritoryInfoEditModal from "@/components/main/sidebar/TerritoryInfoEditModal";

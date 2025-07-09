@@ -8,7 +8,7 @@ import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
 import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
 import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
-import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
 import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
 import {
     CENTRAL_INCREASE_RATIO,

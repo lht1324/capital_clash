@@ -13,7 +13,7 @@ import {useContinentStore} from "@/store/continentStore";
 import {useComponentStateStore} from "@/store/componentStateStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import CheckoutSuccessModal from "@/components/main/continent_map/CheckoutSuccessModal";
-import {Position} from "@/lib/treemapAlgorithm";
+import {Position} from "@/lib/spiralPlacementAlgorithm";
 import { SRGBColorSpace, NoToneMapping } from "three";
 
 function ContinentMap() {

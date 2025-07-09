@@ -1,7 +1,7 @@
 import {ImageStatus, Player} from '@/api/types/supabase/Players';
 import {supabase} from '@/lib/supabase/supabaseClient';
 import {PlayerUpdateInfo, UpdateType} from "@/api/types/supabase/players/PlayerUpdates";
-import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
 import {Continent} from '@/api/types/supabase/Continents';
 import {createWithEqualityFn} from "zustand/traditional";
 import {

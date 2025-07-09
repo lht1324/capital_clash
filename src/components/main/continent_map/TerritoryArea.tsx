@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Placement} from "@/lib/treemapAlgorithm";
+import {Placement} from "@/lib/spiralPlacementAlgorithm";
 import {PlayersStore, usePlayersStore} from "@/store/playersStore";
 
 // 🌳 NEW: 개별 영역 컴포넌트 (직사각형) - 최적화된 버전

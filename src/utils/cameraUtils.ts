@@ -1,5 +1,5 @@
 import {Continent} from "@/api/types/supabase/Continents";
-import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
 import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAP_FOV,

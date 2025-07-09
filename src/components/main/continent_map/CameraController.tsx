@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
-import {Position} from "@/lib/treemapAlgorithm";
+import {Position} from "@/lib/spiralPlacementAlgorithm";
 
 function CameraController({
     initialPosition
