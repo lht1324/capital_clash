@@ -85,7 +85,10 @@ function CameraController({
             y: event.clientY
         }
 
-        const movementSpeed = 0.03  // 0.1 → 0.03으로 조정
+        // 트랙패드 감지: 작은 움직임이 연속적으로 오면 트랙패드
+        const isTrackpad = Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5;
+        const movementSpeed = isTrackpad ? 0.09 : 0.03; // 트랙패드일 때 3배 더 빠르게
+        
         targetPosition.current.x -= deltaX * movementSpeed
         targetPosition.current.y += deltaY * movementSpeed
     }, [isDragging]);
@@ -96,7 +99,11 @@ function CameraController({
 
     const handleWheel = useCallback((event: WheelEvent) => {
         event.preventDefault();
-        const zoomSpeed = 0.015;
+        
+        // 트랙패드 감지: deltaY가 작고 연속적이면 트랙패드
+        const isTrackpad = Math.abs(event.deltaY) < 10;
+        const zoomSpeed = isTrackpad ? 0.18 : 0.015; // 트랙패드일 때 12배 더 민감하게
+        
         targetPosition.current.z += event.deltaY * zoomSpeed;
         // Z축 제한 범위를 기존대로 복원
         targetPosition.current.z = Math.max(20, Math.min(100, targetPosition.current.z));
