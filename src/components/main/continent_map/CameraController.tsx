@@ -156,7 +156,7 @@ function CameraController({
             );
             
             const deltaDistance = currentDistance - lastPinchDistance.current;
-            const zoomSpeed = 0.02; // 모바일 핀치 줌 속도
+            const zoomSpeed = 0.1; // 모바일 핀치 줌 속도
             
             targetPosition.current.z -= deltaDistance * zoomSpeed;
             targetPosition.current.z = Math.max(20, Math.min(100, targetPosition.current.z));
@@ -173,7 +173,7 @@ function CameraController({
                 y: touch.clientY
             };
             
-            const movementSpeed = 0.05; // 모바일 터치 드래그 속도
+            const movementSpeed = 0.15; // 모바일 터치 드래그 속도
             targetPosition.current.x -= deltaX * movementSpeed;
             targetPosition.current.y += deltaY * movementSpeed;
         }
