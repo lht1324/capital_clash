@@ -195,12 +195,10 @@ function CameraController({
             };
 
             const movementSpeed = 0.12; // 모바일 터치 드래그 속도
-            // const px2world = camera.position.z / gl.domElement.clientHeight;
-            // const movementSpeed = 0.6 * px2world; // 모바일 터치 드래그 속도
             targetPosition.current.x -= deltaX * movementSpeed;
             targetPosition.current.y += deltaY * movementSpeed;
         }
-    }, [isDragging, isPinching, maxZ, camera.position.z, gl.domElement.clientHeight]);
+    }, [isDragging, isPinching, maxZ]);
 
     const handleTouchEnd = useCallback((event: TouchEvent) => {
         if (event.touches.length < 2) {
@@ -229,11 +227,7 @@ function CameraController({
             targetPosition.current.set(x, y, z)
             setCameraTarget(null)
         }
-    }, [cameraTarget, setCameraTarget])
-
-    useEffect(() => {
-        gl.domElement.style.touchAction = 'none';
-    }, [gl]);
+    }, [cameraTarget, setCameraTarget]);
 
     useEffect(() => {
         const canvas = gl.domElement
@@ -247,9 +241,9 @@ function CameraController({
 
         // 모바일 터치 이벤트들
         if (!isHorizontalScreen) {
-            canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
-            canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
-            canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: true })
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: true })
+            canvas.addEventListener('touchend', handleTouchEnd, { passive: true })
         }
 
         return () => {
