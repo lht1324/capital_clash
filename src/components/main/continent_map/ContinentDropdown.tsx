@@ -38,6 +38,10 @@ function ContinentDropdown() {
 
     const [isOpen, setIsOpen] = useState(false);
 
+    const isMobile = useMemo(() => {
+        return screenWidth < screenHeight || screenWidth <= 768
+    }, [screenWidth, screenHeight]);
+
     // 현재 선택 상태에 따른 표시 (안전한 접근)
     const selectedContinentData = useMemo(() => {
         return continentList.find((continent) => {
@@ -209,7 +213,7 @@ function ContinentDropdown() {
                                 />
                                 <div className="flex-1 text-left">
                                     <div className={`font-bold text-sm ${isCentral ? "text-yellow-400" : "text-white"}`}>{continent.name}</div>
-                                    <div className={`text-xs ${isCentral ? "text-yellow-400" : "text-gray-300"}`}>{continent.description}</div>
+                                    {!isMobile && <div className={`text-xs ${isCentral ? "text-yellow-400" : "text-gray-300"}`}>{continent.description}</div>}
                                     <div className={`${isCentral ? "font-bold " : ""}text-xs ${isCentral ? "text-yellow-400" : "text-gray-400"}`}>
                                         {currentPlayerCount}/{continent.max_users} {`${currentPlayerCount === 1 ? "player" : "players"}`}
                                     </div>
