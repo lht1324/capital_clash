@@ -194,7 +194,8 @@ function CameraController({
                 y: touch.clientY
             };
             
-            const movementSpeed = 0.4; // 모바일 터치 드래그 속도
+            // const movementSpeed = 0.4; // 모바일 터치 드래그 속도
+            const movementSpeed = 1.5; // 모바일 터치 드래그 속도
             targetPosition.current.x -= deltaX * movementSpeed;
             targetPosition.current.y += deltaY * movementSpeed;
         }
