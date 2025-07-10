@@ -131,7 +131,6 @@ function HeaderClient(props: HeaderClientProps) {
                             width={isMobile ? 10 : 189}
                             height={isMobile ? 10 : 40}
                             priority
-                            className="hidden sm:block"
                         />
                     </button>
                 ) : (
