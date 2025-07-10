@@ -136,7 +136,7 @@ function HeaderClient(props: HeaderClientProps) {
                 ) : (
                     <DropDownMenu
                         trigger={
-                            (isMobile ? <div className="flex items-center space-x-2">
+                            (!isMobile ? <div className="flex items-center space-x-2">
                                 {user?.avatar_url ? (
                                     <Image
                                         src={user.avatar_url}
