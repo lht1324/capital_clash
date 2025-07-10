@@ -194,7 +194,7 @@ function CameraController({
                 y: touch.clientY
             };
             
-            const movementSpeed = 12.00; // 모바일 터치 드래그 속도
+            const movementSpeed = 0.4; // 모바일 터치 드래그 속도
             targetPosition.current.x -= deltaX * movementSpeed;
             targetPosition.current.y += deltaY * movementSpeed;
         }
@@ -266,7 +266,8 @@ function CameraController({
                 return prevPosition;
             }
         });
-        cameraPosition.current.lerp(targetPosition.current, 0.12);
+        // cameraPosition.current.lerp(targetPosition.current, 0.12);
+        cameraPosition.current.lerp(targetPosition.current, 0.6);
         camera.position.copy(cameraPosition.current);
     })
 
