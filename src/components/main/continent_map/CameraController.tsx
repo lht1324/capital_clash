@@ -95,7 +95,7 @@ function CameraController({
     }, []);
 
     const handlePointerMove = useCallback((event: PointerEvent) => {
-        if (!isDragging) return
+        if (!isDragging || event.pointerType === 'touch') return
 
         const deltaX = event.clientX - previousMouse.current.x
         const deltaY = event.clientY - previousMouse.current.y
@@ -163,7 +163,7 @@ function CameraController({
     }, [isPinching]);
 
     const handleTouchMove = useCallback((event: TouchEvent) => {
-        // event.preventDefault();
+        event.preventDefault();
         
         if (event.touches.length === 2 && isPinching) {
             // 핀치 줌 처리

@@ -93,7 +93,7 @@ function ContinentMap() {
                     state.gl.toneMapping = NoToneMapping;
                 }}
                 className="w-full h-full"
-                style={{ cursor: 'grab', touchAction: 'none' }}
+                style={{ cursor: 'grab' }}
             >
                 {initialPosition && <CameraController initialPosition={initialPosition}/>}
                 <WorldScene
