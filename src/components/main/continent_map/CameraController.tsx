@@ -5,6 +5,7 @@ import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import {Position} from "@/lib/spiralPlacementAlgorithm";
+import {getWorldViewPositionZ} from "@/utils/cameraUtils";
 
 function CameraController({
     initialPosition
@@ -13,7 +14,11 @@ function CameraController({
 }) {
     const { camera, gl } = useThree();
     const { continentList } = useContinentStore();
-    const { continentPositionRecord } = usePlayersStore();
+    const {
+        placementResultRecord,
+        continentPositionRecord,
+        screenSize: { screenWidth, screenHeight },
+    } = usePlayersStore();
     const {
         selectedContinentId,
         isWorldView,
@@ -57,6 +62,16 @@ function CameraController({
 
         return nearestContinent;
     }, [continentList, continentPositionRecord, currentCameraPosition]);
+
+    const maxZ = useMemo(() => {
+        return getWorldViewPositionZ(
+            continentList,
+            placementResultRecord,
+            continentPositionRecord,
+            screenWidth,
+            screenHeight,
+        ) * 1.2;
+    }, [continentList, placementResultRecord, continentPositionRecord, screenWidth, screenHeight]);
 
     useEffect(() => {
         if (nearestContinentId && nearestContinentId !== selectedContinentId) {
@@ -109,10 +124,14 @@ function CameraController({
         const isTrackpad = Math.abs(event.deltaY) < 10;
         const zoomSpeed = isTrackpad ? 0.18 : 0.015; // 트랙패드일 때 12배 더 민감하게
         
-        targetPosition.current.z += event.deltaY * zoomSpeed;
+        // targetPosition.current.z += event.deltaY * zoomSpeed;
+        // // Z축 제한 범위를 기존대로 복원
+        // targetPosition.current.z = Math.max(20, Math.min(maxZ, targetPosition.current.z));
+
         // Z축 제한 범위를 기존대로 복원
-        targetPosition.current.z = Math.max(20, Math.min(100, targetPosition.current.z));
-    }, []);
+        const newZ = targetPosition.current.z + event.deltaY * zoomSpeed;
+        targetPosition.current.z = Math.max(20, Math.min(maxZ, newZ));
+    }, [maxZ]);
 
     // 모바일 터치 이벤트 핸들러들
     const handleTouchStart = useCallback((event: TouchEvent) => {
@@ -158,8 +177,10 @@ function CameraController({
             const deltaDistance = currentDistance - lastPinchDistance.current;
             const zoomSpeed = 0.1; // 모바일 핀치 줌 속도
             
-            targetPosition.current.z -= deltaDistance * zoomSpeed;
-            targetPosition.current.z = Math.max(20, Math.min(100, targetPosition.current.z));
+            // targetPosition.current.z -= deltaDistance * zoomSpeed;
+            // targetPosition.current.z = Math.max(20, Math.min(100, targetPosition.current.z));
+            const newZ = targetPosition.current.z - deltaDistance * zoomSpeed;
+            targetPosition.current.z = Math.max(20, Math.min(maxZ, newZ));
             
             lastPinchDistance.current = currentDistance;
         } else if (event.touches.length === 1 && isDragging && !isPinching) {
@@ -173,11 +194,11 @@ function CameraController({
                 y: touch.clientY
             };
             
-            const movementSpeed = 6.00; // 모바일 터치 드래그 속도
+            const movementSpeed = 9.00; // 모바일 터치 드래그 속도
             targetPosition.current.x -= deltaX * movementSpeed;
             targetPosition.current.y += deltaY * movementSpeed;
         }
-    }, [isDragging, isPinching]);
+    }, [isDragging, isPinching, maxZ]);
 
     const handleTouchEnd = useCallback((event: TouchEvent) => {
         if (event.touches.length < 2) {
