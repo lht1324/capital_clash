@@ -241,9 +241,9 @@ function CameraController({
         document.addEventListener('pointerup', handlePointerUp)
         
         // 모바일 터치 이벤트들
-        canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
-        canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
-        canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: screenWidth < screenHeight })
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: screenWidth < screenHeight })
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: screenWidth < screenHeight })
 
         return () => {
             canvas.removeEventListener('pointerdown', handlePointerDown)
@@ -255,7 +255,7 @@ function CameraController({
             canvas.removeEventListener('touchmove', handleTouchMove)
             canvas.removeEventListener('touchend', handleTouchEnd)
         }
-    }, [gl, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd])
+    }, [gl, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd, screenWidth, screenHeight]);
 
     useFrame(() => {
         setCurrentCameraPosition((prevPosition: { x: number, y: number }) => {
