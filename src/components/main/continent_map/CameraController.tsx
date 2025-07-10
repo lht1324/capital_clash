@@ -232,6 +232,10 @@ function CameraController({
     }, [cameraTarget, setCameraTarget])
 
     useEffect(() => {
+        gl.domElement.style.touchAction = 'none';
+    }, [gl]);
+
+    useEffect(() => {
         const canvas = gl.domElement
         const isHorizontalScreen = screenWidth >= screenHeight;
         
