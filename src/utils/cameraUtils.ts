@@ -10,16 +10,28 @@ import {MathUtils} from "three";
 export function getWorldViewPositionZ(
     continentList: Continent[],
     placementResultRecord: Record<string, PlacementResult>,
-    continentPositionRecord: Record<string, Position>
+    continentPositionRecord: Record<string, Position>,
+    screenWidth: number,
+    screenHeight: number,
 ) {
     const worldBoundary = getWorldBoundary(continentList, placementResultRecord, continentPositionRecord);
 
-    const height = worldBoundary.height;
-    const paddingRatio = 0.2; // 지도 상에서 대륙 위아래와 화면 경계 간격의 비율
+    // const height = worldBoundary.height;
+    const paddingRatio = 0.2; // 지도 상에서 대륙 위아래/좌우와(가로 화면/세로 화면) 화면 경계 간격의 비율
     const continentalRatio = 1 - paddingRatio;
     const fov = MathUtils.degToRad(CONTINENT_MAP_FOV);
 
-    return height / (2 * continentalRatio * Math.tan(fov / 2));
+    if (screenWidth >= screenHeight) {
+        const height = worldBoundary.height;
+
+        return height / (2 * continentalRatio * Math.tan(fov / 2));
+    } else {
+        const width = worldBoundary.width;
+        const aspectRatio = screenWidth / screenHeight;
+
+        return width / (2 * continentalRatio * Math.tan(fov / 2) * aspectRatio);
+    }
+    // return height / (2 * continentalRatio * Math.tan(fov / 2));
 }
 
 function getWorldBoundary(

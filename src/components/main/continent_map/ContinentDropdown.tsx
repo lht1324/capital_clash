@@ -24,6 +24,7 @@ function ContinentDropdown() {
         vipPlayerList,
         placementResultRecord,
         continentPositionRecord,
+        screenSize: { screenWidth, screenHeight },
     } = usePlayersStore();
 
     const {
@@ -78,7 +79,13 @@ function ContinentDropdown() {
     }, [playerList, vipPlayerList, selectedContinentId, selectedContinentData]);
 
     const handleWorldViewSelect = useCallback(() => {
-        const worldViewPositionZ = getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord);
+        const worldViewPositionZ = getWorldViewPositionZ(
+            continentList,
+            placementResultRecord,
+            continentPositionRecord,
+            screenWidth,
+            screenHeight
+        );
 
         resetContinentSelection();
         setCameraTarget({

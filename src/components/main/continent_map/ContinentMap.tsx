@@ -18,7 +18,13 @@ import { SRGBColorSpace, NoToneMapping } from "three";
 
 function ContinentMap() {
     const { continentList } = useContinentStore();
-    const { isPlayersInitialized, players, placementResultRecord, continentPositionRecord } = usePlayersStore();
+    const {
+        isPlayersInitialized,
+        players,
+        placementResultRecord,
+        continentPositionRecord,
+        screenSize: { screenWidth, screenHeight },
+    } = usePlayersStore();
     const { externalCameraTarget, setExternalCameraTarget } = useCameraStateStore();
     const { checkoutSuccessStatus } = useComponentStateStore();
 
@@ -28,7 +34,13 @@ function ContinentMap() {
 
     const initialCameraPositionZ = useMemo(() => {
         return isPlayersInitialized
-            ? getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord)
+            ? getWorldViewPositionZ(
+                continentList,
+                placementResultRecord,
+                continentPositionRecord,
+                screenWidth,
+                screenHeight,
+            )
             : 60;
     }, [isPlayersInitialized, continentList, placementResultRecord, continentPositionRecord]);
 
