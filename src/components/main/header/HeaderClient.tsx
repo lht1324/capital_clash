@@ -128,8 +128,8 @@ function HeaderClient(props: HeaderClientProps) {
                         <Image
                             src={`/signin-assets/${isMobile ? "google_signin_small" : "google_signin_normal"}.png`}
                             alt="Sign in with Google"
-                            width={isMobile ? 10 : 189}
-                            height={isMobile ? 10 : 40}
+                            width={isMobile ? 40 : 189}
+                            height={40}
                             priority
                         />
                     </button>
