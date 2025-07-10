@@ -194,9 +194,9 @@ function CameraController({
                 y: touch.clientY
             };
 
-            // const movementSpeed = 0.4; // 모바일 터치 드래그 속도
-            const px2world = camera.position.z / gl.domElement.clientHeight;
-            const movementSpeed = 20 * px2world; // 모바일 터치 드래그 속도
+            const movementSpeed = 0.6; // 모바일 터치 드래그 속도
+            // const px2world = camera.position.z / gl.domElement.clientHeight;
+            // const movementSpeed = 0.6 * px2world; // 모바일 터치 드래그 속도
             targetPosition.current.x -= deltaX * movementSpeed;
             targetPosition.current.y += deltaY * movementSpeed;
         }
@@ -233,27 +233,32 @@ function CameraController({
 
     useEffect(() => {
         const canvas = gl.domElement
+        const isHorizontalScreen = screenWidth >= screenHeight;
         
         // 기존 이벤트들
         canvas.addEventListener('pointerdown', handlePointerDown)
         canvas.addEventListener('wheel', handleWheel)
         document.addEventListener('pointermove', handlePointerMove)
         document.addEventListener('pointerup', handlePointerUp)
-        
+
         // 모바일 터치 이벤트들
-        canvas.addEventListener('touchstart', handleTouchStart, { passive: screenWidth < screenHeight })
-        canvas.addEventListener('touchmove', handleTouchMove, { passive: screenWidth < screenHeight })
-        canvas.addEventListener('touchend', handleTouchEnd, { passive: screenWidth < screenHeight })
+        if (!isHorizontalScreen) {
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: true })
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: true })
+            canvas.addEventListener('touchend', handleTouchEnd, { passive: true })
+        }
 
         return () => {
             canvas.removeEventListener('pointerdown', handlePointerDown)
             canvas.removeEventListener('wheel', handleWheel)
             document.removeEventListener('pointermove', handlePointerMove)
             document.removeEventListener('pointerup', handlePointerUp)
-            
-            canvas.removeEventListener('touchstart', handleTouchStart)
-            canvas.removeEventListener('touchmove', handleTouchMove)
-            canvas.removeEventListener('touchend', handleTouchEnd)
+
+            if (!isHorizontalScreen) {
+                canvas.removeEventListener('touchstart', handleTouchStart)
+                canvas.removeEventListener('touchmove', handleTouchMove)
+                canvas.removeEventListener('touchend', handleTouchEnd)
+            }
         }
     }, [gl, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd, screenWidth, screenHeight]);
 
