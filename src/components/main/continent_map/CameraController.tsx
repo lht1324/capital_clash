@@ -247,9 +247,9 @@ function CameraController({
 
         // 모바일 터치 이벤트들
         if (!isHorizontalScreen) {
-            canvas.addEventListener('touchstart', handleTouchStart, { passive: true })
-            canvas.addEventListener('touchmove', handleTouchMove, { passive: true })
-            canvas.addEventListener('touchend', handleTouchEnd, { passive: true })
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
+            canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
         }
 
         return () => {
