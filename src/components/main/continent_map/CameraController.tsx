@@ -173,12 +173,10 @@ function CameraController({
                 Math.pow(touch1.clientX - touch2.clientX, 2) + 
                 Math.pow(touch1.clientY - touch2.clientY, 2)
             );
-            
+
             const deltaDistance = currentDistance - lastPinchDistance.current;
             const zoomSpeed = 0.15; // 모바일 핀치 줌 속도
-            
-            // targetPosition.current.z -= deltaDistance * zoomSpeed;
-            // targetPosition.current.z = Math.max(20, Math.min(100, targetPosition.current.z));
+
             const newZ = targetPosition.current.z - deltaDistance * zoomSpeed;
             targetPosition.current.z = Math.max(20, Math.min(maxZ, newZ));
             
