@@ -8,16 +8,16 @@ import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
 import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
 import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
-import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
+import {calculateSquareLayout, PlacementResult} from "@/lib/spiralPlacementAlgorithm";
 import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
 import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_MAX_USER_COUNT
 } from "@/components/main/continent_map/continent_map_public_variables";
+import ScreenManager from "@/components/providers/ScreenManager";
 
 type Props = {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-    // searchParams: Promise<URLSearchParams>
 }
 
 export const dynamic = 'force-dynamic'
@@ -106,7 +106,6 @@ export default async function Page({ searchParams }: Props) {
         }, {} as Record<string, Player>)
     );
     const placementResultRecord: Record<string, PlacementResult> = { }
-    const continentPositionRecord: Record<string, Position> = { }
 
     const getFilteredPlayerListByContinent = (continentId: string) => {
         return playerList.filter((player) => {
@@ -144,26 +143,10 @@ export default async function Page({ searchParams }: Props) {
         }
     });
 
-    continentList.forEach((continent) => {
-        if (placementResultRecord[continent.id].placements.length !== 0) {
-            continentPositionRecord[continent.id] = getContinentPosition(
-                placementResultRecord[continent.id],
-                placementResultRecord["central"]
-            );
-        } else {
-            continentPositionRecord[continent.id] = {
-                x: continent.position_x,
-                y: continent.position_y,
-                z: 1
-            }
-        }
-    });
-
     const props = {
         continentList: continentList,
         playerList: playerList,
         placementResultRecord: placementResultRecord,
-        continentPositionRecord: continentPositionRecord,
 
         // params
         targetPlayerId: targetPlayerId,
@@ -173,6 +156,7 @@ export default async function Page({ searchParams }: Props) {
     return (
         <>
             <StoreInitializer {...props} />
+            <ScreenManager/>
             <HeaderServer/>
             <div className="flex min-h-screen">
                 <SidebarServer/>

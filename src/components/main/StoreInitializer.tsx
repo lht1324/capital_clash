@@ -20,7 +20,6 @@ export interface StoreInitializerProps {
     continentList: Continent[],
     playerList: Player[],
     placementResultRecord: Record<string, PlacementResult>,
-    continentPositionRecord: Record<string, Position>,
 
     // params
     targetPlayerId?: string | null,
@@ -55,11 +54,12 @@ function StoreInitializer(props: StoreInitializerProps) {
             initializePlayers(
                 props.playerList,
                 props.placementResultRecord,
-                props.continentPositionRecord,
-                props.continentList
+                props.continentList,
+                window.screen.width,
+                window.screen.height
             );
         }
-    }, [isPlayersInitialized, initializePlayers, props.playerList, props.placementResultRecord, props.continentPositionRecord, props.continentList]);
+    }, [isPlayersInitialized, initializePlayers, props.playerList, props.placementResultRecord, props.continentList]);
 
     // PlayersStore - Subscription
     useEffect(() => {

@@ -147,7 +147,8 @@ function placeSpiralLayout(squares: Square[]): { placements: Placement[], bounda
 
     if (squares.length === 1) {
         const square = squares[0];
-        const boundary =  {
+
+        return {
             placements: [{
                 playerId: square.playerId,
                 x: -(square.sideLength / 2),
@@ -163,8 +164,7 @@ function placeSpiralLayout(squares: Square[]): { placements: Placement[], bounda
                 width: CONTINENT_MAX_USER_COUNT,
                 height: CONTINENT_MAX_USER_COUNT,
             }
-        }
-        return boundary
+        };
     }
     
     const placements: Placement[] = [];
@@ -609,6 +609,8 @@ export function getContinentPositions(placementResultsByContinent: Record<string
 export function getContinentPosition(
     placementResult: PlacementResult,
     centralPlacementResult: PlacementResult,
+    screenWidth: number,
+    screenHeight: number,
 ) {
     const continentSize = getContinentSize(placementResult);
     const centralContinentSize = getContinentSize(centralPlacementResult);
@@ -617,39 +619,36 @@ export function getContinentPosition(
     // 대륙 배치 방식 수정: 각 대륙이 중앙 대륙의 꼭짓점에 닿도록 조정
     // 대륙 ID에 따라 위치 조정 방식을 다르게 적용
     let x = 0, y = 0;
-    const horizontalGap = continentSize.width * 0.2;
-    const verticalGap = continentSize.height * 0.4;
+    const isHorizontalScreen = screenWidth >= screenHeight;
+    const screenRatio = isHorizontalScreen
+        ? screenWidth / screenHeight
+        : screenHeight / screenWidth;
+    const horizontalGap = continentSize.width * (screenRatio * 0.1);
+    const verticalGap = continentSize.height * (screenRatio * 0.2);
+    const continentWidth = continentSize.width;
+    const continentHeight = continentSize.height;
 
-    switch(placementResult.continentId) {
-        case "northwest":
-            // 북서쪽 대륙: 오른쪽 아래 모서리가 중앙 대륙의 북서쪽 꼭짓점에 닿도록
-            x = cornerCoordinate.x - (continentSize.width / 2) - horizontalGap;
-            y = cornerCoordinate.y + (continentSize.height / 2) - verticalGap;
-            break;
-        case "northeast":
-            // 북동쪽 대륙: 왼쪽 아래 모서리가 중앙 대륙의 북동쪽 꼭짓점에 닿도록
-            x = cornerCoordinate.x + (continentSize.width / 2) + horizontalGap;
-            y = cornerCoordinate.y + (continentSize.height / 2) - verticalGap;
-            break;
-        case "southwest":
-            // 남서쪽 대륙: 오른쪽 위 모서리가 중앙 대륙의 남서쪽 꼭짓점에 닿도록
-            x = cornerCoordinate.x - (continentSize.width / 2) - horizontalGap;
-            y = cornerCoordinate.y - (continentSize.height / 2) + verticalGap;
-            break;
-        case "southeast":
-            // 남동쪽 대륙: 왼쪽 위 모서리가 중앙 대륙의 남동쪽 꼭짓점에 닿도록
-            x = cornerCoordinate.x + (continentSize.width / 2) + horizontalGap;
-            y = cornerCoordinate.y - (continentSize.height / 2) + verticalGap;
-            break;
-        case "central":
-            // 남동쪽 대륙: 왼쪽 위 모서리가 중앙 대륙의 남동쪽 꼭짓점에 닿도록
-            x = 0;
-            y = 0;
-            break;
-        default:
-            // 기본 계산 방식 (기존 코드와 동일)
-            x = cornerCoordinate.x - continentSize.width / 2;
-            y = cornerCoordinate.y - continentSize.height / 2;
+    if (placementResult.continentId !== "central") {
+        if (isHorizontalScreen) {
+            x = placementResult.continentId.includes("west")
+                ? cornerCoordinate.x - (continentWidth / 2) - horizontalGap
+                : cornerCoordinate.x + (continentWidth / 2) + horizontalGap;
+
+            y = placementResult.continentId.includes("north")
+                ? cornerCoordinate.y + (continentHeight / 2) - verticalGap
+                : cornerCoordinate.y - (continentHeight / 2) + verticalGap;
+        } else {
+            x = placementResult.continentId.includes("west")
+                ? cornerCoordinate.x - (continentWidth / 2) + verticalGap
+                : cornerCoordinate.x + (continentWidth / 2) - verticalGap;
+
+            y = placementResult.continentId.includes("north")
+                ? cornerCoordinate.y + (continentHeight / 2) + horizontalGap
+                : cornerCoordinate.y - (continentHeight / 2) - horizontalGap;
+        }
+    } else {
+        x = 0;
+        y = 0;
     }
 
     return {

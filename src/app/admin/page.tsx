@@ -2,14 +2,11 @@
 
 import AdminPageServer from "@/components/admin/AdminPageServer";
 import StoreInitializer from "@/components/main/StoreInitializer";
-import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
-import {getSupabaseUser} from "@/utils/userUtils";
-import {usersServerAPI} from "@/api/server/supabase/usersServerAPI";
-import {Continent} from "@/api/types/supabase/Continents";
 import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
+import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
+import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
-import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
-import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
+import {calculateSquareLayout, PlacementResult} from "@/lib/spiralPlacementAlgorithm";
 
 export default async function AdminPage() {
     const continentList: Continent[] = await continentsServerAPI.getContinents();
@@ -26,7 +23,6 @@ export default async function AdminPage() {
         }, {} as Record<string, Player>)
     );
     const placementResultRecord: Record<string, PlacementResult> = { }
-    const continentPositionRecord: Record<string, Position> = { }
 
     const getFilteredPlayerListByContinent = (continentId: string) => {
         return playerList.filter((player) => {
@@ -47,20 +43,10 @@ export default async function AdminPage() {
         }
     });
 
-    continentList.forEach((continent) => {
-        if (placementResultRecord[continent.id]) {
-            continentPositionRecord[continent.id] = getContinentPosition(
-                placementResultRecord[continent.id],
-                placementResultRecord["central"]
-            );
-        }
-    });
-
     const props = {
         continentList: continentList,
         playerList: playerList,
         placementResultRecord: placementResultRecord,
-        continentPositionRecord: continentPositionRecord,
     }
 
     return (
