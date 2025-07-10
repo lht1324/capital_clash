@@ -268,8 +268,8 @@ function CameraController({
                 return prevPosition;
             }
         });
-        // cameraPosition.current.lerp(targetPosition.current, 0.12);
-        cameraPosition.current.lerp(targetPosition.current, 1.2);
+        cameraPosition.current.lerp(targetPosition.current, 0.12);
+        // cameraPosition.current.lerp(targetPosition.current, 1.2);
         camera.position.copy(cameraPosition.current);
     })
 
