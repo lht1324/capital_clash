@@ -163,7 +163,7 @@ function CameraController({
     }, [isPinching]);
 
     const handleTouchMove = useCallback((event: TouchEvent) => {
-        event.preventDefault();
+        // event.preventDefault();
         
         if (event.touches.length === 2 && isPinching) {
             // 핀치 줌 처리
