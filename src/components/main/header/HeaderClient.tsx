@@ -85,8 +85,8 @@ function HeaderClient(props: HeaderClientProps) {
                     <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
                         CC
                     </span>
-                    <span className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                        Capital Clash
+                    <span className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent whitespace-pre-line">
+                        Capital{isMobile ? "\n" : " "}Clash
                     </span>
                 </Link>
 
