@@ -92,7 +92,7 @@ function HeaderClient(props: HeaderClientProps) {
 
                 {/* 중앙 네비게이션 버튼들 */}
                 <div className="flex items-center space-x-4">
-                    (!isMobile ? <button
+                    {!isMobile ? <button
                         onClick={() => setIsRankingModalOpen(true)}
                         className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                     >
@@ -103,9 +103,9 @@ function HeaderClient(props: HeaderClientProps) {
                         className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors flex items-center justify-center text-lg"
                     >
                         <span>🏆</span>
-                    </button>)
+                    </button>}
 
-                    (!isMobile ? <button
+                    {!isMobile ? <button
                         onClick={async () => { await onClickPurchaseButton(); }}
                         className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors"
                     >
@@ -116,7 +116,7 @@ function HeaderClient(props: HeaderClientProps) {
                         className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center justify-center text-lg"
                     >
                         <span>💎</span>
-                    </button>)
+                    </button>}
                 </div>
 
                 {/* 로그인/프로필 영역 */}
