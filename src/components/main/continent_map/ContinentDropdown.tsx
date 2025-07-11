@@ -133,7 +133,7 @@ function ContinentDropdown() {
                 {/* 현재 선택된 뷰 버튼 */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center space-x-3 bg-black bg-opacity-80 text-white p-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 min-w-[300px]"
+                    className={`flex items-center space-x-3 bg-black bg-opacity-80 text-white p-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ${!isMobile ? "min-w-[300px]" : "min-w-[200px] max-w-[50%]"}`}
                     style={{ borderLeft: `4px solid ${currentDisplay.color}` }}
                 >
                     <div
