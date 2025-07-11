@@ -146,12 +146,12 @@ function ContinentDropdown() {
                         {!isWorldView && currentContinentInfo && (
                             <div className="text-xs text-gray-400 mt-1 space-y-0.5">
                                 <div className="flex justify-between">
-                                    <span>💰 Total Stake:</span>
+                                    <span>💰{!isMobile ? " Total Stake:" : ""}</span>
                                     <span
                                         className="text-green-400">${currentContinentInfo.totalStakeAmount.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span>👥 Number of Players:</span>
+                                    <span>👥{!isMobile ? " Number of Players:" : ""}</span>
                                     <span
                                         className="text-blue-400">{currentContinentInfo.playerCount}/{currentContinentInfo.maxUsers}</span>
                                 </div>
