@@ -75,10 +75,12 @@ function StatsTab() {
                                 const changeRate = isToday && dayOfWeek !== 0
                                     ? (dailyViewCount - averageDailyView) / averageDailyView * 100
                                     : isPast
-                                        ? dayOfWeek !== 0
+                                        ? dayOfWeek > 0
                                             ? (dailyViewCount - userDailyViews[dayOfWeek - 1]) / userDailyViews[dayOfWeek - 1] * 100
                                             : 0
-                                        : 0
+                                        : 0;
+
+                                console.log(`[${dayOfWeek}] dailyViewCount = ${dailyViewCount}, changeRate = ${changeRate}`)
 
                                 const changeColor = changeRate !== 0 && dayOfWeek <= currentDayOfWeek
                                     ? changeRate > 0
