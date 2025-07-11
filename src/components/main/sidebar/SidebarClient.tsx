@@ -37,7 +37,7 @@ function SidebarClient(props: SidebarClientProps) {
     const { user } = useUserStore();
 
     const isMobile = useMemo(() => {
-        return screenWidth < screenWidth && screenWidth <= 768;
+        return screenWidth < screenWidth || screenWidth <= 768;
     }, [screenWidth, screenHeight]);
 
     const userPlayerInfo = useMemo(() => {
