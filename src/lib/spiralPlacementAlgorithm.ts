@@ -115,10 +115,12 @@ function calculateRectangularSquareLayout(filteredPlayerListByContinent: Player[
     return placeSpiralLayout(squares);
 }
 
-function preprocessPlayers(players: Player[]): Square[] {
-    const totalStakeAmount = players.reduce((acc, player) => acc + player.stake_amount, 0);
+function preprocessPlayers(filteredPlayerListByContinent: Player[]): Square[] {
+    const totalStakeAmount = filteredPlayerListByContinent.reduce((acc, player) => acc + player.stake_amount, 0);
     
-    return players.map((player) => {
+    return filteredPlayerListByContinent.sort((a, b) => {
+        return b.stake_amount - a.stake_amount;
+    }).map((player) => {
         const sharePercentage = Math.max(0.01, player.stake_amount / totalStakeAmount);
         const area = sharePercentage * CONTINENT_MAX_USER_COUNT * CONTINENT_MAX_USER_COUNT;
         const sideLength = Math.floor(Math.sqrt(area));
@@ -127,7 +129,7 @@ function preprocessPlayers(players: Player[]): Square[] {
             playerId: player.id,
             sideLength: Math.max(1, sideLength)
         };
-    }).sort((a, b) => b.sideLength - a.sideLength);
+    });
 }
 
 function placeSpiralLayout(squares: Square[]): { placements: Placement[], boundary: Boundary } {

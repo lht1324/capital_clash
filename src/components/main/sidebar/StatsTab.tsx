@@ -75,7 +75,7 @@ function StatsTab() {
                                 const changeRate = isToday && dayOfWeek !== 0
                                     ? (dailyViewCount - averageDailyView) / averageDailyView * 100
                                     : isPast
-                                        ? dayOfWeek > 0
+                                        ? dayOfWeek > 0 && userDailyViews[dayOfWeek - 1] !== 0
                                             ? (dailyViewCount - userDailyViews[dayOfWeek - 1]) / userDailyViews[dayOfWeek - 1] * 100
                                             : 0
                                         : 0;
