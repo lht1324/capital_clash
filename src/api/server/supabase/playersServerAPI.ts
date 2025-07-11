@@ -1,5 +1,5 @@
 import { Player } from "@/api/types/supabase/Players";
-import { createSupabaseServer } from "@/lib/supabase/supabaseServer";
+import {createSupabaseSecureServer, createSupabaseServer} from "@/lib/supabase/supabaseServer";
 
 // 🧑‍💼 투자자 관련 함수들
 export const playersServerAPI = {
@@ -66,7 +66,10 @@ export const playersServerAPI = {
 
     // 투자자 정보 업데이트
     async patchPlayersById(playerId: string, player: Partial<Player>): Promise<Player | null> {
-        const supabase = await createSupabaseServer();
+        const supabase = "daily_views" in player
+            ? await createSupabaseSecureServer()
+            : await createSupabaseServer();
+        // const supabase = await createSupabaseServer();
 
         const { data, error } = await supabase
             .from('players')
