@@ -229,16 +229,16 @@ function SidebarClient(props: SidebarClientProps) {
                         >
                             🎯 My Territory
                         </button>
-                        <button
-                            onClick={() => setActiveTab('stats')}
-                            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                                activeTab === 'stats'
-                                    ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                            }`}
-                        >
-                            📈 Stats
-                        </button>
+                        {/*<button*/}
+                        {/*    onClick={() => setActiveTab('stats')}*/}
+                        {/*    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${*/}
+                        {/*        activeTab === 'stats'*/}
+                        {/*            ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'*/}
+                        {/*            : 'text-gray-400 hover:text-white hover:bg-gray-800'*/}
+                        {/*    }`}*/}
+                        {/*>*/}
+                        {/*    📈 Stats*/}
+                        {/*</button>*/}
                     </div>
 
                     {/* 탭 내용 */}
@@ -260,9 +260,9 @@ function SidebarClient(props: SidebarClientProps) {
                             />
                         )}
 
-                        {activeTab === 'stats' && (
-                            <StatsTab/>
-                        )}
+                        {/*{activeTab === 'stats' && (*/}
+                        {/*    <StatsTab/>*/}
+                        {/*)}*/}
                     </div>
                 </div>
             </div>

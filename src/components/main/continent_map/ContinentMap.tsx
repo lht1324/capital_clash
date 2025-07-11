@@ -100,7 +100,7 @@ function ContinentMap() {
                     onTileClick={async (playerId: string) => {
                         setTerritoryOwnerId(playerId);
                         setIsTerritoryInfoModalOpen(true);
-                        await updateDailyViews(playerId);
+                        // await updateDailyViews(playerId);
                     }}
                 />
             </Canvas>
