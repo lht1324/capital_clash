@@ -141,8 +141,8 @@ function ContinentDropdown() {
                         style={{ backgroundColor: currentDisplay.color }}
                     />
                     <div className="flex-1 text-left">
-                        <div className="font-bold text-sm">{currentDisplay.name}, {JSON.stringify(isMobile)}, {screenWidth}, {screenHeight}</div>
-                        <div className="text-xs text-gray-300">{currentDisplay.description}</div>
+                        <div className="font-bold text-sm">{currentDisplay.name}</div>
+                        {!isMobile && <div className="text-xs text-gray-300">{currentDisplay.description}</div>}
                         {!isWorldView && currentContinentInfo && (
                             <div className="text-xs text-gray-400 mt-1 space-y-0.5">
                                 <div className="flex justify-between">
