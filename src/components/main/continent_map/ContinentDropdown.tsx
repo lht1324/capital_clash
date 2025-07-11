@@ -39,7 +39,7 @@ function ContinentDropdown() {
     const [isOpen, setIsOpen] = useState(false);
 
     const isMobile = useMemo(() => {
-        return screenWidth < screenHeight || screenWidth <= 768
+        return screenWidth < screenHeight || screenWidth <= 768;
     }, [screenWidth, screenHeight]);
 
     // 현재 선택 상태에 따른 표시 (안전한 접근)
@@ -141,7 +141,7 @@ function ContinentDropdown() {
                         style={{ backgroundColor: currentDisplay.color }}
                     />
                     <div className="flex-1 text-left">
-                        <div className="font-bold text-sm">{currentDisplay.name}</div>
+                        <div className="font-bold text-sm">{currentDisplay.name}, {JSON.stringify(isMobile)}, {screenWidth}, {screenHeight}</div>
                         <div className="text-xs text-gray-300">{currentDisplay.description}</div>
                         {!isWorldView && currentContinentInfo && (
                             <div className="text-xs text-gray-400 mt-1 space-y-0.5">
@@ -212,7 +212,7 @@ function ContinentDropdown() {
                                     style={{backgroundColor: continent.color}}
                                 />
                                 <div className="flex-1 text-left">
-                                    <div className={`font-bold text-sm ${isCentral ? "text-yellow-400" : "text-white"}`}>{continent.name}, {isMobile}, {screenWidth}, {screenHeight}</div>
+                                    <div className={`font-bold text-sm ${isCentral ? "text-yellow-400" : "text-white"}`}>{continent.name}</div>
                                     {!isMobile && <div className={`text-xs ${isCentral ? "text-yellow-400" : "text-gray-300"}`}>{continent.description}</div>}
                                     <div className={`${isCentral ? "font-bold " : ""}text-xs ${isCentral ? "text-yellow-400" : "text-gray-400"}`}>
                                         {currentPlayerCount}/{continent.max_users} {`${currentPlayerCount === 1 ? "player" : "players"}`}
