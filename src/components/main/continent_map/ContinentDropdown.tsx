@@ -128,7 +128,7 @@ function ContinentDropdown() {
     }, [continentList, placementResultRecord, continentPositionRecord]);
 
     return (
-        <div className="fixed top-20 left-4 z-30">
+        <div className="fixed top-20 left-4 z-20">
             {continentList ? (<div className="relative">
                 {/* 현재 선택된 뷰 버튼 */}
                 <button

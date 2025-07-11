@@ -184,7 +184,7 @@ function SidebarClient(props: SidebarClientProps) {
             {/* 사이드바 토글 버튼 - 오른쪽으로 이동 */}
             <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className={`fixed ${!isMobile ? "top-20" : "bottom-20"} z-20 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-l-lg border border-r-0 border-gray-700 transition-all duration-300 flex items-center gap-2 ${
+                className={`fixed ${!isMobile ? "top-20" : "bottom-20"} z-30 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-l-lg border border-r-0 border-gray-700 transition-all duration-300 flex items-center gap-2 ${
                     isSidebarOpen ? 'right-80' : 'right-0'
                 }`}
             >
