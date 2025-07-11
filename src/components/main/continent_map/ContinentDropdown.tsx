@@ -212,7 +212,7 @@ function ContinentDropdown() {
                                     style={{backgroundColor: continent.color}}
                                 />
                                 <div className="flex-1 text-left">
-                                    <div className={`font-bold text-sm ${isCentral ? "text-yellow-400" : "text-white"}`}>{continent.name}</div>
+                                    <div className={`font-bold text-sm ${isCentral ? "text-yellow-400" : "text-white"}`}>{continent.name}, {isMobile}, {screenWidth}, {screenHeight}</div>
                                     {!isMobile && <div className={`text-xs ${isCentral ? "text-yellow-400" : "text-gray-300"}`}>{continent.description}</div>}
                                     <div className={`${isCentral ? "font-bold " : ""}text-xs ${isCentral ? "text-yellow-400" : "text-gray-400"}`}>
                                         {currentPlayerCount}/{continent.max_users} {`${currentPlayerCount === 1 ? "player" : "players"}`}
