@@ -124,11 +124,11 @@ function StatsTab() {
                                                 <span className="text-lg font-semibold text-gray-500">-</span>
                                             )}
                                         </div>
-                                        {changeRate !== 0 && <div className="text-right flex items-center justify-end space-x-1">
+                                        <div className="text-right flex items-center justify-end space-x-1">
                                             <span className={`text-sm font-medium ${changeColor}`}>
-                                                {`${changeRate.toFixed(0)}%`}
+                                                {changeRate !== 0 ? `${changeRate.toFixed(0)}%` : "-"}
                                             </span>
-                                        </div>}
+                                        </div>
                                     </div>
                                 )
                             })}
