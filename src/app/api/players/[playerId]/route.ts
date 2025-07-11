@@ -33,7 +33,7 @@ export async function PATCH(
         let mappedUpdatePlayerInfo: Partial<Player>;
 
         if ("daily_views" in updatePlayerInfo) {
-            const prevPlayerInfo = await playersServerAPI.getPlayersByUserId(playerId);
+            const prevPlayerInfo = await playersServerAPI.getPlayersByPlayerId(playerId);
 
             if (prevPlayerInfo && "daily_views" in prevPlayerInfo) {
                 const todayDayOfWeek = (new Date().getDay() + 6) % 7;
