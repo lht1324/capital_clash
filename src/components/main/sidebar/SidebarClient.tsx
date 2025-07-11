@@ -33,8 +33,12 @@ function SidebarClient(props: SidebarClientProps) {
     const { setCameraTarget } = useCameraStateStore();
 
     const { continents } = useContinentStore();
-    const { playerList, vipPlayerList } = usePlayersStore();
+    const { playerList, vipPlayerList, screenSize: { screenWidth, screenHeight } } = usePlayersStore();
     const { user } = useUserStore();
+
+    const isMobile = useMemo(() => {
+        return screenWidth < screenWidth && screenWidth <= 768;
+    }, [screenWidth, screenHeight]);
 
     const userPlayerInfo = useMemo(() => {
         return playerList.find((player) => {
@@ -184,7 +188,7 @@ function SidebarClient(props: SidebarClientProps) {
                     isSidebarOpen ? 'right-80' : 'right-0'
                 }`}
             >
-                <span className="text-sm font-medium">My Info</span>
+                {!isMobile && <span className="text-sm font-medium">My Info</span>}
                 <svg
                     className={`w-5 h-5 transition-transform duration-300 ${isSidebarOpen ? '' : 'rotate-180'}`}
                     fill="none"
