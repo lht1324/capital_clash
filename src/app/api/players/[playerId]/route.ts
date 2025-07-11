@@ -30,8 +30,37 @@ export async function PATCH(
     try {
         const { playerId } = await params;
         const updatePlayerInfo: Partial<Player> = await request.json();
+        let mappedUpdatePlayerInfo: Partial<Player>;
 
-        const result = await playersServerAPI.patchPlayersById(playerId, updatePlayerInfo);
+        if ("daily_views" in updatePlayerInfo) {
+            const prevPlayerInfo = await playersServerAPI.getPlayersByUserId(playerId);
+
+            if (prevPlayerInfo && "daily_views" in prevPlayerInfo) {
+                const todayDayOfWeek = (new Date().getDay() + 6) % 7;
+
+                const isNotWeeklyUpdated = prevPlayerInfo.daily_views.some((dailyView, dayIndex) => {
+                    return todayDayOfWeek < dayIndex && dailyView !== 0;
+                });
+
+                if (isNotWeeklyUpdated) {
+                    const newDailyViews = [0, 0, 0, 0, 0, 0, 0];
+                    newDailyViews[todayDayOfWeek] = 1;
+
+                    mappedUpdatePlayerInfo = {
+                        ...updatePlayerInfo,
+                        daily_views: newDailyViews,
+                    };
+                } else {
+                    mappedUpdatePlayerInfo = updatePlayerInfo;
+                }
+            } else {
+                mappedUpdatePlayerInfo = updatePlayerInfo;
+            }
+        } else {
+            mappedUpdatePlayerInfo = updatePlayerInfo;
+        }
+
+        const result = await playersServerAPI.patchPlayersById(playerId, mappedUpdatePlayerInfo);
 
         return NextResponse.json({ data: result }, { status: 201 });
     } catch (error) {
