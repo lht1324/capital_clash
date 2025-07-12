@@ -233,27 +233,29 @@ function PurchaseTerritoryModal({
         setIsCalculating(true)
 
         try {
-            const getProductsResponse = await polarClientAPI.getProductsClient();
+            // const getProductsResponse = await polarClientAPI.getProductsClient();
+            //
+            // const productId = getProductsResponse.items.find((item) => {
+            //     return !item.name.includes("continent");
+            // })?.id;
+            //
+            // if (!productId || !user) {
+            //     throw new Error("No product found.");
+            // }
 
-            const productId = getProductsResponse.items.find((item) => {
-                return !item.name.includes("continent");
-            })?.id;
-
-            if (!productId || !user) {
-                throw new Error("No product found.");
-            }
-
-            const postCheckoutsResponse = await polarClientAPI.postCheckoutsStakeClient(
-                productId,
-                user.id,
-                stakeAmount,
-                user.email,
-                playerName.length !== 0 ? playerName : null,
-                selectedContinentId,
-            );
+            // const postCheckoutsResponse = await polarClientAPI.postCheckoutsStakeClient(
+            //     productId,
+            //     user.id,
+            //     stakeAmount,
+            //     user.email,
+            //     playerName.length !== 0 ? playerName : null,
+            //     selectedContinentId,
+            // );
 
             // window.location.href = postCheckoutsResponse.url;
-            window.location.assign(postCheckoutsResponse.url);
+            // window.location.assign(postCheckoutsResponse.url);
+            window.location.assign(`https://overeazy.gumroad.com/l/vqcgwn?price=${stakeAmount}`); // Test
+            // window.location.assign(`https://overeazy.gumroad.com/l/ovhtrv?price=${stakeAmount}`); // Prod
         } catch (error) {
             console.error(error);
             setIsCalculating(false)

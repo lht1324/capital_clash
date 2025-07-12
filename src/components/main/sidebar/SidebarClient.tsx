@@ -88,24 +88,26 @@ function SidebarClient(props: SidebarClientProps) {
                 const isAlreadyChangedContinent = userPlayerInfo.is_changed_continent; // once free, patchPlayers or postCheckout
 
                 if (isAlreadyChangedContinent) {
-                    const getProductsResponse = await polarClientAPI.getProductsClient();
+                    // const getProductsResponse = await polarClientAPI.getProductsClient();
+                    //
+                    // const productId = getProductsResponse.items.find((item) => {
+                    //     return item.name.includes("continent");
+                    // })?.id;
+                    //
+                    // if (!productId || !user) {
+                    //     throw new Error("No product found.");
+                    // }
+                    //
+                    // const postCheckoutsResponse = await polarClientAPI.postCheckoutsChangeContinentClient(
+                    //     productId,
+                    //     userPlayerInfo.id,
+                    //     selectedContinentId,
+                    //     user.email,
+                    // );
 
-                    const productId = getProductsResponse.items.find((item) => {
-                        return item.name.includes("continent");
-                    })?.id;
-
-                    if (!productId || !user) {
-                        throw new Error("No product found.");
-                    }
-
-                    const postCheckoutsResponse = await polarClientAPI.postCheckoutsChangeContinentClient(
-                        productId,
-                        userPlayerInfo.id,
-                        selectedContinentId,
-                        user.email,
-                    );
-
-                    window.location.assign(postCheckoutsResponse.url);
+                    // window.location.assign(postCheckoutsResponse.url);
+                    window.location.assign("https://overeazy.gumroad.com/l/yapwgu"); // Test
+                    // window.location.assign("https://overeazy.gumroad.com/l/brnsm"); // Prod
                 } else {
                     await playersClientAPI.patchPlayersById(
                         userPlayerInfo.id,
