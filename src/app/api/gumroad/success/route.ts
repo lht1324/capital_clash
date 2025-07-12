@@ -13,6 +13,8 @@ export async function POST(nextReq: NextRequest) {
             email: formData.get('email'),
             full_name: formData.get('full_name'),
             price: formData.get('price'),
+            player_id: formData.get('url_params[player_id]'),
+            original_price: formData.get('url_params[price]'),
             refunded: formData.get('refunded'),
             disputed: formData.get('disputed'),
             dispute_won: formData.get('dispute_won'),
