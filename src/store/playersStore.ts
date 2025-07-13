@@ -218,7 +218,8 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
 
                             // 2. 알림을 위해 어떤 정보가 변경되었는지 별도로 확인합니다.
                             if (oldPlayer) {
-                                const isStakeAmountChanged = oldPlayer.stake_amount !== updatedPlayer.stake_amount;
+                                const isStakeAmountChanged = oldPlayer.stake_amount !== updatedPlayer.stake_amount
+                                    && oldPlayer.continent_id === updatedPlayer.continent_id;
                                 const isImageStatusChanged = oldPlayer.image_status !== updatedPlayer.image_status;
                                 const isContinentChanged = oldPlayer.continent_id !== updatedPlayer.continent_id;
                                 const isAreaColorChanged = oldPlayer.area_color !== updatedPlayer.area_color;
