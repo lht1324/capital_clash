@@ -6,6 +6,7 @@ import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
 import {polarClientAPI} from "@/api/client/polar/polarClientAPI";
 import {CONTINENT_MAX_USER_COUNT} from "@/components/main/continent_map/continent_map_public_variables";
+import {encodeBase64} from "@/utils/base64Utils";
 
 enum ValidationErrorType {
     INPUT_STAKE_EMPTY = 'INPUT_STAKE_EMPTY',
@@ -254,7 +255,14 @@ function PurchaseTerritoryModal({
 
             // window.location.href = postCheckoutsResponse.url;
             // window.location.assign(postCheckoutsResponse.url);
-            window.location.assign(`https://overeazy.gumroad.com/l/vqcgwn?price=${stakeAmount}`); // Test
+            const checkoutUrl = `https://overeazy.gumroad.com/l/vqcgwn?`
+                + `price=${stakeAmount}`
+                + `&player_id=${userPlayerInfo?.id ? encodeBase64(userPlayerInfo.id) : null}`
+                + `&user_id=${user?.id ? encodeBase64(user?.id as string) : null}`
+                + `&continent_id=${selectedContinentId}`
+                + `&name=${playerName}`
+
+            window.location.assign(checkoutUrl); // Test
             // window.location.assign(`https://overeazy.gumroad.com/l/ovhtrv?price=${stakeAmount}`); // Prod
         } catch (error) {
             console.error(error);
