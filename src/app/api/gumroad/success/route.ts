@@ -91,7 +91,7 @@ export async function POST(nextReq: NextRequest) {
 
                         break;
                     } else {
-                        const prevPlayer = await playersServerAPI.getPlayersByPlayerId(decodedUserId);
+                        const prevPlayer = await playersServerAPI.getPlayersByUserId(decodedUserId);
 
                         if (!prevPlayer || !decodedPlayerId) throw Error("Player not found!");
 
