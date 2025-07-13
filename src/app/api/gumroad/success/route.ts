@@ -14,26 +14,9 @@ export async function POST(nextReq: NextRequest) {
     try {
         // Gumroad에서 전송된 form data 파싱
         const formData = await nextReq.formData();
-        
-        // const eventData = {
-        //     sale_id: formData.get('sale_id'),
-        //     product_id: formData.get('product_id'),
-        //     email: formData.get('email'),
-        //     full_name: formData.get('full_name'),
-        //     price: formData.get('price'), // cent. / 100 => dollar
-        //     player_id: formData.get('url_params[player_id]'), // nullable로 신규, 추가 판단
-        //     original_price: formData.get('url_params[price]'),
-        //     refunded: formData.get('refunded'),
-        //     disputed: formData.get('disputed'),
-        //     dispute_won: formData.get('dispute_won'),
-        //     is_recurring_charge: formData.get('is_recurring_charge'),
-        // };
 
-        // const saleId = formData.get('sale_id');
+        const saleId = formData.get('sale_id') as (string | null);
         const productId = formData.get('product_id') as (string | null);
-        // const email = formData.get('email');
-        // const fullName = formData.get('full_name');
-        const price = formData.get('price') as (number | null); // cent. / 100 => dollar
 
         const encodedUserId = formData.get('url_params[user_id]') as (string | null); // base64
         const encodedPlayerId = formData.get('url_params[player_id]') as (string | null); // base64
@@ -43,34 +26,26 @@ export async function POST(nextReq: NextRequest) {
         const decodedPlayerId = encodedPlayerId
             ? decodeBase64(encodedPlayerId)
             : null;
+
         const continentId = formData.get('url_params[continent_id]') as (string | null);
         const name = formData.get('url_params[name]') as (string | null);
-        // const originalPrice = formData.get('url_params[price]');
-        // const refunded = formData.get('refunded')
-        // const disputed = formData.get('disputed');
-        // const dispute_won = formData.get('dispute_won');
-        // const isRecurringCharge = formData.get('is_recurring_charge');
+
+        if (!saleId || !productId || !decodedUserId) throw Error("Ping's data is not valid.");
+
+        const saleInfo = await gumroadServerAPI.getSalesBySaleId(saleId);
+
+        if (!saleInfo) throw Error("Sale data is not valid.");
+
+        const purchasedProduct = await gumroadServerAPI.getProductById(productId);
 
         console.log("🔔 Gumroad Ping 수신", {
-            // saleId: saleId,
             productId: productId,
-            // email: email,
-            // fullName: fullName,
-            price: price,
             playerId: decodedPlayerId,
-            // originalPrice: originalPrice,
-            // refunded: refunded,
-            // disputed: disputed,
-            // dispute_won: dispute_won,
-            // isRecurringCharge: isRecurringCharge,
+            userId: decodedUserId,
+            continentId: continentId,
+            saleInfo: saleInfo,
+            purchasedProduct: purchasedProduct,
         });
-
-        if (!decodedUserId || !price) throw Error("Ping's data is not valid.");
-
-        const productList = await gumroadServerAPI.getProducts();
-        const purchasedProduct = productList.find((product) => {
-            return product.id === productId;
-        })
 
         if (purchasedProduct) {
             const purchaseType = !purchasedProduct.name.includes("continent")
@@ -83,7 +58,7 @@ export async function POST(nextReq: NextRequest) {
                         const result = await playersServerAPI.postPlayers({
                             user_id: decodedUserId,
                             continent_id: continentId,
-                            stake_amount: price / 100,
+                            stake_amount: saleInfo.price / 100,
                             name: name
                         });
 
@@ -96,7 +71,7 @@ export async function POST(nextReq: NextRequest) {
                         if (!prevPlayer || !decodedPlayerId) throw Error("Player not found!");
 
                         const result = await playersServerAPI.patchPlayersById(decodedPlayerId, {
-                            stake_amount: prevPlayer.stake_amount + price / 100,
+                            stake_amount: prevPlayer.stake_amount + saleInfo.price / 100,
                         });
 
                         if (result) {
