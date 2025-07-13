@@ -31,19 +31,21 @@ function NotificationManager() {
     const { lastUpdatedPlayerList } = usePlayersStore();
     const { isSidebarOpen } = useComponentStateStore();
 
-    const [notifications, setNotifications] = useState<NotificationData[]>([])
+    const [notificationDataList, setNotificationDataList] = useState<NotificationData[]>([])
 
     // 🔥 실제 투자 알림만 처리 (테스트 로직 제거됨)
     // 실제 투자가 발생했을 때 알림을 추가하는 함수
     const addNotification = useCallback((notification: NotificationData) => {
-        setNotifications((prev) => {
+        setNotificationDataList((prev) => {
             return [notification, ...prev.slice(0, 4)];
         }) // 최대 5개 유지
     }, []);
 
-    const handleCloseNotification = useCallback((id: string) => {
-        setNotifications((prev) => {
-            return prev.filter(notification => notification.id !== id);
+    const handleCloseNotification = useCallback((id: string, timestamp: Date) => {
+        setNotificationDataList((prev) => {
+            return prev.filter(notification => {
+                return notification.id !== id && notification.timestamp !== timestamp;
+            });
         })
     }, []);
 
@@ -64,7 +66,9 @@ function NotificationManager() {
     useEffect(() => {
         if (lastUpdatedPlayerList.length === 0) return;
 
-        const notificationList: NotificationData[] = lastUpdatedPlayerList.map((updatedPlayerInfo) => {
+        const notificationList: NotificationData[] = lastUpdatedPlayerList.filter((updatedPlayerInfo) => {
+
+        }).map((updatedPlayerInfo) => {
             const { player: updatedPlayer, updateType, previousStake } = updatedPlayerInfo;
 
             const additionalStakeAmount = updateType === UpdateType.STAKE_CHANGE && previousStake !== undefined
@@ -112,17 +116,17 @@ function NotificationManager() {
             return notificationData !== null;
         });
 
-        setNotifications(notificationList);
-    }, [lastUpdatedPlayerList, continentList]);
+        setNotificationDataList(notificationList);
+    }, [lastUpdatedPlayerList, continentList, notificationDataList]);
 
-    if (notifications.length === 0) return null
+    if (notificationDataList.length === 0) return null
 
     return (
         <div
             className={`fixed z-50 max-w-sm transition-all duration-300 ${toastPosition}`}
             style={toastStyle}
         >
-            {notifications.map(notification => (
+            {notificationDataList.map(notification => (
                 <NotificationToast
                     key={notification.id}
                     notification={notification}

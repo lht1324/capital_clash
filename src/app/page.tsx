@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0;
 
 const FALLBACK_IMAGE = '/preview.png';
-const SITE_ORIGIN = 'https://capital-clash-git-dbseparating-overeasys-projects.vercel.app/';
+const SITE_ORIGIN = 'https://capital-clash.vercel.app/';
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
     const defaultMetaData = {

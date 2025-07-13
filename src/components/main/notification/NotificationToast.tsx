@@ -5,7 +5,7 @@ import {NotificationData, NotificationType} from "@/components/main/notification
 
 export interface NotificationToastProps {
     notification: NotificationData
-    onClose: (id: string) => void
+    onClose: (id: string, timestamp: Date) => void
 }
 
 function NotificationToast({ notification, onClose }: NotificationToastProps) {
@@ -62,18 +62,18 @@ function NotificationToast({ notification, onClose }: NotificationToastProps) {
 
     const handleClose = useCallback(() => {
         setIsExiting(true)
-        setTimeout(() => onClose(notification.id), 300)
-    }, []);
+        setTimeout(() => onClose(notification.id, notification.timestamp), 300)
+    }, [notification.id, notification.timestamp]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             setIsExiting(true)
             // 애니메이션 시간 후 실제 제거
-            setTimeout(() => onClose(notification.id), 300)
+            setTimeout(() => onClose(notification.id, notification.timestamp), 300)
         }, 10000)
 
         return () => clearTimeout(timer)
-    }, [notification.id, onClose]);
+    }, [notification.id, notification.timestamp, onClose]);
 
     return (
         <div className={`bg-gradient-to-r from-gray-900 to-gray-800 border border-green-500 rounded-xl p-5 shadow-lg shadow-green-900/20 max-w-sm mb-3 ${
