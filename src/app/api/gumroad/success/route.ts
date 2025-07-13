@@ -88,6 +88,7 @@ export async function POST(nextReq: NextRequest) {
 
                     const result = await playersServerAPI.patchPlayersById(decodedPlayerId, {
                         continent_id: continentId,
+                        stake_amount: prevPlayer.stake_amount + 2,
                     })
 
                     if (result) {

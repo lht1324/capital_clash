@@ -146,11 +146,13 @@ function TerritoryTab({
                     {/* 영역 이전 옵션 */}
                     <div className="bg-gray-800 rounded-lg p-4">
                         <h4 className="text-md font-semibold text-white mb-3">
-                            Continent Transfer ({userPlayerInfo?.is_changed_continent ? "$2.99" : <s className="text-gray-400">$2.99</s>})
+                            Move to another Continent ({userPlayerInfo?.is_changed_continent ? "$2.99" : <s className="text-gray-400">$2.99</s>})
                         </h4>
-                        <p className="text-sm text-gray-400 mb-3">
-                            You can transfer to another continent with your total stake.
-                        </p>
+                        <ul className="text-sm text-gray-400 mb-3 list-disc list-inside">
+                            <li>You can move to another continent with your total stake.</li>
+                            <li>First moving is free.</li>
+                            <li>$2 will be added into your total stake.</li>
+                        </ul>
 
                         {/* X 모양 대륙 현황 */}
                         <div className="space-y-2 mb-3">

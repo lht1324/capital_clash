@@ -107,8 +107,8 @@ function SidebarClient(props: SidebarClientProps) {
                     // );
 
                     // window.location.assign(postCheckoutsResponse.url);
-                    // const checkoutUrl = `https://overeazy.gumroad.com/l/brnsm?` // Prod
-                    const checkoutUrl = `https://overeazy.gumroad.com/l/yapwgu?` // Test
+                    const checkoutUrl = `https://overeazy.gumroad.com/l/brnsm?` // Prod
+                    // const checkoutUrl = `https://overeazy.gumroad.com/l/yapwgu?` // Test
                         + `&player_id=${userPlayerInfo?.id ? encodeBase64(userPlayerInfo.id) : null}`
                         + `&user_id=${user?.id ? encodeBase64(user?.id as string) : null}`
                         + `&continent_id=${selectedContinentId}`
