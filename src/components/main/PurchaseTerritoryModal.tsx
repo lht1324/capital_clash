@@ -255,6 +255,7 @@ function PurchaseTerritoryModal({
 
             // window.location.href = postCheckoutsResponse.url;
             // window.location.assign(postCheckoutsResponse.url);
+            // const checkoutUrl = `https://overeazy.gumroad.com/l/ovhtrv?`
             const checkoutUrl = `https://overeazy.gumroad.com/l/vqcgwn?`
                 + `price=${stakeAmount}`
                 + `&player_id=${userPlayerInfo?.id ? encodeBase64(userPlayerInfo.id) : null}`

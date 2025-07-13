@@ -17,6 +17,7 @@ import {useUserStore} from "@/store/userStore";
 import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
 import {polarClientAPI} from "@/api/client/polar/polarClientAPI";
 import {imagesClientAPI} from "@/api/client/supabase/imagesClientAPI";
+import {encodeBase64} from "@/utils/base64Utils";
 
 export interface SidebarClientProps {
 
@@ -106,8 +107,13 @@ function SidebarClient(props: SidebarClientProps) {
                     // );
 
                     // window.location.assign(postCheckoutsResponse.url);
-                    window.location.assign("https://overeazy.gumroad.com/l/yapwgu"); // Test
-                    // window.location.assign("https://overeazy.gumroad.com/l/brnsm"); // Prod
+                    // const checkoutUrl = `https://overeazy.gumroad.com/l/brnsm?` // Prod
+                    const checkoutUrl = `https://overeazy.gumroad.com/l/yapwgu?` // Test
+                        + `&player_id=${userPlayerInfo?.id ? encodeBase64(userPlayerInfo.id) : null}`
+                        + `&user_id=${user?.id ? encodeBase64(user?.id as string) : null}`
+                        + `&continent_id=${selectedContinentId}`
+
+                    window.location.assign(checkoutUrl); // Test
                 } else {
                     await playersClientAPI.patchPlayersById(
                         userPlayerInfo.id,

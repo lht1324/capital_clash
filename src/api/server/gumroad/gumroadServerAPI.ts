@@ -19,6 +19,7 @@ export const gumroadServerAPI = {
             }
         } catch (error) {
             console.error(error);
+
             return [];
         }
     },
