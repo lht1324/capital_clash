@@ -26,12 +26,16 @@ function HeaderClient(props: HeaderClientProps) {
     const [isProfileInfoModalOpen, setIsProfileInfoModalOpen] = useState(false)
 
     const { isContinentsInitialized } = useContinentStore();
-    const { isPlayersInitialized, playerList } = usePlayersStore();
+    const { isPlayersInitialized, playerList, screenSize: { screenWidth, screenHeight } } = usePlayersStore();
     const { isUsersInitialized, user } = useUserStore();
 
     const isInitialized = useMemo(() => {
         return isContinentsInitialized && isPlayersInitialized && isUsersInitialized;
     }, [isContinentsInitialized, isPlayersInitialized, isUsersInitialized]);
+
+    const isMobile = useMemo(() => {
+        return screenWidth < screenHeight || screenWidth <= 768;
+    }, [screenWidth, screenHeight]);
 
     const userPlayerInfo = useMemo(() => {
         return playerList.find((player) => {
@@ -61,6 +65,18 @@ function HeaderClient(props: HeaderClientProps) {
         }
     }, []);
 
+    const onClickPurchaseButton = useCallback(async () => {
+        if (user) {
+            setIsPurchaseModalOpen(true)
+        } else {
+            const confirmed = confirm("Please sign in first.");
+
+            if (confirmed) {
+                await handleGoogleLogin();
+            }
+        }
+    }, [user, handleGoogleLogin]);
+
     return (
         isInitialized && <header className="fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white z-50">
             <div className="container h-full mx-auto px-4 flex items-center justify-between">
@@ -69,38 +85,38 @@ function HeaderClient(props: HeaderClientProps) {
                     <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
                         CC
                     </span>
-                    <span className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                        Capital Clash
+                    <span className="text-xl font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent whitespace-pre-line">
+                        Capital{isMobile ? "\n" : " "}Clash
                     </span>
                 </Link>
 
                 {/* 중앙 네비게이션 버튼들 */}
                 <div className="flex items-center space-x-4">
-                    <button
+                    {!isMobile ? <button
                         onClick={() => setIsRankingModalOpen(true)}
                         className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                     >
                         <span>🏆</span>
                         <span>Leaderboard</span>
-                    </button>
+                    </button> : <button
+                        onClick={() => setIsRankingModalOpen(true)}
+                        className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors flex items-center justify-center text-lg"
+                    >
+                        <span>🏆</span>
+                    </button>}
 
-                    <button
-                        onClick={async () => {
-                            if (user) {
-                                setIsPurchaseModalOpen(true)
-                            } else {
-                                const confirmed = confirm("Please sign in first.");
-
-                                if (confirmed) {
-                                    await handleGoogleLogin();
-                                }
-                            }
-                        }}
+                    {!isMobile ? <button
+                        onClick={async () => { await onClickPurchaseButton(); }}
                         className="flex items-center space-x-1 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors"
                     >
                         <span>💎</span>
                         <span>{(!!userPlayerInfo) ? "Raise Stake" : "Drop Stake"}</span>
-                    </button>
+                    </button> : <button
+                        onClick={async () => { await onClickPurchaseButton(); }}
+                        className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center justify-center text-lg"
+                    >
+                        <span>💎</span>
+                    </button>}
                 </div>
 
                 {/* 로그인/프로필 영역 */}
@@ -110,18 +126,17 @@ function HeaderClient(props: HeaderClientProps) {
                         className="flex items-center"
                     >
                         <Image
-                            src="/signin-assets/google_signin_normal.png"
+                            src={`/signin-assets/${isMobile ? "google_signin_small" : "google_signin_normal"}.png`}
                             alt="Sign in with Google"
-                            width={189}
+                            width={isMobile ? 40 : 189}
                             height={40}
                             priority
-                            className="hidden sm:block"
                         />
                     </button>
                 ) : (
                     <DropDownMenu
                         trigger={
-                            <div className="flex items-center space-x-2">
+                            (!isMobile ? <div className="flex items-center space-x-2">
                                 {user?.avatar_url ? (
                                     <Image
                                         src={user.avatar_url}
@@ -134,7 +149,17 @@ function HeaderClient(props: HeaderClientProps) {
                                     <UserCircleIcon className="h-6 w-6" />
                                 )}
                                 <span>{user?.name || 'User'}</span>
-                            </div>
+                            </div> : (user?.avatar_url ? (
+                                <Image
+                                    src={user.avatar_url}
+                                    alt="User Avatar"
+                                    width={24}
+                                    height={24}
+                                    className="rounded-full"
+                                />
+                            ) : (
+                                <UserCircleIcon className="h-6 w-6" />
+                            )))
                         }
                         items={[
                             {

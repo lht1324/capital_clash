@@ -65,7 +65,7 @@ function TerritoryInfoViewModal({
         const userIdentifier = encodeBase64(territoryOwnerPlayerInfo.id);
 
         // const targetUrl = new URL("https://capital-clash.vercel.app");
-        const targetUrl = new URL("http://localhost:3000/");
+        const targetUrl = new URL(window.location.origin);
         targetUrl.searchParams.set("user_identifier", encodeURIComponent(userIdentifier));
 
         const continentName = continentList.find((continent) => {
@@ -93,7 +93,7 @@ function TerritoryInfoViewModal({
             `${overallRankText}\n` +
             `${continentalRankText}\n\n` +
             `${targetUrl}\n\n` +
-            "#CapitalClash"
+            "#CapitalClash by @0verEazy"
         );
 
         window.open(intent.toString(), "_blank", "noopener,noreferrer");
@@ -186,21 +186,21 @@ function TerritoryInfoViewModal({
                                     <div className="min-w-6 mr-2">👑</div>
                                     <span className="text-gray-600">Owner</span>
                                 </div>
-                                <span className="font-medium">{territoryOwnerPlayerInfo.name}</span>
+                                <span className="font-medium text-black">{territoryOwnerPlayerInfo.name}</span>
                             </div>
                             <div className="flex justify-between">
                                 <div className="flex flex-row w-fit">
                                     <div className="min-w-6 mr-2">💰</div>
                                     <span className="text-gray-600">Stake Amount</span>
                                 </div>
-                                <span className="font-medium">${territoryOwnerPlayerInfo.stake_amount.toLocaleString()}</span>
+                                <span className="font-medium text-black">${territoryOwnerPlayerInfo.stake_amount.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between">
                                 <div className="flex flex-row w-fit">
                                     <div className="min-w-6 mr-2">📈</div>
                                     <span className="text-gray-600">Continental Share</span>
                                 </div>
-                                <span className="font-medium">
+                                <span className="font-medium text-black">
                                     {userSharePercentage.toFixed(2)}%
                                 </span>
                             </div>
@@ -209,7 +209,7 @@ function TerritoryInfoViewModal({
                                     <div className="min-w-6 mr-2">🏅</div>
                                     <span className="text-gray-600">Continental Rank</span>
                                 </div>
-                                <span className={`${userContinentalRank === 1 ? "text-yellow-500" : "text-black-600"} font-medium`}>
+                                <span className={`${userContinentalRank === 1 ? "text-yellow-500" : "text-black"} font-medium`}>
                                     # {userContinentalRank}
                                 </span>
                             </div>
@@ -218,7 +218,7 @@ function TerritoryInfoViewModal({
                                     <div className="min-w-6 mr-2">🏆</div>
                                     <span className="text-gray-600">Overall Rank</span>
                                 </div>
-                                <span className={`${userOverallRank === 1 ? "text-yellow-500" : "text-black-600"} font-medium`}>
+                                <span className={`${userOverallRank === 1 ? "text-yellow-500" : "text-black"} font-medium`}>
                                     # {userOverallRank}
                                 </span>
                             </div>

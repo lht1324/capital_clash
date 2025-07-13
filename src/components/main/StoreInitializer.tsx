@@ -1,25 +1,25 @@
 'use client'
 
+import {useEffect} from "react";
+import {useRouter} from "next/navigation";
 import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
-import {calculatePlayerCoordinates, PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {User as AuthUser} from "@supabase/auth-js";
 import {User} from "@/api/types/supabase/Users";
-import {useEffect, useRef} from "react";
+import {calculatePlayerCoordinates, PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
 import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
+import {useComponentStateStore} from "@/store/componentStateStore";
+import {useCameraStateStore} from "@/store/cameraStateStore";
 import {supabase} from "@/lib/supabase/supabaseClient";
 import {usersClientAPI} from "@/api/client/supabase/usersClientAPI";
-import {useCameraStateStore} from "@/store/cameraStateStore";
 import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
-import {useComponentStateStore} from "@/store/componentStateStore";
-import {useRouter} from "next/navigation";
 
 export interface StoreInitializerProps {
     continentList: Continent[],
     playerList: Player[],
     placementResultRecord: Record<string, PlacementResult>,
-    continentPositionRecord: Record<string, Position>,
 
     // params
     targetPlayerId?: string | null,
@@ -29,7 +29,7 @@ export interface StoreInitializerProps {
 function StoreInitializer(props: StoreInitializerProps) {
     const router = useRouter();
 
-    const { isContinentsInitialized, initializeContinents } = useContinentStore();
+    const { isContinentsInitialized, initializeContinents, continents } = useContinentStore();
     const {
         isPlayersInitialized,
         players,
@@ -54,11 +54,12 @@ function StoreInitializer(props: StoreInitializerProps) {
             initializePlayers(
                 props.playerList,
                 props.placementResultRecord,
-                props.continentPositionRecord,
-                props.continentList
+                props.continentList,
+                window.screen.width,
+                window.screen.height
             );
         }
-    }, [isPlayersInitialized, initializePlayers, props.playerList, props.placementResultRecord, props.continentPositionRecord, props.continentList]);
+    }, [isPlayersInitialized, initializePlayers, props.playerList, props.placementResultRecord, props.continentList]);
 
     // PlayersStore - Subscription
     useEffect(() => {
@@ -103,11 +104,23 @@ function StoreInitializer(props: StoreInitializerProps) {
     useEffect(() => {
         // onAuthStateChange 리스너 설정
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-            const currentUser = session?.user ?? null;
+            const authUser: AuthUser | null = session?.user ?? null;
 
-            if (currentUser) {
-                usersClientAPI.getUserById(currentUser.id).then((user) => {
-                    initializeUser(user);
+            if (authUser) {
+                usersClientAPI.getUserById(authUser.id).then((user: User | null) => {
+                    if (user) {
+                        initializeUser(user);
+                    } else {
+                        usersClientAPI.postUsers({
+                            id: authUser.id,
+                            email: authUser.user_metadata?.email ?? "",
+                            name: authUser.user_metadata?.name ?? "",
+                            avatar_url: authUser.user_metadata?.avatar_url ?? "",
+                            external_url: authUser.user_metadata?.external_url ?? "",
+                        }).then((newUser: User | null) => {
+                            initializeUser(newUser);
+                        });
+                    }
                 });
             } else {
                 initializeUser(null);

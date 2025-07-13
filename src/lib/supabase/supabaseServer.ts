@@ -14,7 +14,37 @@ export async function createSupabaseServer(mode: Mode = "readOnly"): Promise<Sup
 
     return createServerClient<Database>(
         process.env.SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        process.env.SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                /** 브라우저가 보낸 쿠키 → Supabase */
+                getAll() {
+                    return store.getAll().map(({ name, value, ...opts }) => ({
+                        name,
+                        value,
+                        options: opts as CookieOptions,
+                    }))
+                },
+                /** Supabase가 돌려준 쿠키 → 브라우저 */
+                setAll(all) {
+                    if (mode === "mutate") {
+                        all.forEach(({ name, value, options }) =>
+                            store.set({ name, value, ...options }),
+                        );
+                    }
+                },
+            },
+        },
+    )
+}
+
+export async function createSupabaseSecureServer(mode: Mode = "readOnly"): Promise<SupabaseClient<Database>> {
+    // v15+: Promise 반환
+    const store = await cookies();
+
+    return createServerClient<Database>(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
         {
             cookies: {
                 /** 브라우저가 보낸 쿠키 → Supabase */

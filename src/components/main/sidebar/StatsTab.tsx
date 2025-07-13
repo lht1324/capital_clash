@@ -75,10 +75,12 @@ function StatsTab() {
                                 const changeRate = isToday && dayOfWeek !== 0
                                     ? (dailyViewCount - averageDailyView) / averageDailyView * 100
                                     : isPast
-                                        ? dayOfWeek !== 0
+                                        ? dayOfWeek > 0 && userDailyViews[dayOfWeek - 1] !== 0
                                             ? (dailyViewCount - userDailyViews[dayOfWeek - 1]) / userDailyViews[dayOfWeek - 1] * 100
                                             : 0
-                                        : 0
+                                        : 0;
+
+                                console.log(`[${dayOfWeek}] dailyViewCount = ${dailyViewCount}, changeRate = ${changeRate}`)
 
                                 const changeColor = changeRate !== 0 && dayOfWeek <= currentDayOfWeek
                                     ? changeRate > 0
@@ -122,11 +124,11 @@ function StatsTab() {
                                                 <span className="text-lg font-semibold text-gray-500">-</span>
                                             )}
                                         </div>
-                                        {changeRate !== 0 && <div className="text-right flex items-center justify-end space-x-1">
+                                        <div className="text-right flex items-center justify-end space-x-1">
                                             <span className={`text-sm font-medium ${changeColor}`}>
-                                                {`${changeRate.toFixed(0)}%`}
+                                                {changeRate !== 0 ? `${changeRate.toFixed(0)}%` : "-"}
                                             </span>
-                                        </div>}
+                                        </div>
                                     </div>
                                 )
                             })}

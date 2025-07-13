@@ -2,41 +2,48 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { playersServerAPI } from "@/api/server/supabase/playersServerAPI";
-import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
+import { polarServerAPI } from "@/api/server/polar/polarServerAPI";
+import { CheckoutSuccessStatus } from "@/api/types/polar/CheckoutSuccessStatus";
 
 export async function GET(req: NextRequest) {
     try {
         const searchParams = req.nextUrl.searchParams;
 
-        // PolarClientAPI.ts의 metadata에 정의된 파라미터들을 추출합니다.
+        const checkoutId = searchParams.get('checkout_id');
+        if (!checkoutId) throw Error("Checkout ID is missing.");
+
+        const checkoutDetails = await polarServerAPI.getCheckout(checkoutId);
+        if (!checkoutDetails || !checkoutDetails.amount) throw Error("Failed to retrieve checkout details or amount from Polar.");
+
+        const actualStakeAmount = checkoutDetails.amount / 100; // Polar API는 금액을 센트 단위로 반환
+
         const userId = searchParams.get('user_id');
         const continentId = searchParams.get('continent_id');
-        const stakeAmount = searchParams.get('stake_amount');
         const name = searchParams.get('name');
         const email = searchParams.get('email');
 
-        // 추출된 파라미터들을 객체로 묶습니다. (null이 될 수 있으므로 타입 추론에 주의)
         const metaData = {
             userId,
             continentId,
-            stakeAmount,
+            stakeAmount: actualStakeAmount, // 실제 결제 금액 사용
             name,
             email,
         };
 
-        // 접속 확인, DB 업데이트
         console.log("Received meta_data from Polar checkout success:", metaData);
 
-        if (!userId || !stakeAmount || !email) throw Error("Invalid meta_data from Polar checkout success");
+        if (!userId || !email) throw Error("Invalid meta_data from Polar checkout success");
 
         if (continentId && name) {
-            await playersServerAPI.postPlayers({
+            const result = await playersServerAPI.postPlayers({
                 user_id: userId,
                 continent_id: continentId,
-                stake_amount: parseInt(stakeAmount),
+                stake_amount: actualStakeAmount,
                 name: name,
                 contact_email: email
             })
+
+            if (!result) throw Error("Failed insert player.");
         } else {
             const prevPlayerInfo = await playersServerAPI.getPlayersByUserId(userId);
 
@@ -44,7 +51,7 @@ export async function GET(req: NextRequest) {
 
             await playersServerAPI.patchPlayersById(prevPlayerInfo.id, {
                 user_id: userId,
-                stake_amount: prevPlayerInfo.stake_amount + parseInt(stakeAmount),
+                stake_amount: prevPlayerInfo.stake_amount + actualStakeAmount,
                 contact_email: email
             })
         }

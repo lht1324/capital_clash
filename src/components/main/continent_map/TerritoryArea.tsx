@@ -2,7 +2,7 @@
 
 import * as THREE from "three";
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {Placement} from "@/lib/treemapAlgorithm";
+import {Placement} from "@/lib/spiralPlacementAlgorithm";
 import {PlayersStore, usePlayersStore} from "@/store/playersStore";
 
 // 🌳 NEW: 개별 영역 컴포넌트 (직사각형) - 최적화된 버전
@@ -78,47 +78,68 @@ function TerritoryArea({
     return (
         <group position={[x, y, 1.1]}>
             {/* 🌳 NEW: 기본 직사각형 베이스 - 최적화된 애니메이션 */}
-            {!imageTexture && <mesh
-                ref={meshRef}
-                position={[0, 0, baseZ]}
-                scale={[baseScale, baseScale, baseScale]}
-                onPointerOver={() => setHovered(true)}
-                onPointerOut={() => setHovered(false)}
-                onClick={() => {
-                    if (!imageTexture) {
-                        onTileClick();
-                    }
-                }}
-            >
-                <boxGeometry args={[width, height, 0.2]} />
-                {/* 그림 색이 이상하다. TerritoryInfoEditModal과 비교하면서 살펴보기. */}
-                <meshStandardMaterial
-                    // color={player.area_color}
-                    color={linearColor}
-                    opacity={hovered ? 1.0 : 0.9}
-                    transparent={!hovered}
-                />
-            </mesh>}
+            {!imageTexture && (
+                <>
+                    <mesh
+                        ref={meshRef}
+                        position={[0, 0, baseZ]}
+                        scale={[baseScale, baseScale, baseScale]}
+                        onPointerOver={() => setHovered(true)}
+                        onPointerOut={() => setHovered(false)}
+                        onClick={() => {
+                            if (!imageTexture) {
+                                onTileClick();
+                            }
+                        }}
+                    >
+                        <boxGeometry args={[width, height, 0.2]} />
+                        <meshStandardMaterial
+                            color={linearColor}
+                            opacity={hovered ? 1.0 : 0.9}
+                            transparent={!hovered}
+                        />
+                    </mesh>
+                    {/* 테두리 선 */}
+                    <lineSegments
+                        position={[0, 0, baseZ + 0.01]}
+                        scale={[baseScale, baseScale, baseScale]}
+                    >
+                        <edgesGeometry args={[new THREE.BoxGeometry(width, height, 0.2)]} />
+                        {/*<lineBasicMaterial color="white" linewidth={1} />*/}
+                        <lineBasicMaterial color="white" opacity={0.8} linewidth={1} />
+                    </lineSegments>
+                </>
+            )}
 
             {/* 🌳 NEW: 프로필 이미지 - 공통 텍스처 사용 */}
             {imageTexture && (
-                <mesh
-                    ref={imageMeshRef}
-                    position={[0, 0, imageZ]}
-                    scale={[baseScale, baseScale, baseScale]}
-                    onPointerOver={() => setHovered(true)}
-                    onPointerOut={() => setHovered(false)}
-                    onClick={() => {
-                        onTileClick();
-                    }}
-                >
-                    <planeGeometry args={[width, height]} />
-                    <meshBasicMaterial
-                        map={imageTexture}
-                        transparent={true}
-                        opacity={1.0}
-                    />
-                </mesh>
+                <>
+                    <mesh
+                        ref={imageMeshRef}
+                        position={[0, 0, imageZ]}
+                        scale={[baseScale, baseScale, baseScale]}
+                        onPointerOver={() => setHovered(true)}
+                        onPointerOut={() => setHovered(false)}
+                        onClick={() => {
+                            onTileClick();
+                        }}
+                    >
+                        <planeGeometry args={[width, height]} />
+                        <meshBasicMaterial
+                            map={imageTexture}
+                            transparent={true}
+                            opacity={1.0}
+                        />
+                    </mesh>
+                    {/* 이미지 테두리 선 */}
+                    <lineSegments
+                        position={[0, 0, imageZ + 0.01]}
+                        scale={[baseScale, baseScale, baseScale]}
+                    >
+                        <edgesGeometry args={[new THREE.PlaneGeometry(width, height)]} />
+                        <lineBasicMaterial color="white" opacity={0.8}  linewidth={1} />
+                    </lineSegments>
+                </>
             )}
 
             {/* 🌳 NEW: 호버 시 투자자 정보 표시 (큰 직사각형에만) */}

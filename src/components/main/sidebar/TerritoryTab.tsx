@@ -52,11 +52,15 @@ function TerritoryTab({
     const imageStatusText = useMemo(() => {
         switch (userPlayerInfo?.image_status) {
             case ImageStatus.APPROVED: return '✅ Approved'
-            case ImageStatus.PENDING: return '⏳ Under Review'
+            case ImageStatus.PENDING: {
+                return userPlayerInfo?.image_url
+                    ? '⏳ Under Review'
+                    : "📷 No Image"
+            }
             case ImageStatus.REJECTED: return '❌ Rejected'
             default: return '📷 Not uploaded'
         }
-    }, [userPlayerInfo?.image_status]);
+    }, [userPlayerInfo?.image_status, userPlayerInfo?.image_url]);
 
     const continentName = useMemo(() => {
         return userPlayerInfo?.continent_id
@@ -142,11 +146,13 @@ function TerritoryTab({
                     {/* 영역 이전 옵션 */}
                     <div className="bg-gray-800 rounded-lg p-4">
                         <h4 className="text-md font-semibold text-white mb-3">
-                            Continent Transfer ({userPlayerInfo?.is_changed_continent ? "$2.99" : <s className="text-gray-400">$2.99</s>})
+                            Move to another Continent ({userPlayerInfo?.is_changed_continent ? "$2.99" : <s className="text-gray-400">$2.99</s>})
                         </h4>
-                        <p className="text-sm text-gray-400 mb-3">
-                            You can transfer to another continent with your total stake.
-                        </p>
+                        <ul className="text-sm text-gray-400 mb-3 list-disc list-inside">
+                            <li>You can move to another continent with your total stake.</li>
+                            <li>First moving is free.</li>
+                            <li>$2 will be added into your total stake.</li>
+                        </ul>
 
                         {/* X 모양 대륙 현황 */}
                         <div className="space-y-2 mb-3">
@@ -196,37 +202,12 @@ function TerritoryTab({
                         <p className="text-gray-400 mb-4">
                             Choose a continent and purchase your first territory to begin!
                         </p>
-                    </div>
-
-                    {/* 대륙 선택 옵션 */}
-                    <div className="space-y-2">
-                        {continentList.filter((continent) => {
-                            return continent.id !== "central";
-                        }).map((continent) => {
-                            const currentCount = getContinentPlayerCount(continent.id);
-                            const isFull = currentCount >= continent.max_users
-
-                            return (
-                                <button
-                                    key={continent.id}
-                                    onClick={() => !isFull && onClickOpenPurchaseModal()}
-                                    disabled={isFull}
-                                    className={`w-full ${
-                                        isFull ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
-                                    } text-white p-3 rounded-lg transition-all`}
-                                    style={{ backgroundColor: `${continent.color}` }}
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-medium">{continent.name}</span>
-                                        <div className="text-right">
-                                            <div className={`text-xs ${isFull ? 'text-red-200' : 'text-white/80'}`}>
-                                                {currentCount}/{continent.max_users}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </button>
-                            )
-                        })}
+                        <button
+                            onClick={() => onClickOpenPurchaseModal()}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                        >
+                            Purchase Territory
+                        </button>
                     </div>
                 </div>
             )}

@@ -1,5 +1,5 @@
 import {Continent} from "@/api/types/supabase/Continents";
-import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
 import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH, CONTINENT_MAP_FOV,
@@ -10,17 +10,28 @@ import {MathUtils} from "three";
 export function getWorldViewPositionZ(
     continentList: Continent[],
     placementResultRecord: Record<string, PlacementResult>,
-    continentPositionRecord: Record<string, Position>
+    continentPositionRecord: Record<string, Position>,
+    screenWidth: number,
+    screenHeight: number,
 ) {
     const worldBoundary = getWorldBoundary(continentList, placementResultRecord, continentPositionRecord);
 
-    const height = worldBoundary.height;
-    const cellLength = CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT;
-    const realHeight = height * cellLength;
-    const ratio = 0.8;
+    // const height = worldBoundary.height;
+    const paddingRatio = 0.2; // 지도 상에서 대륙 위아래/좌우와(가로 화면/세로 화면) 화면 경계 간격의 비율
+    const continentalRatio = 1 - paddingRatio;
     const fov = MathUtils.degToRad(CONTINENT_MAP_FOV);
 
-    return height / (2 * ratio * Math.tan(fov / 2));
+    if (screenWidth >= screenHeight) {
+        const height = worldBoundary.height;
+
+        return height / (2 * continentalRatio * Math.tan(fov / 2));
+    } else {
+        const width = worldBoundary.width;
+        const aspectRatio = screenWidth / screenHeight;
+
+        return width / (2 * continentalRatio * Math.tan(fov / 2) * aspectRatio);
+    }
+    // return height / (2 * continentalRatio * Math.tan(fov / 2));
 }
 
 function getWorldBoundary(
@@ -28,26 +39,27 @@ function getWorldBoundary(
     placementResultRecord: Record<string, PlacementResult>,
     continentPositionRecord: Record<string, Position>
 ) {
-    const cellLength = CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT;
-
     let minX =  Infinity, minY =  Infinity;
     let maxX = -Infinity, maxY = -Infinity;
 
     // 1) 실제로 존재하는 대륙들만으로 1차 박스
     continentList.forEach((continent) => {
+        const cellLength = continent.id !== "central"
+            ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT
+            : CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT * CENTRAL_INCREASE_RATIO;
+
         const placementResult = placementResultRecord[continent.id];
-        if (!placementResult) return;                // 인구 0 → skip
 
         const boundary = placementResult.boundary;
         const { x = 0, y = 0, z = 0 } = continentPositionRecord[continent.id] ?? {};
 
-        minX = Math.min(minX, boundary.minX * cellLength + x);
-        maxX = Math.max(maxX, boundary.maxX * cellLength + x);
-        minY = Math.min(minY, boundary.minY * cellLength + y);
-        maxY = Math.max(maxY, boundary.maxY * cellLength + y);
+        minX = Math.min(minX, x - (boundary.width * cellLength / 2));
+        maxX = Math.max(maxX, x + (boundary.width * cellLength / 2));
+        minY = Math.min(minY, y - (boundary.height * cellLength / 2));
+        maxY = Math.max(maxY, y + (boundary.height * cellLength / 2));
     });
 
-    if (minX === Infinity) throw new Error('No active continents');
+    if (minX === Infinity) throw Error("No continents are active.");
 
     // 2) 중심 계산
     const cx = (minX + maxX) / 2;

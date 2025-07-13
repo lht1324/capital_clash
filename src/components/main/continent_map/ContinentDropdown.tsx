@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, memo } from 'react'
 import { useCameraStateStore } from "@/store/cameraStateStore";
 import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
-import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
 import {
     CENTRAL_INCREASE_RATIO,
     CONTINENT_DEFAULT_LENGTH,
@@ -24,6 +24,7 @@ function ContinentDropdown() {
         vipPlayerList,
         placementResultRecord,
         continentPositionRecord,
+        screenSize: { screenWidth, screenHeight },
     } = usePlayersStore();
 
     const {
@@ -36,6 +37,10 @@ function ContinentDropdown() {
     } = useCameraStateStore();
 
     const [isOpen, setIsOpen] = useState(false);
+
+    const isMobile = useMemo(() => {
+        return screenWidth < screenHeight || screenWidth <= 768;
+    }, [screenWidth, screenHeight]);
 
     // 현재 선택 상태에 따른 표시 (안전한 접근)
     const selectedContinentData = useMemo(() => {
@@ -78,7 +83,13 @@ function ContinentDropdown() {
     }, [playerList, vipPlayerList, selectedContinentId, selectedContinentData]);
 
     const handleWorldViewSelect = useCallback(() => {
-        const worldViewPositionZ = getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord);
+        const worldViewPositionZ = getWorldViewPositionZ(
+            continentList,
+            placementResultRecord,
+            continentPositionRecord,
+            screenWidth,
+            screenHeight
+        );
 
         resetContinentSelection();
         setCameraTarget({
@@ -117,12 +128,12 @@ function ContinentDropdown() {
     }, [continentList, placementResultRecord, continentPositionRecord]);
 
     return (
-        <div className="fixed top-20 left-4 z-30">
+        <div className="fixed top-20 left-4 z-20">
             {continentList ? (<div className="relative">
                 {/* 현재 선택된 뷰 버튼 */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center space-x-3 bg-black bg-opacity-80 text-white p-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 min-w-[300px]"
+                    className={`flex items-center space-x-3 bg-black bg-opacity-80 text-white p-3 rounded-lg hover:bg-opacity-90 transition-all duration-300 ${!isMobile ? "min-w-[300px]" : "min-w-[200px] max-w-[50%]"}`}
                     style={{ borderLeft: `4px solid ${currentDisplay.color}` }}
                 >
                     <div
@@ -131,16 +142,16 @@ function ContinentDropdown() {
                     />
                     <div className="flex-1 text-left">
                         <div className="font-bold text-sm">{currentDisplay.name}</div>
-                        <div className="text-xs text-gray-300">{currentDisplay.description}</div>
+                        {!isMobile && <div className="text-xs text-gray-300">{currentDisplay.description}</div>}
                         {!isWorldView && currentContinentInfo && (
                             <div className="text-xs text-gray-400 mt-1 space-y-0.5">
                                 <div className="flex justify-between">
-                                    <span>💰 Total Stake:</span>
+                                    <span>💰{!isMobile ? " Total Stake:" : ""}</span>
                                     <span
                                         className="text-green-400">${currentContinentInfo.totalStakeAmount.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span>👥 Number of Players:</span>
+                                    <span>👥{!isMobile ? " Number of Players:" : ""}</span>
                                     <span
                                         className="text-blue-400">{currentContinentInfo.playerCount}/{currentContinentInfo.maxUsers}</span>
                                 </div>
@@ -202,7 +213,7 @@ function ContinentDropdown() {
                                 />
                                 <div className="flex-1 text-left">
                                     <div className={`font-bold text-sm ${isCentral ? "text-yellow-400" : "text-white"}`}>{continent.name}</div>
-                                    <div className={`text-xs ${isCentral ? "text-yellow-400" : "text-gray-300"}`}>{continent.description}</div>
+                                    {!isMobile && <div className={`text-xs ${isCentral ? "text-yellow-400" : "text-gray-300"}`}>{continent.description}</div>}
                                     <div className={`${isCentral ? "font-bold " : ""}text-xs ${isCentral ? "text-yellow-400" : "text-gray-400"}`}>
                                         {currentPlayerCount}/{continent.max_users} {`${currentPlayerCount === 1 ? "player" : "players"}`}
                                     </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import {memo, useCallback, useEffect, useMemo, useState} from 'react'
-import {calculatePlayerCoordinates} from "@/lib/treemapAlgorithm";
+import {calculatePlayerCoordinates} from "@/lib/spiralPlacementAlgorithm";
 import {useComponentStateStore} from "@/store/componentStateStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import TerritoryInfoEditModal from "@/components/main/sidebar/TerritoryInfoEditModal";
@@ -15,8 +15,9 @@ import {useContinentStore} from "@/store/continentStore";
 import {usePlayersStore} from "@/store/playersStore";
 import {useUserStore} from "@/store/userStore";
 import {playersClientAPI} from "@/api/client/supabase/playersClientAPI";
-import {storageClientAPI} from "@/api/client/supabase/storageClientAPI";
 import {polarClientAPI} from "@/api/client/polar/polarClientAPI";
+import {imagesClientAPI} from "@/api/client/supabase/imagesClientAPI";
+import {encodeBase64} from "@/utils/base64Utils";
 
 export interface SidebarClientProps {
 
@@ -33,8 +34,12 @@ function SidebarClient(props: SidebarClientProps) {
     const { setCameraTarget } = useCameraStateStore();
 
     const { continents } = useContinentStore();
-    const { playerList, vipPlayerList } = usePlayersStore();
+    const { playerList, vipPlayerList, screenSize: { screenWidth, screenHeight } } = usePlayersStore();
     const { user } = useUserStore();
+
+    const isMobile = useMemo(() => {
+        return screenWidth < screenWidth || screenWidth <= 768;
+    }, [screenWidth, screenHeight]);
 
     const userPlayerInfo = useMemo(() => {
         return playerList.find((player) => {
@@ -84,24 +89,31 @@ function SidebarClient(props: SidebarClientProps) {
                 const isAlreadyChangedContinent = userPlayerInfo.is_changed_continent; // once free, patchPlayers or postCheckout
 
                 if (isAlreadyChangedContinent) {
-                    const getProductsResponse = await polarClientAPI.getProductsClient();
+                    // const getProductsResponse = await polarClientAPI.getProductsClient();
+                    //
+                    // const productId = getProductsResponse.items.find((item) => {
+                    //     return item.name.includes("continent");
+                    // })?.id;
+                    //
+                    // if (!productId || !user) {
+                    //     throw new Error("No product found.");
+                    // }
+                    //
+                    // const postCheckoutsResponse = await polarClientAPI.postCheckoutsChangeContinentClient(
+                    //     productId,
+                    //     userPlayerInfo.id,
+                    //     selectedContinentId,
+                    //     user.email,
+                    // );
 
-                    const productId = getProductsResponse.items.find((item) => {
-                        return item.name.includes("continent");
-                    })?.id;
+                    // window.location.assign(postCheckoutsResponse.url);
+                    const checkoutUrl = `https://overeazy.gumroad.com/l/brnsm?` // Prod
+                    // const checkoutUrl = `https://overeazy.gumroad.com/l/yapwgu?` // Test
+                        + `&player_id=${userPlayerInfo?.id ? encodeBase64(userPlayerInfo.id) : null}`
+                        + `&user_id=${user?.id ? encodeBase64(user?.id as string) : null}`
+                        + `&continent_id=${selectedContinentId}`
 
-                    if (!productId || !user) {
-                        throw new Error("No product found.");
-                    }
-
-                    const postCheckoutsResponse = await polarClientAPI.postCheckoutsChangeContinentClient(
-                        productId,
-                        userPlayerInfo.id,
-                        selectedContinentId,
-                        user.email,
-                    );
-
-                    window.location.assign(postCheckoutsResponse.url);
+                    window.location.assign(checkoutUrl); // Test
                 } else {
                     await playersClientAPI.patchPlayersById(
                         userPlayerInfo.id,
@@ -134,27 +146,12 @@ function SidebarClient(props: SidebarClientProps) {
                 try {
                     console.log('🗑️ 기존 이미지 삭제 시작...')
 
-                    // 1. 기존 이미지의 images 테이블 레코드 찾기
-                    const imageList = await storageClientAPI.getImagesByPlayerId(userPlayerInfo.id);
-                    const existingImage = imageList.find((imageInfo) => {
-                        return imageInfo.original_url === userImageUrl;
-                    });
+                    const { isDeleteSuccess } = await imagesClientAPI.deleteImage(userImageUrl);
 
-                    if (existingImage) {
-                        // 2. 파일 경로 추출
-                        const filePath = storageClientAPI.getFilePathFromUrl(existingImage.original_url);
-
-                        if (filePath) {
-                            // 3. 기존 이미지 삭제
-                            const deleteSuccess = await storageClientAPI.deleteImage(existingImage.id, filePath);
-                            if (deleteSuccess) {
-                                console.log('✅ 기존 이미지 삭제 완료');
-                            } else {
-                                console.warn('⚠️ 기존 이미지 삭제에 실패했지만 새 이미지 업로드를 계속 진행합니다.');
-                            }
-                        } else {
-                            console.log('✅ 기존 이미지 경로가 존재하지 않습니다.');
-                        }
+                    if (isDeleteSuccess) {
+                        console.log('✅ 기존 이미지 삭제 완료');
+                    } else {
+                        console.warn('⚠️ 기존 이미지 삭제에 실패했지만 새 이미지 업로드를 계속 진행합니다.');
                     }
                 } catch (deleteError) {
                     console.error('❌ 기존 이미지 삭제 실패:', deleteError);
@@ -167,23 +164,17 @@ function SidebarClient(props: SidebarClientProps) {
             console.log(loadingMessage)
 
             // Supabase Storage에 이미지 업로드
-            const { imageData, error } = await storageClientAPI.uploadImage(
-                file,
-                user.id,
-                userPlayerInfo.id
-            )
-
-            console.log("imageData", imageData);
-            console.log("error", error);
-            if (error) {
-                throw error
-            }
+            const result = await imagesClientAPI.postImage(file, user.id, userPlayerInfo.id);
 
             // 성공 메시지 표시
-            alert(
-                `✅ Image successfully ${userImageStatus === ImageStatus.APPROVED ? "replaced" : "uploaded"}! Image is currently under review.`
-            )
-            console.log('업로드 성공:', imageData)
+            if (result) {
+                alert(
+                    `✅ Image successfully ${userImageStatus === ImageStatus.APPROVED ? "replaced" : "uploaded"}! Image is currently under review.`
+                )
+            } else {
+                throw Error('Image upload failed.');
+            }
+            // console.log('업로드 성공:', imageData)
         } catch (error) {
             console.error('이미지 업로드 실패:', error)
             alert('❌ Image upload failed. Please try again.')
@@ -201,11 +192,11 @@ function SidebarClient(props: SidebarClientProps) {
             {/* 사이드바 토글 버튼 - 오른쪽으로 이동 */}
             <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className={`fixed top-20 z-20 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-l-lg border border-r-0 border-gray-700 transition-all duration-300 flex items-center gap-2 ${
+                className={`fixed top-20 z-30 bg-gray-900 hover:bg-gray-800 text-white px-3 py-2 rounded-l-lg border border-r-0 border-gray-700 transition-all duration-300 flex items-center gap-2 ${
                     isSidebarOpen ? 'right-80' : 'right-0'
                 }`}
             >
-                <span className="text-sm font-medium">My Info</span>
+                {!isMobile && <span className="text-sm font-medium">My Info</span>}
                 <svg
                     className={`w-5 h-5 transition-transform duration-300 ${isSidebarOpen ? '' : 'rotate-180'}`}
                     fill="none"
@@ -218,7 +209,7 @@ function SidebarClient(props: SidebarClientProps) {
 
             {/* 사이드바 - 오른쪽으로 이동 */}
             <div
-                className={`fixed top-16 right-0 h-[calc(100vh-4rem)] bg-gray-900 border-l border-gray-700 z-20 transition-transform duration-300 ${
+                className={`fixed top-16 right-0 h-[calc(100vh-4rem)] bg-gray-900 border-l border-gray-700 z-30 transition-transform duration-300 ${
                     isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
                 style={{ width: '320px' }}
@@ -246,16 +237,16 @@ function SidebarClient(props: SidebarClientProps) {
                         >
                             🎯 My Territory
                         </button>
-                        <button
-                            onClick={() => setActiveTab('stats')}
-                            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                                activeTab === 'stats'
-                                    ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                            }`}
-                        >
-                            📈 Stats
-                        </button>
+                        {/*<button*/}
+                        {/*    onClick={() => setActiveTab('stats')}*/}
+                        {/*    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${*/}
+                        {/*        activeTab === 'stats'*/}
+                        {/*            ? 'text-blue-400 border-b-2 border-blue-400 bg-gray-800'*/}
+                        {/*            : 'text-gray-400 hover:text-white hover:bg-gray-800'*/}
+                        {/*    }`}*/}
+                        {/*>*/}
+                        {/*    📈 Stats*/}
+                        {/*</button>*/}
                     </div>
 
                     {/* 탭 내용 */}
@@ -277,9 +268,9 @@ function SidebarClient(props: SidebarClientProps) {
                             />
                         )}
 
-                        {activeTab === 'stats' && (
-                            <StatsTab/>
-                        )}
+                        {/*{activeTab === 'stats' && (*/}
+                        {/*    <StatsTab/>*/}
+                        {/*)}*/}
                     </div>
                 </div>
             </div>

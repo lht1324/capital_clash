@@ -13,13 +13,19 @@ import {useContinentStore} from "@/store/continentStore";
 import {useComponentStateStore} from "@/store/componentStateStore";
 import {useCameraStateStore} from "@/store/cameraStateStore";
 import CheckoutSuccessModal from "@/components/main/continent_map/CheckoutSuccessModal";
-import {Position} from "@/lib/treemapAlgorithm";
+import {Position} from "@/lib/spiralPlacementAlgorithm";
 import { SRGBColorSpace, NoToneMapping } from "three";
 
 function ContinentMap() {
     const { continentList } = useContinentStore();
-    const { players, placementResultRecord, continentPositionRecord } = usePlayersStore();
-    const { externalCameraTarget, setCameraTarget, setExternalCameraTarget } = useCameraStateStore();
+    const {
+        isPlayersInitialized,
+        players,
+        placementResultRecord,
+        continentPositionRecord,
+        screenSize: { screenWidth, screenHeight },
+    } = usePlayersStore();
+    const { externalCameraTarget, setExternalCameraTarget } = useCameraStateStore();
     const { checkoutSuccessStatus } = useComponentStateStore();
 
     const [initialPosition, setInitialPosition] = useState<Position | null>(null);
@@ -27,8 +33,16 @@ function ContinentMap() {
     const [territoryOwnerId, setTerritoryOwnerId] = useState<string | null>(null);
 
     const initialCameraPositionZ = useMemo(() => {
-        return getWorldViewPositionZ(continentList, placementResultRecord, continentPositionRecord);
-    }, [continentList, placementResultRecord, continentPositionRecord]);
+        return isPlayersInitialized
+            ? getWorldViewPositionZ(
+                continentList,
+                placementResultRecord,
+                continentPositionRecord,
+                screenWidth,
+                screenHeight,
+            )
+            : 60;
+    }, [isPlayersInitialized, continentList, placementResultRecord, continentPositionRecord]);
 
     const defaultPosition = useMemo(() => {
         return { x: 0, y: 0, z: initialCameraPositionZ };
@@ -79,14 +93,14 @@ function ContinentMap() {
                     state.gl.toneMapping = NoToneMapping;
                 }}
                 className="w-full h-full"
-                style={{ cursor: 'grab' }}
+                style={{ cursor: 'grab', touchAction: 'none' }}
             >
                 {initialPosition && <CameraController initialPosition={initialPosition}/>}
                 <WorldScene
                     onTileClick={async (playerId: string) => {
                         setTerritoryOwnerId(playerId);
                         setIsTerritoryInfoModalOpen(true);
-                        await updateDailyViews(playerId);
+                        // await updateDailyViews(playerId);
                     }}
                 />
             </Canvas>

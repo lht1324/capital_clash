@@ -58,31 +58,29 @@ function WorldScene({
                 }
             })}
             {/* 전체 화면 격자 무늬 */}
-            {gridLines.map((geometry, index) => (
-                <primitive
-                    key={`grid-line-${index}`}
-                    object={new THREE.Line(
-                        geometry,
-                        new THREE.LineBasicMaterial({
-                            color: "#2a5298",
-                            opacity: 0.3,
-                            transparent: true
-                        })
-                    )}
-                />
-            ))}
+            {/*{gridLines.map((geometry, index) => (*/}
+            {/*    <primitive*/}
+            {/*        key={`grid-line-${index}`}*/}
+            {/*        object={new THREE.Line(*/}
+            {/*            geometry,*/}
+            {/*            new THREE.LineBasicMaterial({*/}
+            {/*                color: "#2a5298",*/}
+            {/*                opacity: 0.3,*/}
+            {/*                transparent: true*/}
+            {/*            })*/}
+            {/*        )}*/}
+            {/*    />*/}
+            {/*))}*/}
 
             {/* 모든 대륙 렌더링 */}
             {continentList.map((continent) => {
-                if (placementResultRecord[continent.id]) {
-                    return (
-                        <SingleContinent
-                            key={continent.id}
-                            continent={continent}
-                            onTileClick={onTileClick}
-                        />
-                    );
-                }
+                return (
+                    <SingleContinent
+                        key={continent.id}
+                        continent={continent}
+                        onTileClick={onTileClick}
+                    />
+                );
             })}
         </>
     );

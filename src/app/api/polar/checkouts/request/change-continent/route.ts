@@ -5,6 +5,7 @@ import { polarServerAPI } from "@/api/server/polar/polarServerAPI";
 
 export async function POST(req: NextRequest) {
     try {
+        const originUrl = req.nextUrl.origin;
         const {
             productId,
             playerId,
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest) {
         } = await req.json();
 
         const data = await polarServerAPI.postCheckoutsChangeContinentServer(
+            originUrl,
             productId,
             playerId,
             targetContinentId,

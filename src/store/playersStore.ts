@@ -1,9 +1,13 @@
 import {ImageStatus, Player} from '@/api/types/supabase/Players';
 import {supabase} from '@/lib/supabase/supabaseClient';
 import {PlayerUpdateInfo, UpdateType} from "@/api/types/supabase/players/PlayerUpdates";
-import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/spiralPlacementAlgorithm";
 import {Continent} from '@/api/types/supabase/Continents';
 import {createWithEqualityFn} from "zustand/traditional";
+import {
+    CENTRAL_INCREASE_RATIO,
+    CONTINENT_MAX_USER_COUNT
+} from "@/components/main/continent_map/continent_map_public_variables";
 
 export interface PlayersStore {
     // --- 상태 (State) ---
@@ -16,15 +20,18 @@ export interface PlayersStore {
     continentPositionRecord: Record<string, Position>
     continentListForReference: Continent[],
     lastUpdatedPlayerList: PlayerUpdateInfo[];
+    screenSize: { screenWidth: number, screenHeight: number },
 
     // --- 액션 (Actions) ---
     initializePlayers: (
         initialPlayerList: Player[],
         initialPlacementResultRecord: Record<string, PlacementResult>,
-        initialContinentPositionRecord: Record<string, Position>,
-        continentList: Continent[]
+        continentList: Continent[],
+        screenWidth: number,
+        screenHeight: number,
     ) => void;
     subscribeToPlayers: () => () => Promise<'ok' | 'timed out' | 'error'>; // 구독 해제 함수를 반환
+    setScreenSize: (screenWidth: number, screenHeight: number) => void;
 
     getSharePercentageByContinent: (playerId: string, continentId: string) => number;
     getContinentalRankByContinent: (playerId: string, continentId: string) => number;
@@ -58,7 +65,9 @@ function _calculateContinentalLayoutInfo(
     prevPlacementResultRecord: Record<string, PlacementResult>,
     prevContinentPositionRecord: Record<string, Position>,
     rerenderingContinentIdList: string[],
-    continentList: Continent[]
+    continentList: Continent[],
+    screenWidth: number,
+    screenHeight: number,
 ) {
     const placementResultRecord: Record<string, PlacementResult> = { };
     const continentPositionRecord: Record<string, Position> = { };
@@ -79,16 +88,33 @@ function _calculateContinentalLayoutInfo(
                     continent.id
                 )
                 : prevPlacementResultRecord[continent.id]
+        } else {
+            const defaultLength = continent.id !== "central"
+                ? CONTINENT_MAX_USER_COUNT
+                : CONTINENT_MAX_USER_COUNT * CENTRAL_INCREASE_RATIO;
+
+            placementResultRecord[continent.id] = {
+                placements: [],
+                boundary: {
+                    minX: 0,
+                    maxX: defaultLength,
+                    minY: 0,
+                    maxY: defaultLength,
+                    width: defaultLength,
+                    height: defaultLength
+                },
+                continentId: continent.id
+            }
         }
 
-        if (placementResultRecord[continent.id]) {
-            continentPositionRecord[continent.id] = doesNeedRerendering
-                ? getContinentPosition(
-                    placementResultRecord[continent.id],
-                    placementResultRecord["central"]
-                )
-                : prevContinentPositionRecord[continent.id];
-        }
+        continentPositionRecord[continent.id] = doesNeedRerendering
+            ? getContinentPosition(
+                placementResultRecord[continent.id],
+                placementResultRecord["central"],
+                screenWidth,
+                screenHeight
+            )
+            : prevContinentPositionRecord[continent.id];
     });
 
     return {
@@ -108,13 +134,16 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
     continentPositionRecord: {},
     continentListForReference: [],
     lastUpdatedPlayerList: [],
+    screenSize: { screenWidth: 1920, screenHeight: 1080 },
 
     // --- 액션 구현 ---
     initializePlayers: (
         initialPlayerList: Player[],
         initialPlacementResultRecord: Record<string, PlacementResult>,
-        initialContinentPositionRecord: Record<string, Position>,
-        continentList: Continent[]) => {
+        continentList: Continent[],
+        screenWidth: number,
+        screenHeight: number
+    ) => {
         const { isPlayersInitialized } = get();
         if (isPlayersInitialized) {
             console.log('⚠️ PlayerStore가 이미 초기화되었습니다. 중복 실행을 방지합니다.');
@@ -125,13 +154,23 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
             return acc;
         }, {} as Record<string, Player>);
         const vipPlayerList = _calculateVipPlayerList(playersMap);
+        const continentPositionRecord: Record<string, Position> = {};
+
+        continentList.forEach((continent) => {
+            continentPositionRecord[continent.id] = getContinentPosition(
+                initialPlacementResultRecord[continent.id],
+                initialPlacementResultRecord["central"],
+                screenWidth,
+                screenHeight
+            );
+        });
 
         set({
             players: playersMap,
             playerList: initialPlayerList,
             vipPlayerList: vipPlayerList,
             placementResultRecord: initialPlacementResultRecord,
-            continentPositionRecord: initialContinentPositionRecord,
+            continentPositionRecord: continentPositionRecord,
             continentListForReference: continentList,
             isPlayersInitialized: true
         });
@@ -154,7 +193,8 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                     console.log("payload received", payload)
                     const {
                         players: previousPlayers,
-                        continentListForReference: continentList
+                        continentListForReference: continentList,
+                        screenSize: { screenWidth, screenHeight },
                     } = get();
                     const updatedInfos: PlayerUpdateInfo[] = [];
                     let newPlayers: Record<string, Player> = previousPlayers;
@@ -178,7 +218,8 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
 
                             // 2. 알림을 위해 어떤 정보가 변경되었는지 별도로 확인합니다.
                             if (oldPlayer) {
-                                const isStakeAmountChanged = oldPlayer.stake_amount !== updatedPlayer.stake_amount;
+                                const isStakeAmountChanged = oldPlayer.stake_amount !== updatedPlayer.stake_amount
+                                    && oldPlayer.continent_id === updatedPlayer.continent_id;
                                 const isImageStatusChanged = oldPlayer.image_status !== updatedPlayer.image_status;
                                 const isContinentChanged = oldPlayer.continent_id !== updatedPlayer.continent_id;
                                 const isAreaColorChanged = oldPlayer.area_color !== updatedPlayer.area_color;
@@ -276,7 +317,9 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
                                     prevPlacementResultRecord,
                                     prevContinentPositionRecord,
                                     rerenderingContinentIdList,
-                                    continentList
+                                    continentList,
+                                    screenWidth,
+                                    screenHeight
                                 )
 
                                 set({
@@ -312,6 +355,15 @@ export const usePlayersStore = createWithEqualityFn<PlayersStore>((set, get) => 
         };
 
         return unsubscribe;
+    },
+
+    setScreenSize: (screenWidth, screenHeight) => {
+        set({
+            screenSize: {
+                screenWidth: screenWidth,
+                screenHeight: screenHeight,
+            },
+        })
     },
 
     getSharePercentageByContinent: (playerId, continentId) => {

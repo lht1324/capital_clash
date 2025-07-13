@@ -29,12 +29,18 @@ function SingleContinent({
             : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
     }, [continent.id]);
 
+    const continentDefaultLength = useMemo(() => {
+        return continent.id !== "central"
+            ? CONTINENT_DEFAULT_LENGTH
+            : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO;
+    }, [continent.id]);
+
     return (
         <group position={[position.x, position.y, position.z]}>
             {/* 대륙 기본 모양 */}
-            {!placementResult && (
+            {placementResult.placements.length === 0 && (
                 <mesh>
-                    <boxGeometry args={[cellLength * continent.max_users, cellLength * continent.max_users, 1]} />
+                    <boxGeometry args={[continentDefaultLength, continentDefaultLength, 1]} />
                     <meshStandardMaterial
                         color={continent.color}
                         opacity={0.9}
@@ -46,16 +52,16 @@ function SingleContinent({
             )}
 
             {/* 투자자 영역 */}
-            {placementResult && (<group>
+            {placementResult.placements.length !== 0 && (<group>
                 {placementResult.placements.map((placement) => {
-                        return <TerritoryArea
-                            key={placement.playerId}
-                            placement={placement}
-                            cellLength={cellLength}
-                            onTileClick={() => {
-                                onTileClick(placement.playerId);
-                            }}
-                        />
+                    return <TerritoryArea
+                        key={placement.playerId}
+                        placement={placement}
+                        cellLength={cellLength}
+                        onTileClick={() => {
+                            onTileClick(placement.playerId);
+                        }}
+                    />
                 })}
             </group>)}
         </group>

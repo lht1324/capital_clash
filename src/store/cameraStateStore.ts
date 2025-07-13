@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import {Position} from "@/lib/treemapAlgorithm";
+import {Position} from "@/lib/spiralPlacementAlgorithm";
 
 interface CameraState {
     selectedContinentId: string | null,

@@ -1,5 +1,3 @@
-'use server'
-
 import { Metadata } from 'next'
 import { decodeBase64 } from "@/utils/base64Utils";
 import SidebarServer from "@/components/main/sidebar/SidebarServer";
@@ -10,21 +8,35 @@ import {Continent} from "@/api/types/supabase/Continents";
 import {Player} from "@/api/types/supabase/Players";
 import {continentsServerAPI} from "@/api/server/supabase/continentsServerAPI";
 import {playersServerAPI} from "@/api/server/supabase/playersServerAPI";
-import {calculateSquareLayout, getContinentPosition, PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {calculateSquareLayout, PlacementResult} from "@/lib/spiralPlacementAlgorithm";
 import {CheckoutSuccessStatus} from "@/api/types/polar/CheckoutSuccessStatus";
+import {
+    CENTRAL_INCREASE_RATIO,
+    CONTINENT_MAX_USER_COUNT
+} from "@/components/main/continent_map/continent_map_public_variables";
+import ScreenManager from "@/components/providers/ScreenManager";
 
 type Props = {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-    // searchParams: Promise<URLSearchParams>
 }
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0;
+
+const FALLBACK_IMAGE = '/preview.png';
+const SITE_ORIGIN = 'https://capital-clash-git-dbseparating-overeasys-projects.vercel.app/';
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
     const defaultMetaData = {
         title: 'Capital Clash',
         description: 'Dominate the world with your capital.',
-        // 필요하다면 기본 OG 이미지도 설정할 수 있습니다.
-        // openGraph: { images: ['/default-preview-image.png'] },
+        openGraph: { images: [`${SITE_ORIGIN}${FALLBACK_IMAGE}`] },
+        twitter: {
+            card: 'summary_large_image',
+            images: [`${SITE_ORIGIN}${FALLBACK_IMAGE}`]
+        }
     }
+
     const awaitedParams = await searchParams;
     const userIdentifier = awaitedParams?.user_identifier as string;
 
@@ -36,8 +48,6 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     try {
         // URL에서 받은 userIdentifier를 디코딩하여 플레이어 ID를 얻습니다.
         const playerId = decodeBase64(decodeURIComponent(userIdentifier));
-
-        console.log("playerIdParam", playerId);
         
         // 해당 ID로 특정 플레이어의 정보를 서버에서 조회합니다.
         // playersServerAPI에 getPlayerById와 같은 함수가 필요합니다.
@@ -48,8 +58,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
         }
 
         const title = `${player.name}'s Territory | Capital Clash`;
-        const description = `Total Stake: ${player.stake_amount.toLocaleString()}`;
+        const description = `Total Stake: $${player.stake_amount.toLocaleString()}`;
         const imageUrl = player.image_url; // 바로 이 부분이 유저의 고유 이미지 URL입니다.
+        console.log("Generated imageUrl for metadata:", imageUrl);
 
         // 조회된 플레이어 정보로 동적 메타데이터를 생성하여 반환합니다.
         return {
@@ -95,7 +106,6 @@ export default async function Page({ searchParams }: Props) {
         }, {} as Record<string, Player>)
     );
     const placementResultRecord: Record<string, PlacementResult> = { }
-    const continentPositionRecord: Record<string, Position> = { }
 
     const getFilteredPlayerListByContinent = (continentId: string) => {
         return playerList.filter((player) => {
@@ -113,15 +123,23 @@ export default async function Page({ searchParams }: Props) {
                 filteredPlayerListByContinent,
                 continent.id
             )
-        }
-    });
+        } else {
+            const defaultLength = continent.id !== "central"
+                ? CONTINENT_MAX_USER_COUNT
+                : CONTINENT_MAX_USER_COUNT * CENTRAL_INCREASE_RATIO;
 
-    continentList.forEach((continent) => {
-        if (placementResultRecord[continent.id]) {
-            continentPositionRecord[continent.id] = getContinentPosition(
-                placementResultRecord[continent.id],
-                placementResultRecord["central"]
-            );
+            placementResultRecord[continent.id] = {
+                placements: [],
+                boundary: {
+                    minX: 0,
+                    maxX: defaultLength,
+                    minY: 0,
+                    maxY: defaultLength,
+                    width: defaultLength,
+                    height: defaultLength
+                },
+                continentId: continent.id
+            }
         }
     });
 
@@ -129,7 +147,6 @@ export default async function Page({ searchParams }: Props) {
         continentList: continentList,
         playerList: playerList,
         placementResultRecord: placementResultRecord,
-        continentPositionRecord: continentPositionRecord,
 
         // params
         targetPlayerId: targetPlayerId,
@@ -139,6 +156,7 @@ export default async function Page({ searchParams }: Props) {
     return (
         <>
             <StoreInitializer {...props} />
+            <ScreenManager/>
             <HeaderServer/>
             <div className="flex min-h-screen">
                 <SidebarServer/>
