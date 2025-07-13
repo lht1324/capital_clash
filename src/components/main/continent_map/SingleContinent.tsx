@@ -1,28 +1,46 @@
-// src/components/continent_map/SingleContinent.tsx
-import { Continent } from "@/store/continentStore";
-import { memo } from "react";
+'use client'
+
+import {memo, useMemo} from "react";
 import TerritoryArea from "@/components/main/continent_map/TerritoryArea";
-import {PlacementResult, Position} from "@/lib/treemapAlgorithm";
+import {Continent} from "@/api/types/supabase/Continents";
+import {usePlayersStore, PlayersStore} from "@/store/playersStore";
+import {shallow} from "zustand/shallow";
+import {
+    CONTINENT_DEFAULT_LENGTH,
+    CONTINENT_MAX_USER_COUNT,
+    CENTRAL_INCREASE_RATIO,
+} from "./continent_map_public_variables";
 
 function SingleContinent({
     continent,
-    placementResult,
-    position,
-    cellLength,
     onTileClick
 }: {
     continent: Continent;
-    placementResult: PlacementResult;
-    position: Position;
-    cellLength: number;
-    onTileClick: (investorId: string, dailyViews: number[]) => void;
+    onTileClick: (playerId: string) => void;
 }) {
+    const { placementResult, position } = usePlayersStore((state: PlayersStore) => ({
+        placementResult: state.placementResultRecord[continent.id],
+        position: state.continentPositionRecord[continent.id],
+    }), shallow);
+
+    const cellLength = useMemo(() => {
+        return continent.id !== "central"
+            ? CONTINENT_DEFAULT_LENGTH / CONTINENT_MAX_USER_COUNT  // 일반 대륙은 max_users 대신 100 사용
+            : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO / CONTINENT_MAX_USER_COUNT;
+    }, [continent.id]);
+
+    const continentDefaultLength = useMemo(() => {
+        return continent.id !== "central"
+            ? CONTINENT_DEFAULT_LENGTH
+            : CONTINENT_DEFAULT_LENGTH * CENTRAL_INCREASE_RATIO;
+    }, [continent.id]);
+
     return (
         <group position={[position.x, position.y, position.z]}>
             {/* 대륙 기본 모양 */}
-            {!placementResult && (
+            {placementResult.placements.length === 0 && (
                 <mesh>
-                    <boxGeometry args={[cellLength * continent.max_users, cellLength * continent.max_users, 1]} />
+                    <boxGeometry args={[continentDefaultLength, continentDefaultLength, 1]} />
                     <meshStandardMaterial
                         color={continent.color}
                         opacity={0.9}
@@ -34,18 +52,18 @@ function SingleContinent({
             )}
 
             {/* 투자자 영역 */}
-            {placementResult && (
-                <group>
-                    {placementResult.placements.map(placement => (
-                        <TerritoryArea
-                            key={placement.investor.id}
-                            placement={placement}
-                            cellLength={cellLength}
-                            onTileClick={onTileClick}
-                        />
-                    ))}
-                </group>
-            )}
+            {placementResult.placements.length !== 0 && (<group>
+                {placementResult.placements.map((placement) => {
+                    return <TerritoryArea
+                        key={placement.playerId}
+                        placement={placement}
+                        cellLength={cellLength}
+                        onTileClick={() => {
+                            onTileClick(placement.playerId);
+                        }}
+                    />
+                })}
+            </group>)}
         </group>
     );
 }

@@ -2,56 +2,84 @@ import {useFrame, useThree} from "@react-three/fiber";
 import {memo, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import * as THREE from 'three'
 import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
+import {useCameraStateStore} from "@/store/cameraStateStore";
+import {Position} from "@/lib/spiralPlacementAlgorithm";
+import {getWorldViewPositionZ} from "@/utils/cameraUtils";
 
-function CameraController() {
-    const { camera, gl } = useThree()
+function CameraController({
+    initialPosition
+}: {
+    initialPosition: Position | null,
+}) {
+    const { camera, gl } = useThree();
+    const { continentList } = useContinentStore();
+    const {
+        placementResultRecord,
+        continentPositionRecord,
+        screenSize: { screenWidth, screenHeight },
+    } = usePlayersStore();
     const {
         selectedContinentId,
-        continents,
         isWorldView,
         setSelectedContinentId,
         setWorldView,
         cameraTarget,
-        setCameraTarget,
-        resetSelection
-    } = useContinentStore()
+        setCameraTarget
+    } = useCameraStateStore();
 
-    const [isDragging, setIsDragging] = useState(false)
+    const [isDragging, setIsDragging] = useState(false);
     const [currentCameraPosition, setCurrentCameraPosition] = useState({ x: 0, y: 0 });
-    const previousMouse = useRef({ x: 0, y: 0 })
-    const cameraPosition = useRef(new THREE.Vector3(0, 20, 40))
-    const targetPosition = useRef(new THREE.Vector3(0, 0, 40))
+    const previousMouse = useRef({ x: 0, y: 0 });
+    const cameraPosition = useRef(new THREE.Vector3());
+    const targetPosition = useRef(new THREE.Vector3());
+    
+    // 모바일 핀치 줌을 위한 상태
+    const [isPinching, setIsPinching] = useState(false);
+    const initialPinchDistance = useRef(0);
+    const lastPinchDistance = useRef(0);
 
     const nearestContinentId = useMemo(() => {
         let nearestContinent: string | null = null;
-        let minDistance = Infinity
+        let minDistance = Infinity;
 
-        Object.values(continents).forEach((continent) => {
-            const [x, y, z] = [continent.position_x, continent.position_y, continent.position_z]
-            const distance = Math.sqrt(
-                Math.pow(currentCameraPosition.x - x, 2) +
-                Math.pow(currentCameraPosition.y - y, 2)
-            )
+        const cameraMidpoint = currentCameraPosition;
 
-            if (distance < minDistance && distance < 15) {
-                minDistance = distance
-                nearestContinent = continent.id
+        continentList.forEach((continent) => {
+            const continentMidpoint = continentPositionRecord[continent.id];
+
+            if (continentMidpoint) {
+                const distanceX = cameraMidpoint.x - continentMidpoint.x;
+                const distanceY = cameraMidpoint.y - continentMidpoint.y;
+                const midpointDistance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+                if (!nearestContinent || (nearestContinent && minDistance > midpointDistance)) {
+                    minDistance = midpointDistance;
+                    nearestContinent = continent.id;
+                }
             }
-        })
+        });
 
-        return nearestContinent
-    }, [currentCameraPosition]);
+        return nearestContinent;
+    }, [continentList, continentPositionRecord, currentCameraPosition]);
+
+    const maxZ = useMemo(() => {
+        return getWorldViewPositionZ(
+            continentList,
+            placementResultRecord,
+            continentPositionRecord,
+            screenWidth,
+            screenHeight,
+        ) * 1.2;
+    }, [continentList, placementResultRecord, continentPositionRecord, screenWidth, screenHeight]);
 
     useEffect(() => {
         if (nearestContinentId && nearestContinentId !== selectedContinentId) {
-            const continent = continents[nearestContinentId]
-            console.log('위치 기반 드롭다운 변경:', continent.name)
             setSelectedContinentId(nearestContinentId)
             setWorldView(false)
         }
 
         if (!nearestContinentId && !isWorldView) {
-            console.log('세계 지도로 드롭다운 변경')
             setWorldView(true)
         }
     }, [nearestContinentId, selectedContinentId]);
@@ -64,10 +92,10 @@ function CameraController() {
             x: event.clientX,
             y: event.clientY
         }
-    }, [])
+    }, []);
 
     const handlePointerMove = useCallback((event: PointerEvent) => {
-        if (!isDragging) return
+        if (!isDragging || event.pointerType === 'touch') return
 
         const deltaX = event.clientX - previousMouse.current.x
         const deltaY = event.clientY - previousMouse.current.y
@@ -77,64 +105,160 @@ function CameraController() {
             y: event.clientY
         }
 
-        const movementSpeed = 0.03  // 0.1 → 0.03으로 조정
+        // 트랙패드 감지: 작은 움직임이 연속적으로 오면 트랙패드
+        const isTrackpad = Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5;
+        const movementSpeed = isTrackpad ? 0.09 : 0.03; // 트랙패드일 때 3배 더 빠르게
+        
         targetPosition.current.x -= deltaX * movementSpeed
         targetPosition.current.y += deltaY * movementSpeed
-    }, [isDragging])
+    }, [isDragging]);
 
     const handlePointerUp = useCallback(() => {
-        setIsDragging(false)
-        // 드래그 종료 시 즉시 위치 기반 업데이트 실행
-        // updateDropdownBasedOnPosition()
+        setIsDragging(false);
     }, [])
 
     const handleWheel = useCallback((event: WheelEvent) => {
-        event.preventDefault()
-        const zoomSpeed = 0.015
-        targetPosition.current.z += event.deltaY * zoomSpeed
-        // Z축 제한 범위를 기존대로 복원
-        targetPosition.current.z = Math.max(20, Math.min(100, targetPosition.current.z))
-    }, [])
+        event.preventDefault();
+        
+        // 트랙패드 감지: deltaY가 작고 연속적이면 트랙패드
+        const isTrackpad = Math.abs(event.deltaY) < 10;
+        const zoomSpeed = isTrackpad ? 0.18 : 0.015; // 트랙패드일 때 12배 더 민감하게
+        
+        // targetPosition.current.z += event.deltaY * zoomSpeed;
+        // // Z축 제한 범위를 기존대로 복원
+        // targetPosition.current.z = Math.max(20, Math.min(maxZ, targetPosition.current.z));
 
-    // 초기 월드 뷰 설정 (컴포넌트 마운트 시 한 번)
+        // Z축 제한 범위를 기존대로 복원
+        const newZ = targetPosition.current.z + event.deltaY * zoomSpeed;
+        targetPosition.current.z = Math.max(20, Math.min(maxZ, newZ));
+    }, [maxZ]);
+
+    // 모바일 터치 이벤트 핸들러들
+    const handleTouchStart = useCallback((event: TouchEvent) => {
+        event.preventDefault();
+        
+        if (event.touches.length === 2) {
+            // 핀치 줌 시작
+            setIsPinching(true);
+            setIsDragging(false);
+            
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+            const distance = Math.sqrt(
+                Math.pow(touch1.clientX - touch2.clientX, 2) + 
+                Math.pow(touch1.clientY - touch2.clientY, 2)
+            );
+            
+            initialPinchDistance.current = distance;
+            lastPinchDistance.current = distance;
+        } else if (event.touches.length === 1 && !isPinching) {
+            // 단일 터치 드래그 시작
+            setIsDragging(true);
+            const touch = event.touches[0];
+            previousMouse.current = {
+                x: touch.clientX,
+                y: touch.clientY
+            };
+        }
+    }, [isPinching]);
+
+    const handleTouchMove = useCallback((event: TouchEvent) => {
+        event.preventDefault();
+        
+        if (event.touches.length === 2 && isPinching) {
+            // 핀치 줌 처리
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+            const currentDistance = Math.sqrt(
+                Math.pow(touch1.clientX - touch2.clientX, 2) + 
+                Math.pow(touch1.clientY - touch2.clientY, 2)
+            );
+
+            const deltaDistance = currentDistance - lastPinchDistance.current;
+            const zoomSpeed = 0.15; // 모바일 핀치 줌 속도
+
+            const newZ = targetPosition.current.z - deltaDistance * zoomSpeed;
+            targetPosition.current.z = Math.max(20, Math.min(maxZ, newZ));
+            
+            lastPinchDistance.current = currentDistance;
+        } else if (event.touches.length === 1 && isDragging && !isPinching) {
+            // 단일 터치 드래그 처리
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - previousMouse.current.x;
+            const deltaY = touch.clientY - previousMouse.current.y;
+            
+            previousMouse.current = {
+                x: touch.clientX,
+                y: touch.clientY
+            };
+
+            const movementSpeed = 0.09; // 모바일 터치 드래그 속도
+            targetPosition.current.x -= deltaX * movementSpeed;
+            targetPosition.current.y += deltaY * movementSpeed;
+        }
+    }, [isDragging, isPinching, maxZ]);
+
+    const handleTouchEnd = useCallback((event: TouchEvent) => {
+        if (event.touches.length < 2) {
+            setIsPinching(false);
+        }
+        if (event.touches.length === 0) {
+            setIsDragging(false);
+        }
+    }, []);
+
     useEffect(() => {
-        console.log('🏠 CameraController 초기화: 월드 뷰로 설정')
-        // 카메라를 월드 뷰 위치로 설정
-        targetPosition.current.set(0, -2.5, 60)
-        cameraPosition.current.set(0, -2.5, 60)
-        resetSelection()
-    }, [])
+        if (!initialPosition) return;
+
+        const { x, y, z } = initialPosition;
+
+        targetPosition.current.set(x, y, z);
+        cameraPosition.current.copy(targetPosition.current);
+        camera.position.copy(targetPosition.current);
+    }, [initialPosition, camera]);
 
     // 드롭다운 선택에 따른 카메라 이동 처리
     useEffect(() => {
         if (cameraTarget) {
-            const [x, y, z] = cameraTarget
+            const { x, y, z } = cameraTarget;
             console.log('드롭다운 선택으로 카메라 이동:', x, y, z)
             targetPosition.current.set(x, y, z)
             setCameraTarget(null)
         }
-    }, [cameraTarget, setCameraTarget])
+    }, [cameraTarget, setCameraTarget]);
 
     useEffect(() => {
         const canvas = gl.domElement
+        const isHorizontalScreen = screenWidth >= screenHeight;
+        
+        // 기존 이벤트들
         canvas.addEventListener('pointerdown', handlePointerDown)
         canvas.addEventListener('wheel', handleWheel)
-
         document.addEventListener('pointermove', handlePointerMove)
         document.addEventListener('pointerup', handlePointerUp)
+
+        // 모바일 터치 이벤트들
+        if (!isHorizontalScreen) {
+            canvas.addEventListener('touchstart', handleTouchStart, { passive: true })
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: true })
+            canvas.addEventListener('touchend', handleTouchEnd, { passive: true })
+        }
 
         return () => {
             canvas.removeEventListener('pointerdown', handlePointerDown)
             canvas.removeEventListener('wheel', handleWheel)
             document.removeEventListener('pointermove', handlePointerMove)
             document.removeEventListener('pointerup', handlePointerUp)
+
+            if (!isHorizontalScreen) {
+                canvas.removeEventListener('touchstart', handleTouchStart)
+                canvas.removeEventListener('touchmove', handleTouchMove)
+                canvas.removeEventListener('touchend', handleTouchEnd)
+            }
         }
-    }, [gl, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel])
+    }, [gl, handlePointerDown, handlePointerMove, handlePointerUp, handleWheel, handleTouchStart, handleTouchMove, handleTouchEnd, screenWidth, screenHeight]);
 
     useFrame(() => {
-        // 부드러운 카메라 이동
-        cameraPosition.current.lerp(targetPosition.current, 0.12)
-        camera.position.copy(cameraPosition.current)
         setCurrentCameraPosition((prevPosition: { x: number, y: number }) => {
             const isXPosChanged = prevPosition.x.toFixed(1) !== camera.position.x.toFixed(1)
             const isYPosChanged = prevPosition.y.toFixed(1) !== camera.position.y.toFixed(1)
@@ -145,6 +269,9 @@ function CameraController() {
                 return prevPosition;
             }
         });
+        cameraPosition.current.lerp(targetPosition.current, 0.12);
+        // cameraPosition.current.lerp(targetPosition.current, 1.2);
+        camera.position.copy(cameraPosition.current);
     })
 
     return null

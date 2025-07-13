@@ -86,7 +86,7 @@ body {
     rgb(var(--background-start-rgb));
 }
 
-/* Investment notification animations */
+/* Stake notification animations */
 @keyframes slide-in {
   0% {
     transform: translateX(100%);

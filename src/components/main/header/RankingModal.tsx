@@ -1,13 +1,14 @@
 import { useMemo, useState, memo } from 'react'
-import { useContinentStore, type ContinentId } from '@/store/continentStore'
-import { useInvestorStore, type Investor } from "@/store/investorsStore";
+import {Player} from "@/api/types/supabase/Players";
+import {useContinentStore} from "@/store/continentStore";
+import {usePlayersStore} from "@/store/playersStore";
 
 interface RankingData {
     id: string
     name?: string
-    investmentAmount: number
+    stakeAmount: number
     sharePercentage: number
-    continentId: ContinentId
+    continentId: string
     continentName: string
     dailyViews: number[]
 }
@@ -17,17 +18,11 @@ function RankingModal({
 }: {
     onClose: () => void
 }) {
-    const [activeTab, setActiveTab] = useState<'investment' | 'views'>('investment')
-    const [selectedContinentId, setSelectedContinentId] = useState<ContinentId | null>(null)
-    const { continents } = useContinentStore()
-    const { investors } = useInvestorStore();
+    const [activeTab, setActiveTab] = useState<'stake' | 'views'>('stake');
+    const [selectedContinentId, setSelectedContinentId] = useState<string | null>(null);
 
-    const continentList = useMemo(() => {
-        return Object.values(continents).filter((continent) => continent.id !== "central");
-    }, [continents]);
-    const investorList = useMemo(() => {
-        return Object.values(investors);
-    }, [investors]);
+    const { continentList } = useContinentStore();
+    const { playerList, vipPlayerList } = usePlayersStore();
 
     const continentInfoMap = useMemo(() => {
         return new Map(continentList.map((continent) => {
@@ -36,38 +31,43 @@ function RankingModal({
                 {
                     name: continent.name,
                     color: continent.color,
-                    totalInvestment: investorList.filter((investor: Investor) => {
-                        return investor.continent_id === continent.id
-                    }).reduce((acc, investor) => {
-                        return acc + investor.investment_amount
+                    totalStake: playerList.filter((player: Player) => {
+                        return player.continent_id === continent.id
+                    }).reduce((acc, player) => {
+                        return acc + player.stake_amount
                     }, 0)
                 }
             ]
         }))
-    }, [continentList, investorList])
+    }, [continentList, playerList])
 
     const rankingDataList: RankingData[] = useMemo(() => {
-        return investorList.map((investor: Investor) => {
-            const continentInfo = continentInfoMap.get(investor.continent_id);
+        return playerList.map((player: Player) => {
+            const isVip = !!(vipPlayerList.find((vipPlayer) => {
+                return player.id === vipPlayer.id;
+            }));
+            const continentInfo = continentInfoMap.get(player.continent_id);
 
             const continentName = continentInfo?.name ?? "-"
-            const totalInvestment = continentInfo?.totalInvestment ?? 0;
+            const totalStake = continentInfo?.totalStake ?? 0;
 
             return {
-                id: investor.id,
-                name: investor.name,
-                investmentAmount: investor.investment_amount,
-                sharePercentage: (investor.investment_amount / totalInvestment) * 100,
-                continentId: investor.continent_id,
+                id: player.id,
+                name: player.name,
+                stakeAmount: player.stake_amount,
+                sharePercentage: (player.stake_amount / totalStake) * 100,
+                continentId: !isVip ? player.continent_id : "central",
                 continentName: continentName,
-                dailyViews: investor.daily_views || [0, 0, 0, 0, 0, 0, 0]
+                dailyViews: player.daily_views || [0, 0, 0, 0, 0, 0, 0]
             }
         })
-    }, [investorList, continentInfoMap]);
+    }, [playerList, continentInfoMap]);
 
     const filteredRankingDataList = useMemo(() => {
         return selectedContinentId
-            ? rankingDataList.filter((rankingItem) => rankingItem.continentId === selectedContinentId)
+            ? rankingDataList.filter((rankingItem) => {
+                return rankingItem.continentId === selectedContinentId;
+            })
             : rankingDataList;
     }, [rankingDataList, selectedContinentId]);
 
@@ -77,8 +77,8 @@ function RankingModal({
         }
 
         return filteredRankingDataList.sort((a, b) => {
-            return activeTab === "investment"
-                ? b.investmentAmount - a.investmentAmount
+            return activeTab === "stake"
+                ? b.stakeAmount - a.stakeAmount
                 : getTotalViewCount(b.dailyViews) - getTotalViewCount(a.dailyViews);
         })
     }, [activeTab, filteredRankingDataList]);
@@ -143,14 +143,14 @@ function RankingModal({
                             {/* 정렬 기준 탭 */}
                             <div className="flex bg-gray-800 p-1 rounded-lg">
                                 <button
-                                    onClick={() => setActiveTab('investment')}
+                                    onClick={() => setActiveTab('stake')}
                                     className={`px-4 py-1.5 rounded-md text-sm transition-colors ${
-                                        activeTab === 'investment'
+                                        activeTab === 'stake'
                                             ? 'bg-blue-600 text-white'
                                             : 'text-gray-400 hover:text-white'
                                     }`}
                                 >
-                                    💰 Investment
+                                    💰 Stake
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('views')}
@@ -169,9 +169,9 @@ function RankingModal({
                     {/* 랭킹 목록 */}
                     <div className="p-6">
                         <div className="space-y-3">
-                            {rankingItemList.map((investor, index) => (
+                            {rankingItemList.map((rankingData, index) => (
                                 <div
-                                    key={investor.id}
+                                    key={rankingData.id}
                                     className="bg-gray-800 rounded-lg p-4 flex items-center space-x-4"
                                 >
                                     {/* 순위 */}
@@ -190,24 +190,24 @@ function RankingModal({
                                     {/* 투자자 정보 */}
                                     <div className="flex-1">
                                         <div className="flex items-center space-x-2">
-                                            <span className="font-medium text-white">{investor.name}</span>
+                                            <span className="font-medium text-white">{rankingData.name}</span>
                                             <div className="flex items-center space-x-1 text-sm">
                                                 <div
                                                     className="w-2 h-2 rounded-full"
-                                                    style={{ backgroundColor: continentInfoMap.get(investor.continentId)?.color }}
+                                                    style={{ backgroundColor: continentInfoMap.get(rankingData.continentId)?.color }}
                                                 />
-                                                <span className="text-gray-400">{investor.continentName}</span>
+                                                <span className="text-gray-400">{rankingData.continentName}</span>
                                             </div>
                                         </div>
                                         <div className="mt-1 flex items-center space-x-4 text-sm">
                                             <div className="text-green-400">
-                                                ${investor.investmentAmount.toLocaleString()}
+                                                ${rankingData.stakeAmount.toLocaleString()}
                                             </div>
                                             <div className="text-blue-400">
-                                                {investor.sharePercentage.toFixed(2)}%
+                                                {rankingData.sharePercentage.toFixed(2)}%
                                             </div>
                                             <div className="text-purple-400">
-                                                {investor.dailyViews.reduce((acc, dailyView) => {
+                                                {rankingData.dailyViews.reduce((acc, dailyView) => {
                                                     return acc + dailyView
                                                 }, 0).toLocaleString()} views
                                             </div>
@@ -216,8 +216,8 @@ function RankingModal({
 
                                     {/* 추세 */}
                                     <div className="hidden sm:flex items-end space-x-1 h-8">
-                                        {investor.dailyViews.map((views, i) => {
-                                            const maxViews = Math.max(...investor.dailyViews, 1)
+                                        {rankingData.dailyViews.map((views, i) => {
+                                            const maxViews = Math.max(...rankingData.dailyViews, 1)
                                             const height = (views / maxViews) * 100
 
                                             return (
@@ -239,7 +239,7 @@ function RankingModal({
                                 <div className="text-center py-8">
                                     <div className="text-4xl mb-3">🏆</div>
                                     <h3 className="text-lg font-medium text-white mb-2">No Data Available</h3>
-                                    <p className="text-gray-400">There are no investors in the selected continent yet.</p>
+                                    <p className="text-gray-400">There are no players in the selected continent yet.</p>
                                 </div>
                             )}
                         </div>
